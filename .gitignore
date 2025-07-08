@@ -1,2 +1,3 @@
-main
+MIV
 .build/*
+*.so

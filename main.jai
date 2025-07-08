@@ -3,23 +3,23 @@ window_height := 800;
 main_font: *Simp.Dynamic_Font;
 
 main :: () {
-	handle := libc.dlopen("libm.so.6", libc.RTLD_NOW);
+	handle := libc.dlopen("./meow_c.so", libc.RTLD_NOW);
 	if !handle {
 		print("Dynamic library loading error: %s\n", to_string(libc.dlerror()));
 		exit(1);
 	}
 	//print("%s\n", to_string(libc.dlerror()));
 
-	cosine: (float64) -> float64 #c_call;
+	meow :: #type (s64) -> float64 #c_call;
 
-	cosine = libc.dlsym(handle, "cos");
+	meow_c: meow = libc.dlsym(handle, "meow");
 	loading_error := to_string(libc.dlerror());
 	if loading_error {
 		print("Dynamic function loading error: %s\n", loading_error);
 		exit(1);
 	}
 
-	print("%\n", cosine(2));
+	print("%\n", meow_c(2));
 
 	libc.dlclose(handle);
 
