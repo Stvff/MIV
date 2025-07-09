@@ -35,6 +35,8 @@ main :: () {
 	started_zooming := false;
 	image_scale: float = 1.0;
 	shifted := false;
+	initial_mouse_pos: Vector2;
+	started_mouse_panning := false;
 
 	/* Font loading */
 	font_pixel_height := bar_height/2;
@@ -68,17 +70,26 @@ main :: () {
 		for event: events_this_frame {
 			if event.type == .QUIT then running = false;
 			
+			scale_amount := ifx shifted then 0.01 else 0.1;
 			offset_amount := ifx shifted then 1 else 20;
 			if (event.type == .KEYBOARD) && event.key_pressed then if event.key_code == {
 				case .ESCAPE; running = false;
 				case .SHIFT; shifted = true;
+				case .ARROW_UP; image_scale += scale_amount; started_zooming = true;
+				case .ARROW_DOWN; image_scale -= scale_amount; started_zooming = true;
 				case #char "W"; image_offset.y += offset_amount;
 				case #char "A"; image_offset.x -= offset_amount;
 				case #char "S"; image_offset.y -= offset_amount;
 				case #char "D"; image_offset.x += offset_amount;
+				case .MOUSE_BUTTON_LEFT;
+					mouse_x, mouse_y := get_mouse_pointer_position();
+					initial_mouse_pos = .{xx mouse_x, xx mouse_y};
+					started_mouse_panning = true;
+				case .MOUSE_BUTTON_MIDDLE; started_zooming = false;
 			}
 			if (event.type == .KEYBOARD) && !event.key_pressed then if event.key_code == {
 				case .SHIFT; shifted = false;
+				case .MOUSE_BUTTON_LEFT; started_mouse_panning = false;
 			}
 
 			if event.type == .MOUSE_WHEEL {
@@ -93,6 +104,12 @@ main :: () {
 				image_scale = clamp(image_scale, 1/cast(float, max(fake_image_width, fake_image_height)), cast(float, max(canvas_width, canvas_height)));
 			}
 		}
+		if started_mouse_panning {
+			mouse_x, mouse_y := get_mouse_pointer_position();
+			image_offset += .{xx mouse_x, xx -mouse_y} - .{initial_mouse_pos.x, -initial_mouse_pos.y};
+			initial_mouse_pos = .{xx mouse_x, xx mouse_y};
+		}
+
 //		print("eol\n");
 		/* timings etc */
 		now := current_time_monotonic();
