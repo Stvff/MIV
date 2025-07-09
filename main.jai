@@ -1,3 +1,5 @@
+fake_image_width := 789;
+fake_image_height := 600;
 
 main :: () {
 	// handle := libc.dlopen("./meow_c.so", libc.RTLD_NOW);
@@ -25,14 +27,21 @@ main :: () {
 	window := create_window(window_width, window_height, "MIV");
 	Simp.set_render_target(window);
 	bar_height := window_height/10;
+	canvas_width := window_width;
+	canvas_height := window_height - bar_height;
+
+	fit : enum {ONE_TO_ONE; FIT_WIDTH; FIT_HEIGHT; FIT_BEST;} = .FIT_BEST;
+	image_offset: Vector2;
+	started_zooming := false;
+	image_scale: float = 1.0;
+	shifted := false;
 
 	/* Font loading */
 	font_pixel_height := bar_height/2;
 	main_font: *Simp.Dynamic_Font;
 	main_font = Simp.get_font_at_size(FONT_DATA, font_pixel_height);
 
-	target_frame_time: float64 = 1.0/69.0;
-
+	target_frame_time: float64 = 1.0/120.0;
 	last_1s_time := current_time_monotonic();
 	prev_time := last_1s_time;
 
@@ -45,18 +54,46 @@ main :: () {
 		for get_window_resizes() {
 			Simp.update_window(it.window);
 			if it.window == window {
-
 				window_width  = it.width;
 				window_height = it.height;
 
 				bar_height = window_height/10;
+				canvas_width = window_width;
+				canvas_height = window_height - bar_height;
+
 				font_pixel_height = bar_height/2;
 				main_font = Simp.get_font_at_size(FONT_DATA, font_pixel_height);
 			}
 		}
 		for event: events_this_frame {
 			if event.type == .QUIT then running = false;
+			
+			offset_amount := ifx shifted then 1 else 20;
+			if (event.type == .KEYBOARD) && event.key_pressed then if event.key_code == {
+				case .ESCAPE; running = false;
+				case .SHIFT; shifted = true;
+				case #char "W"; image_offset.y += offset_amount;
+				case #char "A"; image_offset.x -= offset_amount;
+				case #char "S"; image_offset.y -= offset_amount;
+				case #char "D"; image_offset.x += offset_amount;
+			}
+			if (event.type == .KEYBOARD) && !event.key_pressed then if event.key_code == {
+				case .SHIFT; shifted = false;
+			}
+
+			if event.type == .MOUSE_WHEEL {
+				started_zooming = true;
+				delta := cast(float, event.wheel_delta)/cast(float, event.typical_wheel_delta);
+				if shifted {
+					image_scale += delta/100;
+				} else {
+					image_scale += delta/10;
+				}
+
+				image_scale = clamp(image_scale, 1/cast(float, max(fake_image_width, fake_image_height)), cast(float, max(canvas_width, canvas_height)));
+			}
 		}
+//		print("eol\n");
 		/* timings etc */
 		now := current_time_monotonic();
 		if to_float64_seconds(now - last_1s_time) > 0.2 {
@@ -73,7 +110,31 @@ main :: () {
 		Simp.clear_render_target(0.05, 0.05, 0.05, 1);
 
 		/* image */
-		Simp.immediate_quad(Vector2.{10, 10} + .{0, 0}, Vector2.{10, 10} + .{300, 0}, Vector2.{10, 10} + .{400, 300}, Vector2.{10, 10} + .{0, 200});
+		screen_center := Vector2.{ cast(float, canvas_width)/2, cast(float, canvas_height)/2 };
+		image_center := Vector2.{ cast(float, fake_image_width)/2, cast(float, fake_image_height)/2 };
+		screen_woh := screen_center.x/screen_center.y;
+		image_woh := image_center.x/image_center.y;
+
+		now_fit := fit;
+		if fit == .FIT_BEST {
+			if screen_woh > image_woh now_fit = .FIT_HEIGHT;
+			else now_fit = .FIT_WIDTH;
+		}
+
+		if !started_zooming if now_fit == {
+		case .ONE_TO_ONE;
+			image_scale = 1;
+		case .FIT_WIDTH;
+			image_scale = screen_center.x/image_center.x;
+		case .FIT_HEIGHT;
+			image_scale = screen_center.y/image_center.y;
+		case .FIT_BEST; /* should be unreachable */
+		}
+		image_bounds := Vector2.[
+			-image_center, .{image_center.x, -image_center.y}, image_center, .{-image_center.x, image_center.y}
+		];
+		for * image_bounds { it.* *= image_scale; it.* += screen_center + image_offset; }
+		Simp.immediate_quad(image_bounds[0], image_bounds[1], image_bounds[2], image_bounds[3]);
 
 		/* UI */
 		Simp.immediate_quad(0, xx window_height, xx window_width, xx(window_height - bar_height), .{0.2, 0.2, 0.2, 1});
@@ -90,10 +151,15 @@ main :: () {
 		} else {
 			text_color = Vector4.{0.8, 0.2, 0.1, 1};
 		}
-		text = sprint("%", frame_count_over_1s);
+		text = sprint("fps: %", frame_count_over_1s);
 		text_width = Simp.prepare_text(main_font, text);
-		Simp.draw_prepared_text(main_font, window_width - text_width*3/2, window_height - font_pixel_height*6/5, text_color);
+		Simp.draw_prepared_text(main_font, window_width - text_width - font_pixel_height, window_height - font_pixel_height*6/5, text_color);
 
+
+		text_color = Vector4.{1, 1, 1, 1};
+		text = sprint("%\%", formatFloat(image_scale*100, trailing_width = 2, zero_removal = .NO));
+		text_width = Simp.prepare_text(main_font, text);
+		Simp.draw_prepared_text(main_font, font_pixel_height, window_height - font_pixel_height*6/5, text_color);
 
 		Simp.immediate_flush();
 		Simp.swap_buffers(window);
