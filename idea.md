@@ -13,9 +13,9 @@ The process for adding dynlibs:
 4. dynlib is asked for file extension and magic number (if there's a problem: inform the user)
 5. dynlib is copied to some cozy place (option in regfile ofc)
 
-- Zoom
-- Pan
-- Rotate
+- Zoom (percentage is image pixel to screen pixel, zoomlimit is when 1 pixel completely covers the screen)
+- Pan (is in imagepixels removed from the center)
+- Rotate (probably degrees, though I prefer radians for this (with the PI factored out))
 - The Slider/Player
 	- Segmented or Contiguous
 	- Prev or Next
