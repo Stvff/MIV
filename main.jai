@@ -3,13 +3,16 @@ fake_image_height := 600;
 fontsize := 20;
 
 main :: () {
-	register_dynlib("./meow_c.so");
+//	load_registration_file();
+//	register_dynlib("./meow_c.so");
 	defer cleanup_registrations();
 
 	/* UI definitions */
 	window_width := 1400;
 	window_height := 800;
 	window := create_window(window_width, window_height, "MIV");
+	dnd_typelist := string.["url/url", "text/uri-list", "text/plain", "application/octet-stream"];
+	X11.enable_drag_and_drop(window, dnd_typelist);
 	Simp.set_render_target(window);
 	bar_height := fontsize*2;
 	canvas_width := window_width;
@@ -59,6 +62,13 @@ main :: () {
 		for event: events_this_frame {
 			if event.type == .QUIT then running = false;
 			
+			if event.type == .DRAG_AND_DROP_FILES for event.files {
+				ext := get_extension(it);
+				if ext == "so" {
+					register_dynlib(it);
+				}
+			}
+			
 			scale_amount := ifx shifted then 0.01 else 0.1;
 			offset_amount := ifx shifted then 1 else 20;
 			if (event.type == .KEYBOARD) && event.key_pressed then if event.key_code == {
@@ -101,7 +111,6 @@ main :: () {
 			initial_mouse_pos = .{xx mouse_x, xx mouse_y};
 		}
 
-//		print("eol\n");
 		/* timings etc */
 		now := current_time_monotonic();
 		if to_float64_seconds(now - last_1s_time) > 0.2 {
@@ -177,12 +186,25 @@ main :: () {
 
 		Simp.immediate_flush();
 		Simp.swap_buffers(window);
-		{
-			#import "X11"; #import "GL";
-			glXSwapIntervalEXT(x_global_display, Simp.find_window_info(window).specific.glx_window, 0);
-	    }
+		GL.glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(window).specific.glx_window, 0);
 		reset_temporary_storage();
 	}
+}
+
+get_extension :: (path: string) -> string {
+	ext: string;
+	ext.count = 0;
+	ext.data = path.data + path.count;
+	while ext.count != path.count {
+		ext.count += 1;
+		ext.data -= 1;
+		if ext[0] == "." {
+			ext.count -= 1;
+			ext.data += 1;
+			return ext;
+		}
+	}
+	return "";
 }
 
 FONT_PATH :: "/usr/share/fonts/libertinus/LibertinusSerif-Regular.otf";
@@ -193,6 +215,8 @@ FONT_DATA :: #run cast([]u8) read_entire_file(FONT_PATH);
 #import "Window_Creation";
 #import "Input";
 Simp :: #import "Simp";
+X11 :: #import "X11";
+GL :: #import "GL";
 
 #import "Math";
 #import "File";

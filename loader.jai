@@ -58,6 +58,7 @@ register_dynlib :: (dynlib_name: string) -> bool {
 	while true {
 		p: Provided_Registration_Entry;
 		amount := reg_proc(*p);
+		if amount < 0 break;
 
 		pre_render_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "pre_render"));
 		pre_render_handle := libc.dlsym(handle, pre_render_cname);
@@ -66,7 +67,6 @@ register_dynlib :: (dynlib_name: string) -> bool {
 			success = false;
 		}
 		libc.dlerror();
-
 
 		render_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "render"));
 		render_handle := libc.dlsym(handle, render_cname);
@@ -86,7 +86,7 @@ register_dynlib :: (dynlib_name: string) -> bool {
 		array_add(*all_registrations, registration);
 		print("%\n", registration);
 
-		if amount == 0 break;
+		if amount <= 0 break;
 	}
 	return success;
 }
