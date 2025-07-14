@@ -4,6 +4,7 @@ fontsize := 20;
 
 main :: () {
 	register_dynlib("./meow_c.so");
+	defer cleanup_registrations();
 
 	/* UI definitions */
 	window_width := 1400;

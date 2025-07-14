@@ -1,19 +1,4 @@
-#include<stdint.h>
-
-typedef struct {
-	int64_t count;
-	uint8_t *data;
-} string;
-
-typedef struct {
-	string name_filetype;
-	string function_prefix;
-	string extension;
-	string magic_number;
-	int64_t bytes_before_magic_number;
-	uint8_t has_magic_number;
-	uint8_t extension_is_case_sensitive;
-} Provided_Registration_Entry;
+#include "MIV.h"
 
 static int called_n_times;
 const int TOTAL_IMAGE_FORMATS = 2;
@@ -21,33 +6,25 @@ const int TOTAL_IMAGE_FORMATS = 2;
 int64_t registration_procedure(Provided_Registration_Entry *registration) {
 	switch (called_n_times) {
 	case 0:
-		registration->name_filetype.count = 17;
-		registration->name_filetype.data = "Netpbm binary PPM";
+		registration->name_filetype = to_string("Netpbm binary PPM");
 
-		registration->function_prefix.count = 4;
-		registration->function_prefix.data = "ppm_";
+		registration->procedure_prefix = to_string("ppm_");
 	
-		registration->extension.count = 3;
-		registration->extension.data = "PPM";
+		registration->extension = to_string("PPM");
 	
-		registration->magic_number.count = 2;
-		registration->magic_number.data = "P6";
+		registration->magic_number = to_string("P6");
 		
 		registration->bytes_before_magic_number = 0;
 		registration->extension_is_case_sensitive = 0;
 		break;
 	case 1:
-		registration->name_filetype.count = 10;
-		registration->name_filetype.data = "Netpbm PFM";
+		registration->name_filetype = to_string("Netpbm PFM");
 
-		registration->function_prefix.count = 4;
-		registration->function_prefix.data = "pfm_";
-	
-		registration->extension.count = 3;
-		registration->extension.data = "PFM";
-	
-		registration->magic_number.count = 2;
-		registration->magic_number.data = "PF";
+		registration->procedure_prefix = to_string("pfm_");
+
+		registration->extension = to_string("PFM");
+
+		registration->magic_number = to_string("PF");
 		
 		registration->bytes_before_magic_number = 0;
 		registration->extension_is_case_sensitive = 0;
@@ -55,4 +32,20 @@ int64_t registration_procedure(Provided_Registration_Entry *registration) {
 	}
 	called_n_times += 1;
 	return TOTAL_IMAGE_FORMATS - called_n_times;
+}
+
+string ppm_pre_render(Pre_Rendering_Info *pre_info) {
+	return (string){0};
+}
+
+string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
+	return (string){0};
+}
+
+string pfm_pre_render(Pre_Rendering_Info *pre_info) {
+	return (string){0};
+}
+
+string pfm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
+	return (string){0};
 }
