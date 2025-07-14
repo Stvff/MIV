@@ -13,6 +13,15 @@ The process for adding dynlibs:
 4. dynlib is asked for file extension and magic number (if there's a problem: inform the user)
 5. dynlib is copied to some cozy place (option in regfile ofc)
 
+What happens when an image is opened:
+1. MIV notes the extension
+2. MIV opens the file and checks the magic number (if applicable)
+3. MIV chooses the library to call to
+4. MIV gives the library the opened file to get image information
+5. MIV allocates the buffer (always RGBA)
+6. MIV tells the library to render the image to the provided buffer
+7. MIV watches the file to see if it changes, restarts this whole process when it changes
+
 - Zoom (percentage is image pixel to screen pixel, zoomlimit is when 1 pixel completely covers the screen)
 - Pan (is in imagepixels removed from the center)
 - Rotate (probably degrees, though I prefer radians for this (with the PI factored out))
