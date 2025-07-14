@@ -22,6 +22,7 @@ What happens when an image is opened:
 6. MIV tells the library to render the image to the provided buffer
 7. MIV watches the file to see if it changes, restarts this whole process when it changes
 
+Some features:
 - Zoom (percentage is image pixel to screen pixel, zoomlimit is when 1 pixel completely covers the screen)
 - Pan (is in imagepixels removed from the center)
 - Rotate (probably degrees, though I prefer radians for this (with the PI factored out))

@@ -3,25 +3,7 @@ fake_image_height := 600;
 fontsize := 20;
 
 main :: () {
-	// handle := libc.dlopen("./meow_c.so", libc.RTLD_NOW);
-	// if !handle {
-	// 	print("Dynamic library loading error: %s\n", to_string(libc.dlerror()));
-	// 	exit(1);
-	// }
-	// libc.dlerror()
-
-	// meow :: #type (s64) -> float64 #c_call;
-
-	// meow_c: meow = libc.dlsym(handle, "meow");
-	// loading_error := to_string(libc.dlerror());
-	// if loading_error {
-	// 	print("Dynamic function loading error: %s\n", loading_error);
-	// 	exit(1);
-	// }
-
-	// print("%\n", meow_c(2));
-
-	// libc.dlclose(handle);
+	register_dynlib("./meow_c.so");
 
 	/* UI definitions */
 	window_width := 1400;
@@ -205,13 +187,11 @@ main :: () {
 FONT_PATH :: "/usr/share/fonts/libertinus/LibertinusSerif-Regular.otf";
 FONT_DATA :: #run cast([]u8) read_entire_file(FONT_PATH);
 
-#load "loader.jai"
+#load "loader.jai";
 
 #import "Window_Creation";
 #import "Input";
 Simp :: #import "Simp";
-
-libc :: #import "POSIX";
 
 #import "Math";
 #import "File";

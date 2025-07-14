@@ -2,7 +2,7 @@
 
 exe_name :: "MIV";
 compile_MIV :: true;
-compile_meow_c :: false;
+compile_meow_c :: true;
 compile_meow_jai :: false;
 
 build :: () {
