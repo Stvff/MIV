@@ -1,5 +1,6 @@
 fake_image_width := 789;
 fake_image_height := 600;
+fontsize := 20;
 
 main :: () {
 	// handle := libc.dlopen("./meow_c.so", libc.RTLD_NOW);
@@ -22,27 +23,32 @@ main :: () {
 
 	// libc.dlclose(handle);
 
+	/* UI definitions */
 	window_width := 1400;
 	window_height := 800;
 	window := create_window(window_width, window_height, "MIV");
 	Simp.set_render_target(window);
-	bar_height := window_height/10;
+	bar_height := fontsize*2;
 	canvas_width := window_width;
 	canvas_height := window_height - bar_height;
-
-	fit : enum {ONE_TO_ONE; FIT_WIDTH; FIT_HEIGHT; FIT_BEST;} = .FIT_BEST;
-	image_offset: Vector2;
-	started_zooming := false;
-	image_scale: float = 1.0;
-	shifted := false;
-	initial_mouse_pos: Vector2;
-	started_mouse_panning := false;
 
 	/* Font loading */
 	font_pixel_height := bar_height/2;
 	main_font: *Simp.Dynamic_Font;
 	main_font = Simp.get_font_at_size(FONT_DATA, font_pixel_height);
 
+	/* Image transform information */
+	fit : enum {ONE_TO_ONE; FIT_WIDTH; FIT_HEIGHT; FIT_BEST;} = .FIT_BEST;
+	image_offset: Vector2;
+	image_scale: float = 1.0;
+	image_angle := 0;
+
+	shifted := false;
+	initial_mouse_pos: Vector2;
+	started_zooming := false;
+	started_mouse_panning := false;
+
+	/* Timing */
 	target_frame_time: float64 = 1.0/120.0;
 	last_1s_time := current_time_monotonic();
 	prev_time := last_1s_time;
@@ -59,7 +65,7 @@ main :: () {
 				window_width  = it.width;
 				window_height = it.height;
 
-				bar_height = window_height/10;
+				bar_height = fontsize*2;
 				canvas_width = window_width;
 				canvas_height = window_height - bar_height;
 
@@ -85,7 +91,9 @@ main :: () {
 					mouse_x, mouse_y := get_mouse_pointer_position();
 					initial_mouse_pos = .{xx mouse_x, xx mouse_y};
 					started_mouse_panning = true;
-				case .MOUSE_BUTTON_MIDDLE; started_zooming = false;
+				case .MOUSE_BUTTON_MIDDLE;
+					if shifted image_offset = .{};
+					else started_zooming = false;
 			}
 			if (event.type == .KEYBOARD) && !event.key_pressed then if event.key_code == {
 				case .SHIFT; shifted = false;
@@ -150,6 +158,12 @@ main :: () {
 		image_bounds := Vector2.[
 			-image_center, .{image_center.x, -image_center.y}, image_center, .{-image_center.x, image_center.y}
 		];
+
+		rot_mat := Matrix2.{
+			cos(2*PI*image_angle/360), -sin(2*PI*image_angle/360),
+			sin(2*PI*image_angle/360), cos(2*PI*image_angle/360)
+		};
+		for * image_bounds { it.* = rot_mat*it.*; }
 		for * image_bounds { it.* *= image_scale; it.* += screen_center + image_offset; }
 		Simp.immediate_quad(image_bounds[0], image_bounds[1], image_bounds[2], image_bounds[3]);
 
