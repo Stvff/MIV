@@ -9,11 +9,11 @@ int64_t registration_procedure(Provided_Registration_Entry *registration) {
 		registration->name_filetype = to_string("Netpbm binary PPM");
 
 		registration->procedure_prefix = to_string("ppm_");
-	
+
 		registration->extension = to_string("PPM");
-	
+
 		registration->magic_number = to_string("P6");
-		
+
 		registration->bytes_before_magic_number = 0;
 		registration->extension_is_case_sensitive = 0;
 		break;
@@ -25,7 +25,7 @@ int64_t registration_procedure(Provided_Registration_Entry *registration) {
 		registration->extension = to_string("PFM");
 
 		registration->magic_number = to_string("PF");
-		
+
 		registration->bytes_before_magic_number = 0;
 		registration->extension_is_case_sensitive = 0;
 		break;

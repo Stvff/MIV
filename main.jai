@@ -210,7 +210,7 @@ get_extension :: (path: string) -> string {
 FONT_PATH :: "/usr/share/fonts/libertinus/LibertinusSerif-Regular.otf";
 FONT_DATA :: #run cast([]u8) read_entire_file(FONT_PATH);
 
-#load "loader.jai";
+#load "registration.jai";
 
 #import "Window_Creation";
 #import "Input";

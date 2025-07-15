@@ -1,3 +1,7 @@
+/* global variables */
+all_registrations: [..]Registration_Entry;
+/* /global variables */
+
 Pre_Rendering_Info :: struct {
 	name: string;
 	fileptr: *struct{};
@@ -36,7 +40,6 @@ Registration_Procedure :: #type (registration: *Provided_Registration_Entry) -> 
 Pre_Rendering_Procedure :: #type (info: *Pre_Rendering_Info) -> string #c_call;
 Rendering_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> string #c_call;
 
-all_registrations: [..]Registration_Entry;
 register_dynlib :: (dynlib_name: string) -> bool {
 	dynlib_cname := temp_c_string(dynlib_name);
 
