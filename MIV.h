@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 typedef struct {
 	int64_t count;
@@ -21,8 +22,11 @@ typedef struct {
 
 typedef struct {
 	string name;
-	struct{} *fileptr;
+	FILE *fileptr;
 	int64_t width, height;
+
+	uint8_t bit_depth;
+	uint8_t channels;
 	string metadata;
 } Pre_Rendering_Info;
 

@@ -7,6 +7,9 @@ Pre_Rendering_Info :: struct {
 	name: string;
 	fileptr: *libc.FILE;
 	width, height: s64;
+
+	bit_depth: u8;
+	channels: u8;
 	metadata: string;
 }
 
@@ -139,10 +142,11 @@ get_loading :: (filepath: string, extension: string) -> bool {
 	defer array_reset(*cast([]u8, found_mn));
 
 	if new_plugin.magic_number {
-		libc.fseek(file_handle, 0, libc.SEEK_SET);
 		libc.fread(found_mn.data, 1, xx found_mn.count, file_handle);
+		libc.fseek(file_handle, 0, libc.SEEK_SET);
 		if found_mn != new_plugin.magic_number {
-			log_error("Mismatched magic number. The file type '%' expected the magic number '%', but got '%'.", new_plugin.name_filetype, new_plugin.magic_number, found_mn);
+			log_error("Mismatched magic number. The file type '%' expected the magic number '%', but got '%'.", new_plugin.name_filetype, cast([]u8, new_plugin.magic_number), cast([]u8, found_mn));
+			// Also do the whole magic number checking here so that the user can choose
 			return false;
 		}
 	}
