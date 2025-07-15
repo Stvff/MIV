@@ -15,7 +15,6 @@ typedef struct {
 	string procedure_prefix;
 	string extension;
 	string magic_number;
-	int64_t bytes_before_magic_number;
 	uint8_t has_magic_number;
 	uint8_t extension_is_case_sensitive;
 } Provided_Registration_Entry;

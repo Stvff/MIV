@@ -4,7 +4,7 @@ fontsize := 20;
 
 main :: () {
 //	load_registration_file();
-//	register_dynlib("./meow_c.so");
+	register_dynlib("./meow_c.so");
 	defer cleanup_registrations();
 
 	/* UI definitions */
@@ -57,6 +57,7 @@ main :: () {
 
 				font_pixel_height = bar_height/2;
 				main_font = Simp.get_font_at_size(FONT_DATA, font_pixel_height);
+				GL.glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(window).specific.glx_window, 0);
 			}
 		}
 		for event: events_this_frame {
@@ -64,9 +65,8 @@ main :: () {
 			
 			if event.type == .DRAG_AND_DROP_FILES for event.files {
 				ext := get_extension(it);
-				if ext == "so" {
-					register_dynlib(it);
-				}
+				if ext == "so" register_dynlib(it);
+				else get_loading(it, ext);
 			}
 			
 			scale_amount := ifx shifted then 0.01 else 0.1;
@@ -186,7 +186,6 @@ main :: () {
 
 		Simp.immediate_flush();
 		Simp.swap_buffers(window);
-		GL.glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(window).specific.glx_window, 0);
 		reset_temporary_storage();
 	}
 }
@@ -220,4 +219,5 @@ GL :: #import "GL";
 
 #import "Math";
 #import "File";
+#import "String";
 #import "Basic";

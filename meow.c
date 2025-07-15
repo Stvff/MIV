@@ -14,7 +14,6 @@ int64_t registration_procedure(Provided_Registration_Entry *registration) {
 
 		registration->magic_number = to_string("P6");
 
-		registration->bytes_before_magic_number = 0;
 		registration->extension_is_case_sensitive = 0;
 		break;
 	case 1:
@@ -26,7 +25,6 @@ int64_t registration_procedure(Provided_Registration_Entry *registration) {
 
 		registration->magic_number = to_string("PF");
 
-		registration->bytes_before_magic_number = 0;
 		registration->extension_is_case_sensitive = 0;
 		break;
 	}
@@ -35,6 +33,8 @@ int64_t registration_procedure(Provided_Registration_Entry *registration) {
 }
 
 string ppm_pre_render(Pre_Rendering_Info *pre_info) {
+	pre_info->width = 10;
+	pre_info->height = 12;
 	return (string){0};
 }
 
@@ -43,6 +43,8 @@ string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 }
 
 string pfm_pre_render(Pre_Rendering_Info *pre_info) {
+	pre_info->width = 20;
+	pre_info->height = 22;
 	return (string){0};
 }
 
