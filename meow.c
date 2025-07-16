@@ -1,4 +1,5 @@
 #include "MIV.h"
+#include <stdlib.h>
 
 /* helper functions */
 uint8_t is_white_space(char c) {
@@ -64,8 +65,19 @@ int64_t registration_procedure(Provided_Registration_Entry *registration) {
 	return TOTAL_IMAGE_FORMATS - called_n_times;
 }
 
-int max_ppm_value = 0;
+typedef struct {
+	int max_ppm_value;
+	int64_t start_of_image;
+} Specifics;
+
 string ppm_pre_render(Pre_Rendering_Info *pre_info) {
+	Specifics *specifics;
+	if (!pre_info->user_ptr) {
+		specifics = malloc(sizeof(Specifics));
+		*specifics = (Specifics){0};
+		pre_info->user_ptr = specifics;
+	} else specifics = pre_info->user_ptr;
+
 	/* ignore the header */
 	fseek(pre_info->fileptr, 3, SEEK_SET);
 
@@ -90,24 +102,47 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	fseek(pre_info->fileptr, -1, SEEK_SET);
 
 	/* reading the max value */
-	max_ppm_value = 0;
+	specifics->max_ppm_value = 0;
 	c = '0';
 	skip_white_space(pre_info->fileptr);
 	skip_comments(pre_info->fileptr); /* these comments could be added to the metadata section imo */
 	do {
-		max_ppm_value = max_ppm_value*10 + (c - '0');
+		specifics->max_ppm_value = specifics->max_ppm_value*10 + (c - '0');
 		c = fgetc(pre_info->fileptr);
 	} while (is_digit(c));
 	/* not fseeking back, because that last newline was in fact the final newline */
+	specifics->start_of_image = ftell(pre_info->fileptr);
 
-	if (max_ppm_value <= 255) pre_info->bit_depth = 8;
-	else if (max_ppm_value <= 65535) pre_info->bit_depth = 16;
+	if (specifics->max_ppm_value <= 255) pre_info->bit_depth = 8;
+	else if (specifics->max_ppm_value <= 65535) pre_info->bit_depth = 16;
 	pre_info->channels = 3;
+	if (pre_info->bit_depth > 8) {
+		return to_string("The PPM plugin currently does not support conversion of 16 bit to 8 bit");
+	}
 
 	return (string){0};
 }
 
 string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
+	int64_t distance = pre_info->channels*pre_info->bit_depth/8;
+	uint8_t *file_data = malloc(render_info->buffer_count*distance);
+
+	Specifics *specifics = pre_info->user_ptr;
+
+	printf("%d\n", specifics->start_of_image);
+	fflush(stdout);
+
+	fseek(pre_info->fileptr, specifics->start_of_image, SEEK_SET);
+	fread(file_data, 1, render_info->buffer_count*distance, pre_info->fileptr);
+
+	for (int64_t i = 0; i < render_info->buffer_count; i += 1) {
+		render_info->buffer[i][0] = file_data[i*distance + 0];
+		render_info->buffer[i][1] = file_data[i*distance + 0];
+		render_info->buffer[i][2] = file_data[i*distance + 0];
+		render_info->buffer[i][3] = file_data[i*distance + 0];
+	}
+
+	free(file_data);
 	return (string){0};
 }
 

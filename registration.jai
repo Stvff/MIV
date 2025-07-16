@@ -121,6 +121,7 @@ cleanup_registrations :: () {
 
 get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) -> bool {
 	new_plugin: *Registration_Entry = null;
+	ok := true;
 	if extension {
 		push_allocator(temp);
 		for * all_registrations {
@@ -140,6 +141,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 	file_handle = libc.fopen(temp_c_string(filepath), "r");
 	if !file_handle {
 		log_error("File does not exist or could not be opened: %", filepath);
+		ok = false;
 		return false;
 	}
 	pre_info := Pre_Rendering_Info.{
@@ -147,7 +149,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 		fileptr = file_handle,
 	};
 
-	defer libc.fclose(file_handle);
+	defer if !ok libc.fclose(file_handle);
 
 	if !new_plugin {
 		push_allocator(temp);
@@ -164,6 +166,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 
 	if !new_plugin {
 		log_error("Could not recognize file");
+		ok = false;
 		return false;
 	}
 
@@ -176,13 +179,16 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 		if found_mn != new_plugin.magic_number {
 			log_error("Mismatched magic number. The file type '%' expected the magic number '%', but got '%'.", new_plugin.name_filetype, cast([]u8, new_plugin.magic_number), cast([]u8, found_mn));
 			// Also do the whole magic number checking here so that the user can choose
+			ok = false;
 			return false;
 		}
 	}
 
 	pre_info_err := new_plugin.pre_render(*pre_info);
+	libc.fseek(file_handle, 0, libc.SEEK_SET);
 	if pre_info_err {
 		log_error("File metadata reading error: %", pre_info_err);
+		ok = false;
 		return false;
 	}
 

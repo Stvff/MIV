@@ -44,6 +44,7 @@ main :: () {
 	};
 
 	/* window specific image context */
+	gpu_texture: Simp.Texture;
 	shifted := false;
 	initial_mouse_pos: Vector2;
 	started_zooming := false;
@@ -85,8 +86,12 @@ main :: () {
 				if ext == "so" register_dynlib(it);
 				else {
 					old_name := img_ctx.pre_info.name;
+					old_handle := img_ctx.pre_info.fileptr;
 					render_image = get_loading(copy_string(it), ext, *img_ctx);
-					if render_image array_reset(*cast([]u8, old_name));
+					if render_image {
+						array_reset(*cast([]u8, old_name));
+						libc.fclose(img_ctx.pre_info.fileptr);
+					}
 					print("%\n", img_ctx);
 				}
 			}
@@ -148,8 +153,16 @@ main :: () {
 			if render_error {
 				log_error("File image data retrieval error: %", render_error);
 				draw_image = false;
+			} else {
+				bitmap: Simp.Bitmap;
+				bitmap.width = xx buffer_width;
+				bitmap.height = xx buffer_height;
+				bitmap.data.count = buffer.count*size_of([4]u8);
+				bitmap.data.data = xx buffer.data;
+				bitmap.stride = cast(s32, buffer_width*size_of([4]u8));
+				bitmap.format = .RGBA8;
+				Simp.texture_load_from_bitmap(*gpu_texture, *bitmap);
 			}
-
 			render_image = false;
 		}
 
@@ -201,10 +214,14 @@ main :: () {
 			};
 			for * image_bounds { it.* = rot_mat*it.*; }
 			for * image_bounds { it.* *= img_ctx.scale; it.* += screen_center + img_ctx.offset; }
+
+			Simp.set_shader_for_images(*gpu_texture);
+			Simp.immediate_begin();
 			Simp.immediate_quad(image_bounds[0], image_bounds[1], image_bounds[2], image_bounds[3]);
 		}
 
 		/* UI */
+		Simp.set_shader_for_color();
 		Simp.immediate_quad(0, xx window_height, xx window_width, xx(window_height - bar_height), .{0.2, 0.2, 0.2, 1});
 
 		text_color := Vector4.{1, 1, 1, 1};
