@@ -1,6 +1,5 @@
 /* global variables */
 all_registrations: [..]Registration_Entry;
-current_plugin: *Registration_Entry;
 /* /global variables */
 
 Pre_Rendering_Info :: struct {
@@ -11,6 +10,8 @@ Pre_Rendering_Info :: struct {
 	bit_depth: u8;
 	channels: u8;
 	metadata: string;
+
+	user_ptr: *void;
 }
 
 Rendering_Info :: struct {
@@ -19,8 +20,7 @@ Rendering_Info :: struct {
 
 	buffer_width: s64;
 	buffer_height: s64;
-	buffer_size: s64;
-	buffer: *[4]u8;
+	buffer: [][4]u8;
 }
 
 Provided_Registration_Entry :: struct {
@@ -38,11 +38,13 @@ Registration_Entry :: struct {
 	using provided: Provided_Registration_Entry;
 	pre_render: Pre_Rendering_Procedure;
 	render: Rendering_Procedure;
+	cleanup: Cleanup_Procedure;
 }
 
 Registration_Procedure :: #type (registration: *Provided_Registration_Entry) -> s64 #c_call;
 Pre_Rendering_Procedure :: #type (info: *Pre_Rendering_Info) -> string #c_call;
 Rendering_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> string #c_call;
+Cleanup_Procedure :: #type (pre_info: *Pre_Rendering_Info) -> string #c_call;
 
 register_dynlib :: (dynlib_name: string) -> bool {
 	dynlib_cname := temp_c_string(dynlib_name);
@@ -83,12 +85,21 @@ register_dynlib :: (dynlib_name: string) -> bool {
 		}
 		libc.dlerror();
 
+		cleanup_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "cleanup"));
+		cleanup_handle := libc.dlsym(handle, cleanup_cname);
+		if !cleanup_handle {
+			log_error("Dynamic function loading error: %", to_string(libc.dlerror()));
+			success = false;
+		}
+		libc.dlerror();
+
 		registration := Registration_Entry.{
 			filepath = dynlib_name,
 			handle = handle,
 			provided = p,
 			pre_render = pre_render_handle,
 			render = render_handle,
+			cleanup = cleanup_handle,
 		};
 		array_add(*all_registrations, registration);
 		print("%\n", registration);
@@ -101,14 +112,16 @@ register_dynlib :: (dynlib_name: string) -> bool {
 cleanup_registrations :: () {
 	closed_handles: [..]*void;
 	for all_registrations {
-		if !array_find(closed_handles, it.handle) then libc.dlclose(it.handle);
+		if !array_find(closed_handles, it.handle) {
+			libc.dlclose(it.handle);
+		}
 		array_add(*closed_handles, it.handle);
 	}
 }
 
-get_loading :: (filepath: string, extension: string) -> bool {
+get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) -> bool {
 	new_plugin: *Registration_Entry = null;
-	if extension.count {
+	if extension {
 		push_allocator(temp);
 		for * all_registrations {
 			registered_ext := it.extension;
@@ -129,13 +142,29 @@ get_loading :: (filepath: string, extension: string) -> bool {
 		log_error("File does not exist or could not be opened: %", filepath);
 		return false;
 	}
+	pre_info := Pre_Rendering_Info.{
+		name = filepath,
+		fileptr = file_handle,
+	};
 
 	defer libc.fclose(file_handle);
 
 	if !new_plugin {
+		push_allocator(temp);
+		for * all_registrations {
+			found_mn := cast(string, NewArray(it.magic_number.count, u8));
+			libc.fread(found_mn.data, 1, xx found_mn.count, file_handle);
+			libc.fseek(file_handle, 0, libc.SEEK_SET);
+			if found_mn == it.magic_number {
+				new_plugin = it;
+				break;
+			}
+		}
+	}
+
+	if !new_plugin {
 		log_error("Could not recognize file");
 		return false;
-		// deal with that by checking possible magic numbers and otherwise returning
 	}
 
 	found_mn := cast(string, NewArray(new_plugin.magic_number.count, u8));
@@ -151,18 +180,14 @@ get_loading :: (filepath: string, extension: string) -> bool {
 		}
 	}
 
-	pre_info := Pre_Rendering_Info.{
-		name = filepath,
-		fileptr = file_handle,
-	};
 	pre_info_err := new_plugin.pre_render(*pre_info);
 	if pre_info_err {
 		log_error("File metadata reading error: %", pre_info_err);
 		return false;
 	}
 
-	print("%\n", pre_info);
-	current_plugin = new_plugin;
+	img_ctx.pre_info = pre_info;
+	img_ctx.plugin = new_plugin;
 	return true;
 }
 

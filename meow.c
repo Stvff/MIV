@@ -99,7 +99,7 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 		c = fgetc(pre_info->fileptr);
 	} while (is_digit(c));
 	/* not fseeking back, because that last newline was in fact the final newline */
-	
+
 	if (max_ppm_value <= 255) pre_info->bit_depth = 8;
 	else if (max_ppm_value <= 65535) pre_info->bit_depth = 16;
 	pre_info->channels = 3;
@@ -111,6 +111,10 @@ string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 	return (string){0};
 }
 
+string ppm_cleanup(Pre_Rendering_Info *pre_info) {
+	return (string){0};
+}
+
 string pfm_pre_render(Pre_Rendering_Info *pre_info) {
 	pre_info->width = 20;
 	pre_info->height = 22;
@@ -118,5 +122,9 @@ string pfm_pre_render(Pre_Rendering_Info *pre_info) {
 }
 
 string pfm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
+	return (string){0};
+}
+
+string pfm_cleanup(Pre_Rendering_Info *pre_info) {
 	return (string){0};
 }

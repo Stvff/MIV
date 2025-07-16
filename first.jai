@@ -8,7 +8,6 @@ compile_meow_jai :: false;
 build :: () {
 	defer set_build_options_dc(.{do_output = false, write_added_strings=false});
 
-
 	/* main program */
 	if compile_MIV {
 		MIV_w := compiler_create_workspace("Build MIV");
@@ -18,14 +17,14 @@ build :: () {
 			options.text_output_flags = .OUTPUT_TIMING_INFO;
 			if options.backend == .LLVM then set_optimization(*options, .VERY_OPTIMIZED);
 		} set_build_options(options, MIV_w);
-	
+
 		{ /* checking for messages (to see when it's done, so that we don't run before it's done) */
 			intercept_flags: Intercept_Flags;
 			compiler_begin_intercept(MIV_w, intercept_flags);
 			defer compiler_end_intercept(MIV_w);
-	
+
 			add_build_file("main.jai", MIV_w);
-	
+
 			while true {
 				message := compiler_wait_for_message();
 				if message.kind == {
