@@ -1,7 +1,7 @@
 # MIV
 This project is somewhat of an experiment. As with most projects, I am not confident it will yield something generally useful, but it is definitely made to eventually be useful.
 
-## Outline/Mission Statement
+## Context
 Recently, while making [Sokoworm](https://stvff.github.io/sokoworm.html#top), which uses [PPM image files](https://en.wikipedia.org/wiki/Netpbm#File_formats)
 as graphics outputs, I noticed that the feature-set of the average image viewer is quite limited. Many image viewers only support a relatively small set of image types,
 and it is rare for one to support automatic file reloading. On top of this, things like zoomlevel or offset (while viewing an image in detail) are not persistent between files, window resizing, or program restart.
