@@ -149,7 +149,10 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 		fileptr = file_handle,
 	};
 
-	defer if !ok libc.fclose(file_handle);
+	defer if !ok {
+		print("closed\n");
+		libc.fclose(file_handle);
+	}
 
 	if !new_plugin {
 		push_allocator(temp);
@@ -177,7 +180,14 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 		libc.fread(found_mn.data, 1, xx found_mn.count, file_handle);
 		libc.fseek(file_handle, 0, libc.SEEK_SET);
 		if found_mn != new_plugin.magic_number {
-			log_error("Mismatched magic number. The file type '%' expected the magic number '%', but got '%'.", new_plugin.name_filetype, cast([]u8, new_plugin.magic_number), cast([]u8, found_mn));
+			expe, foun: string;
+			if !valid_ascii(new_plugin.magic_number) expe = tprint("%", cast([]u8, new_plugin.magic_number));
+			else expe = new_plugin.magic_number;
+			if !valid_ascii(found_mn) foun = tprint("%", cast([]u8, found_mn));
+			else foun = found_mn;
+
+
+			log_error("Mismatched magic number. The file type '%' expected the magic number '%', but got '%'.", new_plugin.name_filetype, expe, foun);
 			// Also do the whole magic number checking here so that the user can choose
 			ok = false;
 			return false;
@@ -194,6 +204,13 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 
 	img_ctx.pre_info = pre_info;
 	img_ctx.plugin = new_plugin;
+	return true;
+}
+
+valid_ascii :: (str: string) -> bool {
+	for str {
+		if #char "~" < it || it < #char " " return false;
+	}
 	return true;
 }
 

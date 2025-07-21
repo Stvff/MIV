@@ -179,7 +179,7 @@ main :: () {
 		}
 		prev_time = current_time_monotonic();
 
-		Simp.clear_render_target(0.05, 0.05, 0.05, 1);
+		Simp.clear_render_target(0.2, 0.2, 0.5, 1);
 
 		/* image drawing */
 		if draw_image {
