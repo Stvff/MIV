@@ -12,13 +12,6 @@ Instead of these things, image viewers seemingly focus development effort on ima
 
 It is good practice to attempt to solve a problem like this yourself when you encounter it; maybe there's a reason these more popular programs haven't done it.
 
-So, my idea is as follows:\
-MIV is a modular image viewer, where file formats are supported through plugins (as .so) files. These plugins must have a simple API, so that supporting a new image format is a simple task based on the reference implementation for that format.
-MIV arranges the windowing, the UI, file collection and preloading, and the plugins decode the images.
-
-A loose set of specific ideas and architecture is collected in `idea.md`.\
-As for now, I'm trying to get a passable image viewer with automatic file reloading for PPM files. This way, I'm creating a 'reference plugin' in C (see `MIV.h` and `meow.c`) that other people can then reference, should they choose to participate.
-
 ## Outline/Mission Statement
 So, my idea is as follows:\
 MIV is a modular image viewer, where file formats are supported through plugins (as `.so` files). These plugins must have a simple API, so that supporting a new image format is a simple task based on the reference implementation for that format.
