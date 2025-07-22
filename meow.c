@@ -34,25 +34,18 @@ void skip_comments(FILE *fileptr) {
 
 /* the actual plugin */
 static int called_n_times;
-const int TOTAL_IMAGE_FORMATS = 3;
+const int TOTAL_IMAGE_FORMATS = 2;
 
 int64_t registration_procedure(Provided_Registration_Entry *registration) {
 	switch (called_n_times) {
 	case 0:
-		registration->name_filetype = to_string("Netpbm binary PPM");
-		registration->procedure_prefix = to_string("ppm_bin_");
+		registration->name_filetype = to_string("Netpbm Portable PixMap");
+		registration->procedure_prefix = to_string("ppm_");
 		registration->extension = to_string("PPM");
-		registration->magic_number = to_string("P6");
+		registration->magic_number = to_string("");
 		registration->extension_is_case_sensitive = 0;
 		break;
 	case 1:
-		registration->name_filetype = to_string("Netpbm PPM");
-		registration->procedure_prefix = to_string("ppm_plain_");
-		registration->extension = to_string("PPM");
-		registration->magic_number = to_string("P3");
-		registration->extension_is_case_sensitive = 0;
-		break;
-	case 2:
 		registration->name_filetype = to_string("Netpbm PFM");
 		registration->procedure_prefix = to_string("pfm_");
 		registration->extension = to_string("PFM");
@@ -67,9 +60,10 @@ int64_t registration_procedure(Provided_Registration_Entry *registration) {
 typedef struct {
 	int max_ppm_value;
 	int64_t start_of_image;
+	bool is_binary;
 } Specifics;
 
-string ppm_bin_pre_render(Pre_Rendering_Info *pre_info) {
+string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	Specifics *specifics;
 	if (!pre_info->user_ptr) {
 		specifics = malloc(sizeof(Specifics));
@@ -77,18 +71,38 @@ string ppm_bin_pre_render(Pre_Rendering_Info *pre_info) {
 		pre_info->user_ptr = specifics;
 	} else specifics = pre_info->user_ptr;
 
-	/* ignore the header */
+	/* Checking the header */
+	fseek(pre_info->fileptr, 0, SEEK_SET);
+	char c = fgetc(pre_info->fileptr);
+	if (c != 'P') {
+		string warning = to_string("PPM files must start with either 'P3' or 'P6', but the first character was ' '");
+		char *bare_warning = warning.data;
+		warning.data = malloc(warning.count + 1);
+		memcpy(warning.data, bare_warning, warning.count+1);
+		warning.data[warning.count - 2] = c;
+		return warning;
+	}
+	c = fgetc(pre_info->fileptr);
+	if (c != '3' && c != '6') {
+		string warning = to_string("PPM files must start with either 'P3' or 'P6', but the second character was ' '");
+		char *bare_warning = warning.data;
+		warning.data = malloc(warning.count + 1);
+		memcpy(warning.data, bare_warning, warning.count+1);
+		warning.data[warning.count - 2] = c;
+		return warning;
+	}
+	if (c == '6') specifics->is_binary = 1;
 	fseek(pre_info->fileptr, 3, SEEK_SET);
 
 	/* read the width */
-	char c = '0';
+	c = '0';
 	skip_white_space(pre_info->fileptr);
 	skip_comments(pre_info->fileptr); /* these comments could be added to the metadata section imo */
 	do {
 		pre_info->width = pre_info->width*10 + (c - '0');
 		c = fgetc(pre_info->fileptr);
 	} while (is_digit(c));
-	fseek(pre_info->fileptr, -1, SEEK_SET);
+	fseek(pre_info->fileptr, -1, SEEK_CUR);
 
 	/* read the height */
 	c = '0';
@@ -98,7 +112,7 @@ string ppm_bin_pre_render(Pre_Rendering_Info *pre_info) {
 		pre_info->height = pre_info->height*10 + (c - '0');
 		c = fgetc(pre_info->fileptr);
 	} while (is_digit(c));
-	fseek(pre_info->fileptr, -1, SEEK_SET);
+	fseek(pre_info->fileptr, -1, SEEK_CUR);
 
 	/* reading the max value */
 	specifics->max_ppm_value = 0;
@@ -122,39 +136,59 @@ string ppm_bin_pre_render(Pre_Rendering_Info *pre_info) {
 	return (string){0};
 }
 
-string ppm_bin_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
-	int64_t distance = pre_info->channels*pre_info->bit_depth/8;
-	uint8_t *file_data = malloc(render_info->buffer_count*distance);
-
+string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 	Specifics *specifics = pre_info->user_ptr;
+	if (specifics->is_binary) {
+		int64_t distance = pre_info->channels*pre_info->bit_depth/8;
+		uint8_t *file_data = malloc(render_info->buffer_count*distance);
 
-	fseek(pre_info->fileptr, specifics->start_of_image, SEEK_SET);
-	int read = fread(file_data, 1, render_info->buffer_count*distance, pre_info->fileptr);
+		fseek(pre_info->fileptr, specifics->start_of_image, SEEK_SET);
+		fread(file_data, 1, render_info->buffer_count*distance, pre_info->fileptr);
 
-	for (int64_t i = 0; i < render_info->buffer_count; i += 1) {
-		render_info->buffer[i][0] = file_data[i*distance + 0];
-		render_info->buffer[i][1] = file_data[i*distance + 1];
-		render_info->buffer[i][2] = file_data[i*distance + 2];
-		render_info->buffer[i][3] = 255;
+		for (int64_t i = 0; i < render_info->buffer_count; i += 1) {
+			render_info->buffer[i][0] = file_data[i*distance + 0];
+			render_info->buffer[i][1] = file_data[i*distance + 1];
+			render_info->buffer[i][2] = file_data[i*distance + 2];
+			render_info->buffer[i][3] = 255;
+		}
+
+		free(file_data);
+		return (string){0};
+	} else {
+		fseek(pre_info->fileptr, 0, SEEK_END);
+		string file;
+		file.count = ftell(pre_info->fileptr) - specifics->start_of_image;
+		file.data = malloc(file.count);
+
+		fseek(pre_info->fileptr, specifics->start_of_image, SEEK_SET);
+		fread(file.data, 1, file.count, pre_info->fileptr);
+
+		int64_t file_i = 0;
+		for (int64_t i = 0; i < render_info->buffer_count; i += 1) {
+			uint8_t pixel[3] = {0};
+			for (int ii = 0; ii < 3; ii += 1) {
+				while (is_white_space(file.data[file_i])) file_i += 1;
+				for (int iii = 0; iii < 3; iii += 1) {
+					char c = file.data[file_i];
+					if (is_white_space(c)) break;
+					pixel[ii] *= 10;
+					pixel[ii] += c - '0';
+					file_i += 1;
+				}
+			}
+
+			render_info->buffer[i][0] = pixel[0];
+			render_info->buffer[i][1] = pixel[1];
+			render_info->buffer[i][2] = pixel[2];
+			render_info->buffer[i][3] = 255;
+		}
+
+		free(file.data);
+		return (string){0};
 	}
-
-	free(file_data);
-	return (string){0};
 }
 
-string ppm_bin_cleanup(Pre_Rendering_Info *pre_info) {
-	return (string){0};
-}
-
-string ppm_plain_pre_render(Pre_Rendering_Info *pre_info) {
-	return ppm_bin_pre_render(pre_info);
-}
-
-string ppm_plain_render(Pre_Rendering_Info *pre_info) {
-	return (string){0};
-}
-
-string ppm_plain_cleanup(Pre_Rendering_Info *pre_info) {
+string ppm_cleanup(Pre_Rendering_Info *pre_info) {
 	return (string){0};
 }
 

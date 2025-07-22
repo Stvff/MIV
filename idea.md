@@ -1,3 +1,11 @@
+## todo
+- [_] command line arguments input
+- [_] logs onscreen instead of in terminal
+- [_] zooming on mouse
+- [_] option buttons
+- [_] registration file for plugins
+
+## unorganized
 Basic idea: images are loaded by dynamic libraries.
 MIV selects the correct dynlib via a 'registration file' that registers file extension and magic number.
 The user is notified when a file's extension and magic number disagree.

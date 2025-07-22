@@ -196,7 +196,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 	pre_info_err := new_plugin.pre_render(*pre_info);
 	libc.fseek(file_handle, 0, libc.SEEK_SET);
 	if pre_info_err {
-		log_error("File metadata reading error: %", pre_info_err);
+		log_error("% file metadata reading error: %", new_plugin.name_filetype, pre_info_err);
 		ok = false;
 		return false;
 	}
