@@ -129,21 +129,14 @@ string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 
 	Specifics *specifics = pre_info->user_ptr;
 
-
 	fseek(pre_info->fileptr, specifics->start_of_image, SEEK_SET);
 	int read = fread(file_data, 1, render_info->buffer_count*distance, pre_info->fileptr);
-	printf("read: %d, requested: %d\n", read, render_info->buffer_count*distance);
-	fflush(stdout);
 
 	for (int64_t i = 0; i < render_info->buffer_count; i += 1) {
 		render_info->buffer[i][0] = file_data[i*distance + 0];
 		render_info->buffer[i][1] = file_data[i*distance + 1];
 		render_info->buffer[i][2] = file_data[i*distance + 2];
 		render_info->buffer[i][3] = 255;
-		// render_info->buffer[i][0] = 255*i/render_info->buffer_count;
-		// render_info->buffer[i][1] = 255*i/render_info->buffer_count;
-		// render_info->buffer[i][2] = 255*i/render_info->buffer_count;
-		// render_info->buffer[i][3] = 255*i/render_info->buffer_count;
 	}
 
 	free(file_data);

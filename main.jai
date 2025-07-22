@@ -90,7 +90,7 @@ main :: () {
 					render_image = get_loading(copy_string(it), ext, *img_ctx);
 					if render_image {
 						array_reset(*cast([]u8, old_name));
-						libc.fclose(img_ctx.pre_info.fileptr);
+						if old_handle libc.fclose(old_handle);
 					}
 					print("%\n", img_ctx);
 				}
