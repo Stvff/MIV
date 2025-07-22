@@ -1,9 +1,10 @@
 ## todo
-- [_] command line arguments input
+- [x] command line arguments input
 - [_] logs onscreen instead of in terminal
 - [_] zooming on mouse
 - [_] option buttons
 - [_] registration file for plugins
+- [_] some starts on preloading (mostly through the user importing more than 1 file at once)
 
 ## unorganized
 Basic idea: images are loaded by dynamic libraries.

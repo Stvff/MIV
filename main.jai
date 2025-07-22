@@ -11,7 +11,8 @@ Image_Context :: struct {
 
 main :: () {
 //	load_registration_file();
-	register_dynlib("./meow_c.so");
+//	register_dynlib("./meow_c.so");
+
 	defer cleanup_registrations();
 
 	/* UI definitions */
@@ -44,6 +45,13 @@ main :: () {
 	};
 
 	/* window specific image context */
+	files_to_open: [..]string;
+	{
+		cli_args := get_command_line_arguments();
+		cli_args.data += 1;
+		cli_args.count -= 1;
+		array_add(*files_to_open, ..cli_args);
+	}
 	gpu_texture: Simp.Texture;
 	shifted := false;
 	initial_mouse_pos: Vector2;
@@ -81,20 +89,7 @@ main :: () {
 		for event: events_this_frame {
 			if event.type == .QUIT then running = false;
 
-			if event.type == .DRAG_AND_DROP_FILES for event.files {
-				ext := get_extension(it);
-				if ext == "so" register_dynlib(it);
-				else {
-					old_name := img_ctx.pre_info.name;
-					old_handle := img_ctx.pre_info.fileptr;
-					render_image = get_loading(copy_string(it), ext, *img_ctx);
-					if render_image {
-						array_reset(*cast([]u8, old_name));
-						if old_handle libc.fclose(old_handle);
-					}
-					print("%\n", img_ctx);
-				}
-			}
+			if event.type == .DRAG_AND_DROP_FILES array_add(*files_to_open, ..event.files);
 
 			scale_amount := ifx shifted then 0.01 else 0.1;
 			offset_amount := ifx shifted then 1 else 20;
@@ -131,6 +126,23 @@ main :: () {
 
 			}
 		}
+		for files_to_open {
+			print("%\n", it);
+			ext := get_extension(it);
+			if ext == "so" register_dynlib(it);
+			else {
+				old_name := img_ctx.pre_info.name;
+				old_handle := img_ctx.pre_info.fileptr;
+				render_image = get_loading(copy_string(it), ext, *img_ctx);
+				if render_image {
+					array_reset(*cast([]u8, old_name));
+					if old_handle libc.fclose(old_handle);
+				}
+				print("%\n", img_ctx);
+			}
+			array_unordered_remove_by_index(*files_to_open, 0);
+		}
+
 		/* This is here because it needs to run after both an input change and a window change. */
 		/* I could have a seperate `if rescale` block or whatever, but for now this is simplest */
 		img_ctx.scale = clamp(img_ctx.scale, 1/cast(float, max(img_ctx.pre_info.width, img_ctx.pre_info.height)), cast(float, max(canvas_width, canvas_height)));
