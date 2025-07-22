@@ -34,30 +34,29 @@ void skip_comments(FILE *fileptr) {
 
 /* the actual plugin */
 static int called_n_times;
-const int TOTAL_IMAGE_FORMATS = 2;
+const int TOTAL_IMAGE_FORMATS = 3;
 
 int64_t registration_procedure(Provided_Registration_Entry *registration) {
 	switch (called_n_times) {
 	case 0:
 		registration->name_filetype = to_string("Netpbm binary PPM");
-
-		registration->procedure_prefix = to_string("ppm_");
-
+		registration->procedure_prefix = to_string("ppm_bin_");
 		registration->extension = to_string("PPM");
-
 		registration->magic_number = to_string("P6");
-
 		registration->extension_is_case_sensitive = 0;
 		break;
 	case 1:
+		registration->name_filetype = to_string("Netpbm PPM");
+		registration->procedure_prefix = to_string("ppm_plain_");
+		registration->extension = to_string("PPM");
+		registration->magic_number = to_string("P3");
+		registration->extension_is_case_sensitive = 0;
+		break;
+	case 2:
 		registration->name_filetype = to_string("Netpbm PFM");
-
 		registration->procedure_prefix = to_string("pfm_");
-
 		registration->extension = to_string("PFM");
-
 		registration->magic_number = to_string("PF");
-
 		registration->extension_is_case_sensitive = 0;
 		break;
 	}
@@ -70,7 +69,7 @@ typedef struct {
 	int64_t start_of_image;
 } Specifics;
 
-string ppm_pre_render(Pre_Rendering_Info *pre_info) {
+string ppm_bin_pre_render(Pre_Rendering_Info *pre_info) {
 	Specifics *specifics;
 	if (!pre_info->user_ptr) {
 		specifics = malloc(sizeof(Specifics));
@@ -123,7 +122,7 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	return (string){0};
 }
 
-string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
+string ppm_bin_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 	int64_t distance = pre_info->channels*pre_info->bit_depth/8;
 	uint8_t *file_data = malloc(render_info->buffer_count*distance);
 
@@ -143,7 +142,19 @@ string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 	return (string){0};
 }
 
-string ppm_cleanup(Pre_Rendering_Info *pre_info) {
+string ppm_bin_cleanup(Pre_Rendering_Info *pre_info) {
+	return (string){0};
+}
+
+string ppm_plain_pre_render(Pre_Rendering_Info *pre_info) {
+	return ppm_bin_pre_render(pre_info);
+}
+
+string ppm_plain_render(Pre_Rendering_Info *pre_info) {
+	return (string){0};
+}
+
+string ppm_plain_cleanup(Pre_Rendering_Info *pre_info) {
 	return (string){0};
 }
 

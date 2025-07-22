@@ -181,11 +181,10 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 		libc.fseek(file_handle, 0, libc.SEEK_SET);
 		if found_mn != new_plugin.magic_number {
 			expe, foun: string;
-			if !valid_ascii(new_plugin.magic_number) expe = tprint("%", cast([]u8, new_plugin.magic_number));
-			else expe = new_plugin.magic_number;
-			if !valid_ascii(found_mn) foun = tprint("%", cast([]u8, found_mn));
-			else foun = found_mn;
-
+			if valid_ascii(new_plugin.magic_number) expe = new_plugin.magic_number;
+			else expe = tprint("%", cast([]u8, new_plugin.magic_number));
+			if valid_ascii(found_mn) foun = found_mn;
+			else foun = tprint("%", cast([]u8, found_mn));
 
 			log_error("Mismatched magic number. The file type '%' expected the magic number '%', but got '%'.", new_plugin.name_filetype, expe, foun);
 			// Also do the whole magic number checking here so that the user can choose
