@@ -1,6 +1,6 @@
 ## 2-week todo
 - [x] command line arguments input
-- [_] log zooming
+- [x] log zooming
 - [_] zooming on mouse
 - [x] Think of actual UI paradigm
 	- [_] logs onscreen instead of in terminal

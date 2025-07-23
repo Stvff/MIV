@@ -116,14 +116,16 @@ main :: () {
 			}
 
 			if event.type == .MOUSE_WHEEL {
+				/* Should still apply a transform based on the position of the mouse during this event */
 				started_zooming = true;
 				delta := cast(float, event.wheel_delta)/cast(float, event.typical_wheel_delta);
 				if shifted {
-					img_ctx.scale += delta/100;
+					delta /= 200;
 				} else {
-					img_ctx.scale += delta/10;
+					delta /= 10;
 				}
-
+				if delta < 0 img_ctx.scale /= 1 + abs(delta);
+				else img_ctx.scale *= 1 + abs(delta);
 			}
 		}
 		for files_to_open {
@@ -137,6 +139,11 @@ main :: () {
 				if render_image {
 					array_reset(*cast([]u8, old_name));
 					if old_handle libc.fclose(old_handle);
+
+					/* retrieve previous offsets etc if available, for now we just reset */
+					started_mouse_panning = false;
+					img_ctx.offset = .{0, 0};
+					started_zooming = false;
 				}
 				print("%\n", img_ctx);
 			}
