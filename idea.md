@@ -1,8 +1,11 @@
-## todo
+## 2-week todo
 - [x] command line arguments input
-- [_] logs onscreen instead of in terminal
+- [_] log zooming
 - [_] zooming on mouse
-- [_] option buttons
+- [x] Think of actual UI paradigm
+	- [_] logs onscreen instead of in terminal
+	- [_] option buttons
+		- [_] option sliders/textfield
 - [_] registration file for plugins
 - [_] some starts on preloading (mostly through the user importing more than 1 file at once)
 
