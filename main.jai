@@ -117,6 +117,8 @@ main :: () {
 
 			if event.type == .MOUSE_WHEEL {
 				/* Should still apply a transform based on the position of the mouse during this event */
+				/* While zooming, also lerp between current offset and mouse offset within the image */
+				/* img_ctx.offset = lerp(img_ctx.offset, mouse_pos_in_image, some_val) */
 				started_zooming = true;
 				delta := cast(float, event.wheel_delta)/cast(float, event.typical_wheel_delta);
 				if shifted {

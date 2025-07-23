@@ -6,8 +6,9 @@
 	- [_] logs onscreen instead of in terminal
 	- [_] option buttons
 		- [_] option sliders/textfield
-- [_] registration file for plugins
-- [_] some starts on preloading (mostly through the user importing more than 1 file at once)
+- [_] registration file for plugins (always lives next to the exe, not cwd)
+- [_] next/prev in the current directory
+	- [_] some starts on preloading (mostly through the user importing more than 1 file at once)
 
 ## unorganized
 Basic idea: images are loaded by dynamic libraries.
