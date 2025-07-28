@@ -1,8 +1,6 @@
-## 2-week todo
-- [x] command line arguments input
-- [x] log zooming
+## Deventer
 - [_] zooming on mouse
-- [x] Think of actual UI paradigm
+- [_] Implement UI
 	- [_] logs onscreen instead of in terminal
 	- [_] option buttons
 		- [_] option sliders/textfield

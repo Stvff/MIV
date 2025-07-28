@@ -9,6 +9,13 @@ Image_Context :: struct {
 	render_info: Rendering_Info;
 }
 
+palette :: Palette.{
+	body = .[65, 65, 65, 255],
+	border = .[150, 150, 150, 255],
+	text = .[255, 255, 255, 255],
+	hover = .[150, 150, 150, 255],
+};
+
 main :: () {
 //	load_registration_file();
 //	register_dynlib("./meow_c.so");
@@ -18,17 +25,25 @@ main :: () {
 	/* UI definitions */
 	fontsize := 20;
 
-	window_width := 1400;
-	window_height := 800;
-	window := Winc.create_window(window_width, window_height, "MIV");
+	os_window: X11.Window;
+	window_panel: UI_Panel;
+	canvas: UI_Panel;
 	{
+		window_width := 1400;
+		window_height := 800;
+		os_window = Winc.create_window(window_width, window_height, "MIV");
+		Simp.prepare_window(os_window, 4);
 		dnd_typelist := string.["url/url", "text/uri-list", "text/plain", "application/octet-stream"];
-		X11.enable_drag_and_drop(window, dnd_typelist);
+		X11.enable_drag_and_drop(os_window, dnd_typelist);
+
+		canvas = create_panel(.[window_width, window_height], palette);
 	}
-	Simp.set_render_target(window);
+	window_panel = canvas;
+
+	// Simp.set_render_target(window);
 	bar_height := fontsize*2;
-	canvas_width := window_width;
-	canvas_height := window_height - bar_height;
+	// canvas_width := window_width;
+	// canvas_height := window_height - bar_height;
 
 	/* Font loading */
 	font_pixel_height := bar_height/2;
@@ -75,17 +90,21 @@ main :: () {
 		Input.update_window_events();
 		for Input.get_window_resizes() {
 			Simp.update_window(it.window);
-			if it.window == window {
-				window_width  = it.width;
-				window_height = it.height;
+			if it.window == os_window {
+				reset_panel(*canvas, .[it.width, it.height], palette);
+				window_panel = canvas;
+				// window_width  = it.width;
+				// window_height = it.height;
 
-				bar_height = fontsize*2;
-				canvas_width = window_width;
-				canvas_height = window_height - bar_height;
+				/* if I ever dynamically adjust bar height, I would do it here */
+				// bar_height = fontsize*2;
+				// font_pixel_height = bar_height/2;
+				// main_font = Simp.get_font_at_size(FONT_DATA, font_pixel_height);
 
-				font_pixel_height = bar_height/2;
-				main_font = Simp.get_font_at_size(FONT_DATA, font_pixel_height);
-				GL.glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(window).specific.glx_window, 0);
+				// canvas_width = window_width;
+				// canvas_height = window_height - bar_height;
+
+				GL.glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(os_window).specific.glx_window, 0);
 			}
 		}
 		for event: Input.events_this_frame {
@@ -152,10 +171,6 @@ main :: () {
 			}
 			array_unordered_remove_by_index(*files_to_open, 0);
 		}
-
-		/* This is here because it needs to run after both an input change and a window change. */
-		/* I could have a seperate `if rescale` block or whatever, but for now this is simplest */
-		img_ctx.scale = clamp(img_ctx.scale, 1/cast(float, max(img_ctx.pre_info.width, img_ctx.pre_info.height)), cast(float, max(canvas_width, canvas_height)));
 		draw_image = true;
 
 		if started_mouse_panning {
@@ -202,76 +217,98 @@ main :: () {
 		}
 		prev_time = current_time_monotonic();
 
-		Simp.clear_render_target(0.2, 0.2, 0.5, 1);
 
-		/* image drawing */
-		if draw_image {
-			screen_center := Vector2.{ cast(float, canvas_width)/2, cast(float, canvas_height)/2 };
-			image_center := Vector2.{ cast(float, img_ctx.pre_info.width)/2, cast(float, img_ctx.pre_info.height)/2 };
-			screen_woh := screen_center.x/screen_center.y;
-			image_woh := image_center.x/image_center.y;
+		{/* drawing time */
+			/* first we define the panels that we'll see */
+			reset_panel(*canvas, window_panel.size, palette);
+			top_bar := panel_split(*canvas, .{bar_height, canvas.size[1]}, .TOP);
+			defer draw_panel(os_window, *top_bar);
+			bottom_bar := panel_split(*canvas, .{bar_height - 4, canvas.size[1]}, .BOTTOM);
+			defer draw_panel(os_window, *bottom_bar);
+			defer draw_panel(os_window, *canvas, false);
 
-			now_fit := img_ctx.fit;
-			if now_fit == .FIT_BEST {
-				if screen_woh > image_woh now_fit = .FIT_HEIGHT;
-				else now_fit = .FIT_WIDTH;
+			/* This needs to run after both an input change and a window change. */
+			/* I could have a seperate `if rescale` block or whatever, but for now this is simplest */
+			img_ctx.scale = clamp(img_ctx.scale, 1/cast(float, max(img_ctx.pre_info.width, img_ctx.pre_info.height)), cast(float, max(canvas.size[0], canvas.size[1])));
+
+			//Simp.set_render_target(os_window);
+			//Simp.clear_render_target(0.2, 0.2, 0.5, 1);
+
+
+			/* image drawing */
+			panel_recolor(*canvas, .{body = .[66, 66, 127, 255]});
+			if draw_image {
+
+				screen_center := Vector2.{ cast(float, canvas.size[0])/2, cast(float, canvas.size[1])/2 };
+				image_center := Vector2.{ cast(float, img_ctx.pre_info.width)/2, cast(float, img_ctx.pre_info.height)/2 };
+				screen_woh := screen_center.x/screen_center.y;
+				image_woh := image_center.x/image_center.y;
+
+				now_fit := img_ctx.fit;
+				if now_fit == .FIT_BEST {
+					if screen_woh > image_woh now_fit = .FIT_HEIGHT;
+					else now_fit = .FIT_WIDTH;
+				}
+
+				if !started_zooming if now_fit == {
+				case .ONE_TO_ONE;
+					img_ctx.scale = 1;
+				case .FIT_WIDTH;
+					img_ctx.scale = screen_center.x/image_center.x;
+				case .FIT_HEIGHT;
+					img_ctx.scale = screen_center.y/image_center.y;
+				case .FIT_BEST; /* should be unreachable */
+				}
+				image_bounds := Vector2.[
+					-image_center, .{image_center.x, -image_center.y}, image_center, .{-image_center.x, image_center.y}
+				];
+
+				rad := 2*PI*img_ctx.angle/360;
+				rot_mat := Matrix2.{
+					cos(rad), -sin(rad),
+					sin(rad), cos(rad)
+				};
+				for * image_bounds { it.* = rot_mat*it.*; }
+				for * image_bounds { it.* *= img_ctx.scale; it.* += screen_center + img_ctx.offset; }
+
+				Simp.set_shader_for_images(*gpu_texture);
+				Simp.immediate_begin();
+				Simp.immediate_quad(image_bounds[0], image_bounds[1], image_bounds[2], image_bounds[3]);
 			}
 
-			if !started_zooming if now_fit == {
-			case .ONE_TO_ONE;
-				img_ctx.scale = 1;
-			case .FIT_WIDTH;
-				img_ctx.scale = screen_center.x/image_center.x;
-			case .FIT_HEIGHT;
-				img_ctx.scale = screen_center.y/image_center.y;
-			case .FIT_BEST; /* should be unreachable */
+			/* UI */
+//			Simp.set_shader_for_color();
+//			Simp.immediate_quad(0, xx window_height, xx window_width, xx(window_height - bar_height), .{0.2, 0.2, 0.2, 1});
+
+			text_color := Vector4.{1, 1, 1, 1};
+			text := "MIV";
+
+			Simp.set_render_target(*top_bar.target);
+			Simp.set_shader_for_text();
+			text_width := Simp.prepare_text(main_font, text);
+			Simp.draw_prepared_text(main_font, top_bar.size[0]/2 - text_width/2, top_bar.size[1] - font_pixel_height*6/5, text_color);
+
+			if frame_time < target_frame_time {
+				bottom_bar.colors.text = .[100, 210, 25, 1];
+			} else {
+				bottom_bar.colors.text = .[220, 60, 25, 1];
 			}
-			image_bounds := Vector2.[
-				-image_center, .{image_center.x, -image_center.y}, image_center, .{-image_center.x, image_center.y}
-			];
+			text = sprint("fps: %", frame_count_over_1s);
 
-			rad := 2*PI*img_ctx.angle/360;
-			rot_mat := Matrix2.{
-				cos(rad), -sin(rad),
-				sin(rad), cos(rad)
-			};
-			for * image_bounds { it.* = rot_mat*it.*; }
-			for * image_bounds { it.* *= img_ctx.scale; it.* += screen_center + img_ctx.offset; }
-
-			Simp.set_shader_for_images(*gpu_texture);
-			Simp.immediate_begin();
-			Simp.immediate_quad(image_bounds[0], image_bounds[1], image_bounds[2], image_bounds[3]);
-		}
-
-		/* UI */
-		Simp.set_shader_for_color();
-		Simp.immediate_quad(0, xx window_height, xx window_width, xx(window_height - bar_height), .{0.2, 0.2, 0.2, 1});
-
-		text_color := Vector4.{1, 1, 1, 1};
-		text := "MIV";
-
-		Simp.set_shader_for_text();
-		text_width := Simp.prepare_text(main_font, text);
-		Simp.draw_prepared_text(main_font, window_width/2 - text_width/2, window_height - font_pixel_height*6/5, text_color);
-
-		if frame_time < target_frame_time {
-			text_color = Vector4.{0.3, 0.7, 0.1, 1};
-		} else {
-			text_color = Vector4.{0.8, 0.2, 0.1, 1};
-		}
-		text = sprint("fps: %", frame_count_over_1s);
-		text_width = Simp.prepare_text(main_font, text);
-		Simp.draw_prepared_text(main_font, window_width - text_width - font_pixel_height, window_height - font_pixel_height*6/5, text_color);
-
-		if draw_image {
-			text_color = Vector4.{1, 1, 1, 1};
-			text = sprint("%\%", formatFloat(img_ctx.scale*100, trailing_width = 2, zero_removal = .NO));
+			Simp.set_render_target(*bottom_bar.target);
 			text_width = Simp.prepare_text(main_font, text);
-			Simp.draw_prepared_text(main_font, font_pixel_height, window_height - font_pixel_height*6/5, text_color);
+			Simp.draw_prepared_text(main_font, bottom_bar.size[0] - text_width - font_pixel_height, bottom_bar.size[1] - font_pixel_height*6/5, text_color);
+
+			if draw_image {
+				text_color = Vector4.{1, 1, 1, 1};
+				text = sprint("%\%", formatFloat(img_ctx.scale*100, trailing_width = 2, zero_removal = .NO));
+				text_width = Simp.prepare_text(main_font, text);
+				Simp.draw_prepared_text(main_font, font_pixel_height, bottom_bar.size[1] - font_pixel_height*6/5, text_color);
+			}
 		}
 
 		Simp.immediate_flush();
-		Simp.swap_buffers(window);
+		Simp.swap_buffers(os_window);
 		reset_temporary_storage();
 	}
 }
