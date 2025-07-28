@@ -20,7 +20,7 @@ main :: () {
 
 	window_width := 1400;
 	window_height := 800;
-	window := create_window(window_width, window_height, "MIV");
+	window := Winc.create_window(window_width, window_height, "MIV");
 	{
 		dnd_typelist := string.["url/url", "text/uri-list", "text/plain", "application/octet-stream"];
 		X11.enable_drag_and_drop(window, dnd_typelist);
@@ -72,8 +72,8 @@ main :: () {
 	running := true;
 	while running {
 		frame_1s_counter += 1;
-		update_window_events();
-		for get_window_resizes() {
+		Input.update_window_events();
+		for Input.get_window_resizes() {
 			Simp.update_window(it.window);
 			if it.window == window {
 				window_width  = it.width;
@@ -88,7 +88,7 @@ main :: () {
 				GL.glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(window).specific.glx_window, 0);
 			}
 		}
-		for event: events_this_frame {
+		for event: Input.events_this_frame {
 			if event.type == .QUIT then running = false;
 
 			if event.type == .DRAG_AND_DROP_FILES array_add(*files_to_open, ..event.files);
@@ -105,12 +105,11 @@ main :: () {
 				case #char "S"; img_ctx.offset.y -= offset_amount;
 				case #char "D"; img_ctx.offset.x += offset_amount;
 				case .MOUSE_BUTTON_LEFT;
-					mouse_x, mouse_y := get_mouse_pointer_position();
-					initial_mouse_pos = .{xx mouse_x, xx mouse_y};
+					initial_mouse_pos = get_pointer_position();
 					started_mouse_panning = true;
 				case .MOUSE_BUTTON_MIDDLE;
-					if shifted img_ctx.offset = .{};
-					else started_zooming = false;
+					img_ctx.offset = .{};
+					started_zooming = false;
 			}
 			if (event.type == .KEYBOARD) && !event.key_pressed then if event.key_code == {
 				case .SHIFT; shifted = false;
@@ -160,9 +159,10 @@ main :: () {
 		draw_image = true;
 
 		if started_mouse_panning {
-			mouse_x, mouse_y := get_mouse_pointer_position();
-			img_ctx.offset += .{xx mouse_x, xx -mouse_y} - .{initial_mouse_pos.x, -initial_mouse_pos.y};
-			initial_mouse_pos = .{xx mouse_x, xx mouse_y};
+			mouse := get_pointer_position();
+			img_ctx.offset += .{mouse.x - initial_mouse_pos.x, initial_mouse_pos.y - mouse.y};
+
+			initial_mouse_pos = mouse;
 		}
 
 		/* image rendering (aka resolving the actual data) */
@@ -292,14 +292,19 @@ get_extension :: (path: string) -> string {
 	return "";
 }
 
+get_pointer_position :: () -> Vector2 {
+	mouse_x, mouse_y := Winc.get_mouse_pointer_position();
+	return .{xx mouse_x, xx mouse_y};
+}
+
 FONT_PATH :: "/usr/share/fonts/libertinus/LibertinusSerif-Regular.otf";
 FONT_DATA :: #run cast([]u8) read_entire_file(FONT_PATH);
 
 #load "registration.jai";
 #load "ui.jai";
 
-#import "Window_Creation";
-#import "Input";
+Winc :: #import "Window_Creation";
+Input :: #import "Input";
 Simp :: #import "Simp";
 X11 :: #import "X11";
 GL :: #import "GL";
