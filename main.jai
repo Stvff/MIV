@@ -21,8 +21,10 @@ main :: () {
 	window_width := 1400;
 	window_height := 800;
 	window := create_window(window_width, window_height, "MIV");
-	dnd_typelist := string.["url/url", "text/uri-list", "text/plain", "application/octet-stream"];
-	X11.enable_drag_and_drop(window, dnd_typelist);
+	{
+		dnd_typelist := string.["url/url", "text/uri-list", "text/plain", "application/octet-stream"];
+		X11.enable_drag_and_drop(window, dnd_typelist);
+	}
 	Simp.set_render_target(window);
 	bar_height := fontsize*2;
 	canvas_width := window_width;
@@ -294,6 +296,7 @@ FONT_PATH :: "/usr/share/fonts/libertinus/LibertinusSerif-Regular.otf";
 FONT_DATA :: #run cast([]u8) read_entire_file(FONT_PATH);
 
 #load "registration.jai";
+#load "ui.jai";
 
 #import "Window_Creation";
 #import "Input";
