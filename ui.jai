@@ -17,8 +17,11 @@ Palette :: struct {
 	body, border, text, hover: [4]u8;
 }
 
-Ratio :: struct {num, den: int;};
+Ratio :: struct {num, den: int;}
 Creation_Side :: enum {TOP; BOTTOM; LEFT; RIGHT;}
+
+Text_Align_Ver :: enum {TOP; MIDDLE; BOTTOM;}
+Text_Align_Hor :: enum {LEFT; MIDDLE; RIGHT;}
 
 /* does not also panel_recolor */
 create_panel :: (size: [2]int, colors: Palette) -> UI_Panel {
@@ -38,15 +41,15 @@ reset_panel :: (p: *UI_Panel, size: [2]int, colors: Palette) {
 	p.target = Simp.texture_create_render_target(xx size[0], xx size[1], .RGBA8);
 }
 
-panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side) -> UI_Panel {
+panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side, inheret := true, colors := Palette.{}) -> UI_Panel {
 	r := ratio;
 	r.den = max(1, r.den);
 	r.num = clamp(abs(r.num), 1, r.den);
 
-	other: UI_Panel;
-	other.colors = mother.colors;
-	other.pos = mother.pos;
-	other.size = mother.size;
+	other := mother.*;
+	if inheret then other.colors = mother.colors;
+	else other.colors = colors;
+
 	if #complete side == {
 	case .TOP;
 		other.size[1] = mother.size[1]*r.num/r.den;
@@ -82,6 +85,34 @@ panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side) -> UI_Pane
 	body = float_rgb(other.colors.body);
 	Simp.clear_render_target(body.x, body.y, body.z, body.w);
 	return other;
+}
+
+panel_text :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, align_h: Text_Align_Hor, align_v: Text_Align_Ver, split_on_h := false, split_on_v := false) {
+	text_width := Simp.prepare_text(font, text);
+	padding := font.character_height;
+	x_pos, y_pos: int;
+	text_panel := mother;
+
+	if #complete align_h == {
+	case .LEFT;
+		x_pos = padding;
+	case .MIDDLE;
+		x_pos = text_panel.size[0]/2 - text_width/2;
+	case .RIGHT;
+		x_pos = text_panel.size[0] - text_width - padding;
+	}
+	if #complete align_v == {
+	case .TOP;
+		y_pos = text_panel.size[1] - padding*5/4; /* this is text_height + padding/4 */
+	case .MIDDLE;
+		y_pos = text_panel.size[1]/2 - padding/4; /* why is this div by 4?? */
+	case .BOTTOM;
+		y_pos = padding*3/4;
+	}
+
+	Simp.set_render_target(*text_panel.target);
+	Simp.set_shader_for_text();
+	Simp.draw_prepared_text(font, x_pos, y_pos, float_rgb(text_panel.colors.text));
 }
 
 panel_recolor :: (p: *UI_Panel, colors: Palette) {

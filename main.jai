@@ -221,15 +221,13 @@ main :: () {
 		{/* drawing time */
 			/* first we define the panels that we'll see */
 			reset_panel(*canvas, window_panel.size, palette);
+			defer draw_panel(os_window, *canvas, false);
+
 			top_bar := panel_split(*canvas, .{bar_height, canvas.size[1]}, .TOP);
 			defer draw_panel(os_window, *top_bar);
 			bottom_bar := panel_split(*canvas, .{bar_height - 4, canvas.size[1]}, .BOTTOM);
 			defer draw_panel(os_window, *bottom_bar);
-			side_bar := panel_split(*canvas, .{bar_height*4, canvas.size[0]}, .LEFT);
-			panel_recolor(*side_bar, .{body = .[40, 40, 40, 255]});
-			defer draw_panel(os_window, *side_bar);
 
-			defer draw_panel(os_window, *canvas, false);
 
 			/* This needs to run after both an input change and a window change. */
 			/* I could have a seperate `if rescale` block or whatever, but for now this is simplest */
@@ -284,13 +282,14 @@ main :: () {
 //			Simp.set_shader_for_color();
 //			Simp.immediate_quad(0, xx window_height, xx window_width, xx(window_height - bar_height), .{0.2, 0.2, 0.2, 1});
 
-			text_color := Vector4.{1, 1, 1, 1};
-			text := "MIV";
+//			text_color := Vector4.{1, 1, 1, 1};
+			text := isolate_name(img_ctx.pre_info.name);
+			panel_text(*top_bar, main_font, text, .MIDDLE, .BOTTOM);
 
-			Simp.set_render_target(*top_bar.target);
-			Simp.set_shader_for_text();
-			text_width := Simp.prepare_text(main_font, text);
-			Simp.draw_prepared_text(main_font, top_bar.size[0]/2 - text_width/2, top_bar.size[1] - font_pixel_height*6/5, text_color);
+			// Simp.set_render_target(*top_bar.target);
+			// Simp.set_shader_for_text();
+			// text_width := Simp.prepare_text(main_font, text);
+			// Simp.draw_prepared_text(main_font, top_bar.size[0]/2 - text_width/2, top_bar.size[1] - font_pixel_height*6/5, text_color);
 
 			if frame_time < target_frame_time {
 				bottom_bar.colors.text = .[100, 210, 25, 255];
@@ -299,16 +298,19 @@ main :: () {
 			}
 			text = sprint("fps: %", frame_count_over_1s);
 
-			Simp.set_render_target(*bottom_bar.target);
-			text_width = Simp.prepare_text(main_font, text);
-			text_color = float_rgb(bottom_bar.colors.text);
-			Simp.draw_prepared_text(main_font, bottom_bar.size[0] - text_width - font_pixel_height, bottom_bar.size[1] - font_pixel_height*6/5, text_color);
+			panel_text(*bottom_bar, main_font, text, .RIGHT, .MIDDLE);
+			bottom_bar.colors.text = palette.text;
+			// Simp.set_render_target(*bottom_bar.target);
+			// text_width = Simp.prepare_text(main_font, text);
+			// text_color = float_rgb(bottom_bar.colors.text);
+			// Simp.draw_prepared_text(main_font, bottom_bar.size[0] - text_width - font_pixel_height, bottom_bar.size[1] - font_pixel_height*6/5, text_color);
 
 			if draw_image {
-				text_color = Vector4.{1, 1, 1, 1};
+				// text_color := Vector4.{1, 1, 1, 1};
 				text = sprint("%\%", formatFloat(img_ctx.scale*100, trailing_width = 2, zero_removal = .NO));
-				text_width = Simp.prepare_text(main_font, text);
-				Simp.draw_prepared_text(main_font, font_pixel_height, bottom_bar.size[1] - font_pixel_height*6/5, text_color);
+				panel_text(*bottom_bar, main_font, text, .LEFT, .TOP);
+				// text_width := Simp.prepare_text(main_font, text);
+				// Simp.draw_prepared_text(main_font, font_pixel_height, bottom_bar.size[1] - font_pixel_height*6/5, text_color);
 			}
 		}
 
@@ -333,6 +335,23 @@ get_extension :: (path: string) -> string {
 	}
 	return "";
 }
+
+isolate_name :: (path: string) -> string {
+	ext: string;
+	ext.count = 0;
+	ext.data = path.data + path.count;
+	while ext.count != path.count {
+		ext.count += 1;
+		ext.data -= 1;
+		if ext[0] == "/" {
+			ext.count -= 1;
+			ext.data += 1;
+			return ext;
+		}
+	}
+	return path;
+}
+
 
 get_pointer_position :: () -> Vector2 {
 	mouse_x, mouse_y := Winc.get_mouse_pointer_position();
