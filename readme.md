@@ -17,7 +17,7 @@ So, my idea is as follows:\
 MIV is a modular image viewer, where file formats are supported through plugins (as `.so` files). These plugins must have a simple API, so that supporting a new image format is a simple task based on the reference implementation for that format.
 MIV arranges the windowing, the UI, file collection and preloading, and the plugins decode the images.
 
-A loose set of specific ideas and architecture is collected in [idea.md](./idea.md).\
+A loose set of specific ideas and architecture is collected in [docs/idea.md](./docs/idea.md).\
 As for now, I'm trying to get a passable image viewer with automatic file reloading for PPM files. This way, I'm creating a 'reference plugin' in C (see `MIV.h` and `meow.c`) that other people can then reference, should they choose to participate.
 
 To be more specific about features, I am aiming for feature parity with the [Linux Mint xviewer](https://github.com/linuxmint/xviewer?tab=readme-ov-file) in terms of the image viewing experience.
