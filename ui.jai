@@ -76,14 +76,10 @@ panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side, inheret :=
 	Simp.texture_destroy(*mother.target);
 
 	mother.target = Simp.texture_create_render_target(xx mother.size[0], xx mother.size[1], .RGBA8);
-	Simp.set_render_target(*mother.target);
-	body := float_rgb(mother.colors.body);
-	Simp.clear_render_target(body.x, body.y, body.z, body.w);
+	panel_recolor(mother, mother.colors);
 
 	other.target = Simp.texture_create_render_target(xx other.size[0], xx other.size[1], .RGBA8);
-	Simp.set_render_target(*other.target);
-	body = float_rgb(other.colors.body);
-	Simp.clear_render_target(body.x, body.y, body.z, body.w);
+	panel_recolor(*other, other.colors);
 	return other;
 }
 
@@ -115,9 +111,7 @@ panel_subdivide :: (mother: *UI_Panel, n: int, direction: enum {HORIZONTAL; VERT
 		}
 
 		it.target = Simp.texture_create_render_target(xx it.size[0], xx it.size[1], .RGBA8);
-		Simp.set_render_target(*it.target);
-		body := float_rgb(it.colors.body);
-		Simp.clear_render_target(body.x, body.y, body.z, body.w);
+		panel_recolor(it, it.colors);
 	}
 
 	Simp.texture_destroy(*mother.target);
@@ -129,9 +123,13 @@ panel_button :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool) -> bool 
 	vertical := p.pos[1] < pointer_position[1] && pointer_position[1] < p.pos[1] + p.size[1];
 
 	if vertical && horizontal {
-		Simp.set_render_target(*p.target);
-		body := float_rgb(p.colors.hover);
-		Simp.clear_render_target(body.x, body.y, body.z, body.w);
+		tc := p.colors;
+		p.colors.body = tc.hover;
+		panel_recolor(p, p.colors);
+		p.colors = tc;
+		// Simp.set_render_target(*p.target);
+		// body := float_rgb(p.colors.hover);
+		// Simp.clear_render_target(body.x, body.y, body.z, body.w);
 	}
 
 	return vertical && horizontal && pressed;
@@ -170,6 +168,22 @@ panel_recolor :: (p: *UI_Panel, colors: Palette) {
 	Simp.set_render_target(*p.target);
 	fcolors := float_rgb(p.colors.body);
 	Simp.clear_render_target(fcolors.x, fcolors.y, fcolors.z, fcolors.w);
+
+	/* drawing the borders */
+	Simp.immediate_begin();
+	Simp.set_shader_for_color();
+	border := float_rgb(p.colors.border);
+	bl := Vector2.{xx p.pos[0], xx p.pos[1]};
+	tr := bl + Vector2.{xx p.size[0], xx p.size[1]};
+	/* left and bottom */
+	Simp.immediate_quad(bl.x, bl.y, bl.x+2, tr.y, border);
+	Simp.immediate_quad(bl.x, bl.y, tr.x, bl.y+2, border);
+	/* top and right */
+	Simp.immediate_quad(bl.x, tr.y-2, tr.x, tr.y, border);
+	Simp.immediate_quad(tr.x-2, bl.y, tr.x, tr.y, border);
+
+	//print("colors: %\n", colors);
+	//Simp.immediate_flush();
 }
 
 draw_panel :: (window: X11.Window, p: *UI_Panel, destroy := true) {

@@ -11,9 +11,16 @@ Image_Context :: struct {
 
 palette :: Palette.{
 	body = .[65, 65, 65, 255],
-	border = .[150, 150, 150, 255],
+	border = .[75, 75, 75, 255],
 	text = .[255, 255, 255, 255],
 	hover = .[150, 150, 150, 255],
+};
+
+bg_palette :: Palette.{
+	body = .[30, 25, 30, 255],
+	border = .[30, 25, 30, 255],
+	text = .[30, 25, 30, 255],
+	hover = .[30, 25, 30, 255],
 };
 
 window_size: [2]int;
@@ -225,12 +232,12 @@ main :: () {
 
 		{/* drawing time */
 			/* first we define the broad outline of panels that we'll see (the ones that make the canvas smaller) */
-			reset_panel(*canvas, window_size, palette);
+			reset_panel(*canvas, window_size, bg_palette);
 			defer draw_panel(os_window, *canvas, false);
 
-			top_bar := panel_split(*canvas, .{bar_height, canvas.size[1]}, .TOP);
+			top_bar := panel_split(*canvas, .{bar_height, canvas.size[1]}, .TOP, false, palette);
 			defer draw_panel(os_window, *top_bar);
-			bottom_bar := panel_split(*canvas, .{bar_height - 4, canvas.size[1]}, .BOTTOM);
+			bottom_bar := panel_split(*canvas, .{bar_height - 4, canvas.size[1]}, .BOTTOM, false, palette);
 			defer draw_panel(os_window, *bottom_bar);
 
 			/* This needs to run after both an input change and a window change. */
@@ -238,7 +245,7 @@ main :: () {
 			img_ctx.scale = clamp(img_ctx.scale, 1/cast(float, max(img_ctx.pre_info.width, img_ctx.pre_info.height)), cast(float, max(canvas.size[0], canvas.size[1])));
 
 			/* image drawing */
-			panel_recolor(*canvas, .{body = .[66, 66, 127, 255]});
+			//panel_recolor(*canvas, .{body = .[66, 66, 127, 255]});
 			if draw_image {
 
 				screen_center := Vector2.{ cast(float, canvas.size[0])/2, cast(float, canvas.size[1])/2 };
@@ -273,6 +280,7 @@ main :: () {
 				for * image_bounds { it.* = rot_mat*it.*; }
 				for * image_bounds { it.* *= img_ctx.scale; it.* += screen_center + img_ctx.offset; }
 
+				Simp.set_render_target(*canvas.target);
 				Simp.set_shader_for_images(*gpu_texture);
 				Simp.immediate_begin();
 				Simp.immediate_quad(image_bounds[0], image_bounds[1], image_bounds[2], image_bounds[3]);
@@ -283,12 +291,13 @@ main :: () {
 			fit_buttons_space := panel_split(*top_bar, .{bar_height*4, top_bar.size[0]}, .LEFT);
 			fit_buttons_space.colors.body = .[55, 55, 55, 255];
 			fit_buttons := panel_subdivide(*fit_buttons_space, 4, .HORIZONTAL);
-			if !started_zooming fit_buttons[img_ctx.fit].colors.text = .[255, 127, 0, 255];
+			if !started_zooming && draw_image fit_buttons[img_ctx.fit].colors.text = .[255, 127, 0, 255];
 			for fit_buttons {
 				pp := get_pointer_position();
 				pointer_position := int.[xx pp.x, xx pp.y];
 				if panel_button(*it, pointer_position, started_mouse_panning) {
 					img_ctx.fit = xx it_index;
+					started_zooming = false;
 				}
 				fit_button_text :: string.["1:1", "W", "H", "B"];
 				panel_text(*it, main_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);
