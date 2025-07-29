@@ -1,8 +1,8 @@
 ## Deventer
 - [_] zooming on mouse
-- [_] Implement UI
+- [x] Implement UI
 	- [_] logs onscreen instead of in terminal
-	- [_] option buttons
+	- [x] option buttons
 		- [_] option sliders/textfield
 - [_] registration file for plugins (always lives next to the exe, not cwd)
 - [_] next/prev in the current directory

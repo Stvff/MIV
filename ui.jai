@@ -87,6 +87,56 @@ panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side, inheret :=
 	return other;
 }
 
+panel_subdivide :: (mother: *UI_Panel, n: int, direction: enum {HORIZONTAL; VERTICAL;}, inheret := true, colors := Palette.{}) -> []UI_Panel {
+	panels: []UI_Panel; {
+		push_allocator(temp);
+		panels = NewArray(n, UI_Panel);
+	}
+
+	templ := mother.*;
+	stride: int;
+	if direction == .HORIZONTAL {
+		stride = mother.size[0]/n;
+		templ.size[0] = stride;
+	} else {
+		stride = mother.size[1]/n;
+		templ.size[1] = stride;
+	}
+
+	for * panels {
+		it.* = templ;
+		if inheret then it.colors = mother.colors;
+		else it.colors = colors;
+
+		if direction == .HORIZONTAL {
+			it.pos[0] += it_index*stride;
+		} else {
+			it.pos[1] += it_index*stride;
+		}
+
+		it.target = Simp.texture_create_render_target(xx it.size[0], xx it.size[1], .RGBA8);
+		Simp.set_render_target(*it.target);
+		body := float_rgb(it.colors.body);
+		Simp.clear_render_target(body.x, body.y, body.z, body.w);
+	}
+
+	Simp.texture_destroy(*mother.target);
+	return panels;
+}
+
+panel_button :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool) -> bool {
+	horizontal := p.pos[0] < pointer_position[0] && pointer_position[0] < p.pos[0] + p.size[0];
+	vertical := p.pos[1] < pointer_position[1] && pointer_position[1] < p.pos[1] + p.size[1];
+
+	if vertical && horizontal {
+		Simp.set_render_target(*p.target);
+		body := float_rgb(p.colors.hover);
+		Simp.clear_render_target(body.x, body.y, body.z, body.w);
+	}
+
+	return vertical && horizontal && pressed;
+}
+
 panel_text :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, align_h: Text_Align_Hor, align_v: Text_Align_Ver, split_on_h := false, split_on_v := false) {
 	text_width := Simp.prepare_text(font, text);
 	padding := font.character_height;

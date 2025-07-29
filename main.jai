@@ -26,7 +26,6 @@ main :: () {
 	fontsize := 20;
 
 	os_window: X11.Window;
-	window_panel: UI_Panel;
 	canvas: UI_Panel;
 	{
 		window_width := 1400;
@@ -38,7 +37,7 @@ main :: () {
 
 		canvas = create_panel(.[window_width, window_height], palette);
 	}
-	window_panel = canvas;
+	window_size := canvas.size;
 
 	// Simp.set_render_target(window);
 	bar_height := fontsize*2;
@@ -92,7 +91,7 @@ main :: () {
 			Simp.update_window(it.window);
 			if it.window == os_window {
 				reset_panel(*canvas, .[it.width, it.height], palette);
-				window_panel = canvas;
+				window_size = canvas.size;
 				// window_width  = it.width;
 				// window_height = it.height;
 
@@ -219,8 +218,8 @@ main :: () {
 
 
 		{/* drawing time */
-			/* first we define the panels that we'll see */
-			reset_panel(*canvas, window_panel.size, palette);
+			/* first we define the broad outline of panels that we'll see (the ones that make the canvas smaller) */
+			reset_panel(*canvas, window_size, palette);
 			defer draw_panel(os_window, *canvas, false);
 
 			top_bar := panel_split(*canvas, .{bar_height, canvas.size[1]}, .TOP);
@@ -228,14 +227,9 @@ main :: () {
 			bottom_bar := panel_split(*canvas, .{bar_height - 4, canvas.size[1]}, .BOTTOM);
 			defer draw_panel(os_window, *bottom_bar);
 
-
 			/* This needs to run after both an input change and a window change. */
 			/* I could have a seperate `if rescale` block or whatever, but for now this is simplest */
 			img_ctx.scale = clamp(img_ctx.scale, 1/cast(float, max(img_ctx.pre_info.width, img_ctx.pre_info.height)), cast(float, max(canvas.size[0], canvas.size[1])));
-
-			//Simp.set_render_target(os_window);
-			//Simp.clear_render_target(0.2, 0.2, 0.5, 1);
-
 
 			/* image drawing */
 			panel_recolor(*canvas, .{body = .[66, 66, 127, 255]});
@@ -279,39 +273,42 @@ main :: () {
 			}
 
 			/* UI */
-//			Simp.set_shader_for_color();
-//			Simp.immediate_quad(0, xx window_height, xx window_width, xx(window_height - bar_height), .{0.2, 0.2, 0.2, 1});
-
-//			text_color := Vector4.{1, 1, 1, 1};
-			text := isolate_name(img_ctx.pre_info.name);
-			panel_text(*top_bar, main_font, text, .MIDDLE, .BOTTOM);
-
-			// Simp.set_render_target(*top_bar.target);
-			// Simp.set_shader_for_text();
-			// text_width := Simp.prepare_text(main_font, text);
-			// Simp.draw_prepared_text(main_font, top_bar.size[0]/2 - text_width/2, top_bar.size[1] - font_pixel_height*6/5, text_color);
-
-			if frame_time < target_frame_time {
-				bottom_bar.colors.text = .[100, 210, 25, 255];
-			} else {
-				bottom_bar.colors.text = .[220, 60, 25, 255];
+			/* we have to reserve some space for buttons */
+			fit_buttons_space := panel_split(*top_bar, .{bar_height*4, top_bar.size[0]}, .LEFT);
+			fit_buttons_space.colors.body = .[55, 55, 55, 255];
+			fit_buttons := panel_subdivide(*fit_buttons_space, 4, .HORIZONTAL);
+			if !started_zooming fit_buttons[img_ctx.fit].colors.text = .[255, 127, 0, 255];
+			for fit_buttons {
+				pp := get_pointer_position();
+				pointer_position := int.[xx pp.x, window_size[1] - xx pp.y];
+				if panel_button(*it, pointer_position, started_mouse_panning) {
+					img_ctx.fit = xx it_index;
+				}
+				fit_button_text :: string.["1:1", "W", "H", "B"];
+				panel_text(*it, main_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
-			text = sprint("fps: %", frame_count_over_1s);
 
+			defer for fit_buttons draw_panel(os_window, *it);
+
+			text := isolate_name(img_ctx.pre_info.name);
+			panel_text(*top_bar, main_font, text, .RIGHT, .MIDDLE);
+
+			if frame_time < target_frame_time then bottom_bar.colors.text = .[100, 210, 25, 255];
+			else bottom_bar.colors.text = .[220, 60, 25, 255];
+			text = sprint("fps: %", frame_count_over_1s);
 			panel_text(*bottom_bar, main_font, text, .RIGHT, .MIDDLE);
 			bottom_bar.colors.text = palette.text;
-			// Simp.set_render_target(*bottom_bar.target);
-			// text_width = Simp.prepare_text(main_font, text);
-			// text_color = float_rgb(bottom_bar.colors.text);
-			// Simp.draw_prepared_text(main_font, bottom_bar.size[0] - text_width - font_pixel_height, bottom_bar.size[1] - font_pixel_height*6/5, text_color);
 
 			if draw_image {
-				// text_color := Vector4.{1, 1, 1, 1};
 				text = sprint("%\%", formatFloat(img_ctx.scale*100, trailing_width = 2, zero_removal = .NO));
-				panel_text(*bottom_bar, main_font, text, .LEFT, .TOP);
-				// text_width := Simp.prepare_text(main_font, text);
-				// Simp.draw_prepared_text(main_font, font_pixel_height, bottom_bar.size[1] - font_pixel_height*6/5, text_color);
+				panel_text(*bottom_bar, main_font, text, .LEFT, .MIDDLE);
 			}
+
+		}
+		{/* popups */
+			/* in here, I wanna write the big dialogue with the buttons and stuff */
+			/* Next to that, I want to write little popup windows about non-critical logs. */
+			/* This latter one will need text flow functions. I'm thinking to have the width be limited, and for the cut-off to initially not care about whitespace */
 		}
 
 		Simp.immediate_flush();
