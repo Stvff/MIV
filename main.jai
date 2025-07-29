@@ -16,6 +16,8 @@ palette :: Palette.{
 	hover = .[150, 150, 150, 255],
 };
 
+window_size: [2]int;
+
 main :: () {
 //	load_registration_file();
 //	register_dynlib("./meow_c.so");
@@ -37,7 +39,7 @@ main :: () {
 
 		canvas = create_panel(.[window_width, window_height], palette);
 	}
-	window_size := canvas.size;
+	window_size = canvas.size;
 
 	// Simp.set_render_target(window);
 	bar_height := fontsize*2;
@@ -147,6 +149,10 @@ main :: () {
 				}
 				if delta < 0 img_ctx.scale /= 1 + abs(delta);
 				else img_ctx.scale *= 1 + abs(delta);
+
+				mouse := get_pointer_position();
+				offset_towards := mouse - Vector2.{xx window_size[0], xx window_size[1]}/2;
+				img_ctx.offset = lerp(offset_towards, img_ctx.offset, delta);
 			}
 		}
 		for files_to_open {
@@ -174,7 +180,7 @@ main :: () {
 
 		if started_mouse_panning {
 			mouse := get_pointer_position();
-			img_ctx.offset += .{mouse.x - initial_mouse_pos.x, initial_mouse_pos.y - mouse.y};
+			img_ctx.offset += .{mouse.x - initial_mouse_pos.x, mouse.y - initial_mouse_pos.y};
 
 			initial_mouse_pos = mouse;
 		}
@@ -280,7 +286,7 @@ main :: () {
 			if !started_zooming fit_buttons[img_ctx.fit].colors.text = .[255, 127, 0, 255];
 			for fit_buttons {
 				pp := get_pointer_position();
-				pointer_position := int.[xx pp.x, window_size[1] - xx pp.y];
+				pointer_position := int.[xx pp.x, xx pp.y];
 				if panel_button(*it, pointer_position, started_mouse_panning) {
 					img_ctx.fit = xx it_index;
 				}
@@ -352,7 +358,7 @@ isolate_name :: (path: string) -> string {
 
 get_pointer_position :: () -> Vector2 {
 	mouse_x, mouse_y := Winc.get_mouse_pointer_position();
-	return .{xx mouse_x, xx mouse_y};
+	return .{xx mouse_x, xx (window_size[1] - xx mouse_y)};
 }
 
 FONT_PATH :: "/usr/share/fonts/libertinus/LibertinusSerif-Regular.otf";
