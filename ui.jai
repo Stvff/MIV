@@ -41,7 +41,7 @@ reset_panel :: (p: *UI_Panel, size: [2]int, colors: Palette) {
 panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side) -> UI_Panel {
 	r := ratio;
 	r.den = max(1, r.den);
-	r.num = clamp(abs(r.num), 0, r.den);
+	r.num = clamp(abs(r.num), 1, r.den);
 
 	other: UI_Panel;
 	other.colors = mother.colors;
@@ -74,18 +74,21 @@ panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side) -> UI_Pane
 
 	mother.target = Simp.texture_create_render_target(xx mother.size[0], xx mother.size[1], .RGBA8);
 	Simp.set_render_target(*mother.target);
-	Simp.clear_render_target(cast(float, mother.colors.body[0])/255, cast(float, mother.colors.body[1])/255, cast(float, mother.colors.body[2])/255, cast(float, mother.colors.body[3])/255);
+	body := float_rgb(mother.colors.body);
+	Simp.clear_render_target(body.x, body.y, body.z, body.w);
 
 	other.target = Simp.texture_create_render_target(xx other.size[0], xx other.size[1], .RGBA8);
 	Simp.set_render_target(*other.target);
-	Simp.clear_render_target(cast(float, other.colors.body[0])/255, cast(float, other.colors.body[1])/255, cast(float, other.colors.body[2])/255, cast(float, other.colors.body[3])/255);
+	body = float_rgb(other.colors.body);
+	Simp.clear_render_target(body.x, body.y, body.z, body.w);
 	return other;
 }
 
 panel_recolor :: (p: *UI_Panel, colors: Palette) {
 	p.colors = colors;
 	Simp.set_render_target(*p.target);
-	Simp.clear_render_target(cast(float, p.colors.body[0])/255, cast(float, p.colors.body[1])/255, cast(float, p.colors.body[2])/255, cast(float, p.colors.body[3])/255);
+	fcolors := float_rgb(p.colors.body);
+	Simp.clear_render_target(fcolors.x, fcolors.y, fcolors.z, fcolors.w);
 }
 
 draw_panel :: (window: X11.Window, p: *UI_Panel, destroy := true) {
@@ -99,7 +102,12 @@ draw_panel :: (window: X11.Window, p: *UI_Panel, destroy := true) {
 	Simp.immediate_quad(cast(float, p.pos[0]), cast(float, p.pos[1]), cast(float, upc[0]), cast(float, upc[1]), .{1, 1, 1, 1});
 
 	if destroy {
+		Simp.immediate_flush();
 		Simp.texture_destroy(*p.target);
 		p.* = .{};
 	}
+}
+
+float_rgb :: (rgb: [4]u8) -> Vector4 {
+	return .{cast(float, rgb[0])/255, cast(float, rgb[1])/255, cast(float, rgb[2])/255, cast(float, rgb[3])/255};
 }

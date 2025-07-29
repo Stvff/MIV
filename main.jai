@@ -225,6 +225,10 @@ main :: () {
 			defer draw_panel(os_window, *top_bar);
 			bottom_bar := panel_split(*canvas, .{bar_height - 4, canvas.size[1]}, .BOTTOM);
 			defer draw_panel(os_window, *bottom_bar);
+			side_bar := panel_split(*canvas, .{bar_height*4, canvas.size[0]}, .LEFT);
+			panel_recolor(*side_bar, .{body = .[40, 40, 40, 255]});
+			defer draw_panel(os_window, *side_bar);
+
 			defer draw_panel(os_window, *canvas, false);
 
 			/* This needs to run after both an input change and a window change. */
@@ -289,14 +293,15 @@ main :: () {
 			Simp.draw_prepared_text(main_font, top_bar.size[0]/2 - text_width/2, top_bar.size[1] - font_pixel_height*6/5, text_color);
 
 			if frame_time < target_frame_time {
-				bottom_bar.colors.text = .[100, 210, 25, 1];
+				bottom_bar.colors.text = .[100, 210, 25, 255];
 			} else {
-				bottom_bar.colors.text = .[220, 60, 25, 1];
+				bottom_bar.colors.text = .[220, 60, 25, 255];
 			}
 			text = sprint("fps: %", frame_count_over_1s);
 
 			Simp.set_render_target(*bottom_bar.target);
 			text_width = Simp.prepare_text(main_font, text);
+			text_color = float_rgb(bottom_bar.colors.text);
 			Simp.draw_prepared_text(main_font, bottom_bar.size[0] - text_width - font_pixel_height, bottom_bar.size[1] - font_pixel_height*6/5, text_color);
 
 			if draw_image {
