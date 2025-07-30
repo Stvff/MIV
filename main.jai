@@ -24,6 +24,8 @@ Input_State :: struct {
 	fpointer: Vector2;
 	ipointer: [2]int;
 
+	left_button_switch: bool;
+
 	using persistent: struct {
 		shifted: bool;
 		left_button: bool;
@@ -47,11 +49,19 @@ bg_palette :: Palette.{
 	hover = .[30, 25, 30, 255],
 };
 
+error_message_palette :: Palette.{
+	body = .[160, 20, 20, 120],
+	border = .[160, 30, 30, 120],
+	text = .[255, 235, 235, 255],
+	hover = .[160, 40, 40, 120],
+};
+
 window_size: [2]int;
 os_window: X11.Window;
 
 main :: () {
-	load_registration_file();
+	errors: [..]Error;
+	load_registration_file(*errors);
 	defer cleanup_registrations();
 
 	/* UI definitions */
@@ -95,7 +105,7 @@ main :: () {
 	gpu_texture: Simp.Texture;
 
 	/* Timing */
-	target_frame_time: float64 = 1.0/12000.0;
+	target_frame_time: float64 = 1.0/120.0;
 	last_1s_time := current_time_monotonic();
 	prev_time := last_1s_time;
 
@@ -151,6 +161,7 @@ main :: () {
 					inp.pointer_when_pressed = get_pointer_position();
 					inp.right_button = true;
 				case .MOUSE_BUTTON_LEFT;
+					inp.left_button_switch = true;
 					inp.pointer_when_pressed = get_pointer_position();
 					inp.left_button = true;
 				case .MOUSE_BUTTON_MIDDLE;
@@ -174,13 +185,13 @@ main :: () {
 		inp.ipointer = .[xx inp.fpointer.x, xx inp.fpointer.y];
 		/* Files added via command line or drop-in */
 		for files_to_open {
-			print("%\n", it);
+			give_log(*errors, "%", it);
 			ext := get_extension(it);
-			if ext == "so" register_dynlib(it, true);
+			if ext == "so" register_dynlib(it, true, *errors);
 			else {
 				old_name := img_ctx.pre_info.name;
 				old_handle := img_ctx.pre_info.fileptr;
-				img_ctx.render = get_loading(copy_string(it), ext, *img_ctx);
+				img_ctx.render = get_loading(copy_string(it), ext, *img_ctx, *errors);
 				if img_ctx.render {
 					array_reset(*cast([]u8, old_name));
 					if old_handle libc.fclose(old_handle);
@@ -188,7 +199,7 @@ main :: () {
 					/* retrieve previous offsets etc if available, for now we just reset */
 					img_ctx.auto_fit = true;
 				}
-				print("%\n", img_ctx);
+				give_log(*errors, "%", img_ctx);
 			}
 			array_unordered_remove_by_index(*files_to_open, 0);
 		}
@@ -204,7 +215,7 @@ main :: () {
 			array_resize(*(buffer), buffer_width*buffer_height);
 			render_error := img_ctx.plugin.render(*img_ctx.pre_info, *img_ctx.render_info);
 			if render_error {
-				log_error("File image data retrieval error: %", render_error);
+				give_error(*errors, "File image data retrieval error: %", render_error);
 				img_ctx.draw = false;
 			} else {
 				bitmap: Simp.Bitmap;
@@ -230,10 +241,9 @@ main :: () {
 			bottom_bar := panel_split(*canvas, .{bar_height - 4, canvas.size[1]}, .BOTTOM, false);
 
 			/* Image drawing */
+			canvas.colors = bg_palette;
+			panel_draw(*canvas);
 			if img_ctx.draw {
-				canvas.colors = bg_palette;
-				panel_draw(*canvas);
-
 				/* we have to process our inputs (not using the keyboard yet) */
 				if pointer_is_in_panel(*canvas, inp.ipointer) {
 					if inp.scroll_delta {
@@ -307,12 +317,12 @@ main :: () {
 
 			/* UI */
 			/* We have to reserve some space for buttons */
-			fit_buttons_space := panel_split(*top_bar, .{bar_height*4, top_bar.size[0]}, .LEFT);
+			fit_buttons_space := panel_split(*top_bar, .{bar_height*4, top_bar.size[0]}, .LEFT, true);
 			fit_buttons_space.colors.body = .[55, 55, 55, 255];
-			fit_buttons := panel_subdivide(*fit_buttons_space, 4, .HORIZONTAL);
+			fit_buttons := panel_subdivide(*fit_buttons_space, 4, .HORIZONTAL, true);
 			if img_ctx.auto_fit && img_ctx.draw fit_buttons[img_ctx.fit].colors.text = .[255, 127, 0, 255];
 			for fit_buttons {
-				if panel_button(*it, inp.ipointer, inp.left_button) {
+				if panel_button(*it, inp.ipointer, inp.left_button_switch) {
 					img_ctx.fit = xx it_index;
 					img_ctx.auto_fit = true;
 				}
@@ -336,9 +346,48 @@ main :: () {
 
 		}
 		{/* Popups */
-			/* In here, I wanna write the big dialogue with the buttons and stuff */
-			/* Next to that, I want to write little popup windows about non-critical logs. */
-			/* This latter one will need text flow functions. I'm thinking to have the width be limited, and for the cut-off to initially not care about whitespace */
+//			log("%", errors);
+//			log("\n");
+			pressed_option := -2;
+			for error: errors {
+				if error.kind == .LOG {
+					log("%", error);
+					array_ordered_remove_by_index(*errors, it_index);
+					continue;
+				}
+				if pressed_option > -2 continue;
+
+				error_screen := UI_Panel.{
+					size = .[window_size[0], bar_height*2],
+					pos = .[0, window_size[1]/2 - bar_height],
+					colors = error_message_palette,
+				};
+				options_bar := panel_split(*error_screen, .{1, 2}, .BOTTOM, true);
+				panel_text(*error_screen, main_font, error.message, .MIDDLE, .MIDDLE);
+
+				divisions := panel_subdivide(*options_bar, 3, .HORIZONTAL, true);
+				buttons := panel_subdivide(*divisions[1], ifx error.options[1].count then 2 else 1, .HORIZONTAL, true);
+				pressed_option = -1;
+				for buttons {
+					if panel_button(*it, inp.ipointer, inp.left_button_switch) {
+						log("%", error);
+						pressed_option = it_index;
+					}
+					panel_text(*it, main_font, error.options[it_index], .MIDDLE, .MIDDLE);
+				}
+				if pressed_option > -1 {
+					array_ordered_remove_by_index(*errors, it_index);
+				}
+			}
+			/* About errors, etc */
+			/* A function can log an error, and can log a choice */
+			/* Errors only have an 'ok' button */
+			/* Choices can have two buttons with custom names */
+			/* Functions that can log choices always carry the 'choice context', which contains info on what was chosen */
+
+			/* Next to that, I want to write little popup windows about non-critical logs. They should be on a timer. */
+			/* This latter one especially will need text flow functions (since it should be notifications in the bottomright). */
+			/* I'm thinking to have the width be limited, and for the cut-off to initially not care about whitespace */
 		}
 
 		Simp.immediate_flush();

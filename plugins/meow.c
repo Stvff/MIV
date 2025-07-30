@@ -42,7 +42,7 @@ int64_t registration_procedure(Provided_Registration_Entry *registration) {
 		registration->name_filetype = to_string("Netpbm Portable PixMap");
 		registration->procedure_prefix = to_string("ppm_");
 		registration->extension = to_string("PPM");
-		registration->magic_number = to_string("");
+		registration->magic_number = to_string("P");
 		registration->extension_is_case_sensitive = 0;
 		break;
 	case 1:

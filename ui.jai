@@ -25,7 +25,7 @@ Text_Align_Hor :: enum {LEFT; MIDDLE; RIGHT;}
 
 clipping_texture: Simp.Texture;
 
-panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side, already_draw := true) -> UI_Panel {
+panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side, already_draw: bool) -> UI_Panel {
 	r := ratio;
 	r.den = max(1, r.den);
 	r.num = clamp(abs(r.num), 1, r.den);
@@ -36,7 +36,7 @@ panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side, already_dr
 	if #complete side == {
 	case .TOP;
 		other.size[1] = mother.size[1]*r.num/r.den;
-		other.pos[1] = mother.size[1] - other.size[1];
+		other.pos[1] += mother.size[1] - other.size[1];
 
 		mother.size[1] -= other.size[1];
 	case .BOTTOM;
@@ -51,7 +51,7 @@ panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side, already_dr
 		mother.pos[0] += other.size[0];
 	case .RIGHT;
 		other.size[0] = mother.size[0]*r.num/r.den;
-		other.pos[0] = mother.size[0] - other.size[0];
+		other.pos[0] += mother.size[0] - other.size[0];
 
 		mother.size[0] -= other.size[0];
 	}
@@ -64,7 +64,7 @@ panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side, already_dr
 	return other;
 }
 
-panel_subdivide :: (mother: *UI_Panel, n: int, direction: enum {HORIZONTAL; VERTICAL;}, already_draw := true) -> []UI_Panel {
+panel_subdivide :: (mother: *UI_Panel, n: int, direction: enum {HORIZONTAL; VERTICAL;}, already_draw: bool) -> []UI_Panel {
 	panels: []UI_Panel; {
 		push_allocator(temp);
 		panels = NewArray(n, UI_Panel);

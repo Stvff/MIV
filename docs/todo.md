@@ -3,7 +3,8 @@
 - [x] zooming on pixel currently in the center of the screen
 	- [x] refactor/reorder of input, drawing, rendering, filehandling
 - [x] Implement UI
-	- [ ] user prompt popups
+	- [x] user prompt popups
+		- [ ] give programs the ability to respond responsibly based on user input option
 	- [ ] logs onscreen instead of in terminal
 		- [ ] intelligent textflows (includes clipping)
 	- [x] option buttons
@@ -20,3 +21,4 @@
 - [ ] Option to select between zoom on screen center and pointer
 	- [ ] zoom on pointer
 - [ ] Filewatching
+- [ ] Options for the different persistence settings (between files, restarts, etc)

@@ -32,6 +32,12 @@ Provided_Registration_Entry :: struct {
 	extension_is_case_sensitive: bool;
 }
 
+Error :: struct {
+	kind: enum{ERROR; LOG;};
+	message: string;
+	options: [2]string;
+}
+
 Registration_Entry :: struct {
 	plugin_filename: string;
 	handle: *void;
@@ -46,7 +52,7 @@ Pre_Rendering_Procedure :: #type (info: *Pre_Rendering_Info) -> string #c_call;
 Rendering_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> string #c_call;
 Cleanup_Procedure :: #type (pre_info: *Pre_Rendering_Info) -> string #c_call;
 
-register_dynlib :: (dynlib_name: string, newly_imported: bool) -> bool {
+register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Error) -> bool {
 	exe_path := path_strip_filename(system.get_path_of_running_executable());
 	new_dynlib_path := tprint("%plugins/%", exe_path, isolate_name(dynlib_name));
 	if newly_imported {
@@ -57,7 +63,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool) -> bool {
 
 	handle := libc.dlopen(dynlib_cname, libc.RTLD_NOW);
 	if !handle {
-		log_error("Dynamic library loading error: %", to_string(libc.dlerror()));
+		give_error(errors, "Dynamic library loading error: %", to_string(libc.dlerror()));
 		return false;
 	}
 	libc.dlerror();
@@ -65,7 +71,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool) -> bool {
 	reg_proc: Registration_Procedure = libc.dlsym(handle, "registration_procedure");
 	loading_error := to_string(libc.dlerror());
 	if loading_error {
-		log_error("Dynamic function loading error: %", loading_error);
+		give_error(errors, "Dynamic function loading error: %", loading_error);
 		return false;
 	}
 
@@ -78,7 +84,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool) -> bool {
 		pre_render_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "pre_render"));
 		pre_render_handle := libc.dlsym(handle, pre_render_cname);
 		if !pre_render_handle {
-			log_error("Dynamic function loading error: %", to_string(libc.dlerror()));
+			give_error(errors, "Dynamic function loading error: %", to_string(libc.dlerror()));
 			success = false;
 		}
 		libc.dlerror();
@@ -86,7 +92,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool) -> bool {
 		render_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "render"));
 		render_handle := libc.dlsym(handle, render_cname);
 		if !render_handle {
-			log_error("Dynamic function loading error: %", to_string(libc.dlerror()));
+			give_error(errors, "Dynamic function loading error: %", to_string(libc.dlerror()));
 			success = false;
 		}
 		libc.dlerror();
@@ -94,7 +100,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool) -> bool {
 		cleanup_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "cleanup"));
 		cleanup_handle := libc.dlsym(handle, cleanup_cname);
 		if !cleanup_handle {
-			log_error("Dynamic function loading error: %", to_string(libc.dlerror()));
+			give_error(errors, "Dynamic function loading error: %", to_string(libc.dlerror()));
 			success = false;
 		}
 		libc.dlerror();
@@ -108,14 +114,14 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool) -> bool {
 			cleanup = cleanup_handle,
 		};
 		array_add(*all_registrations, registration);
-		log("%\n", registration);
+		give_log(errors, "%", registration);
 
 		if amount <= 0 break;
 	}
 	return success;
 }
 
-load_registration_file :: () {
+load_registration_file :: (errors: *[..]Error) {
 	path := path_strip_filename(system.get_path_of_running_executable());
 	make_directory_if_it_does_not_exist(tprint("%plugins/", path));
 	regfile_path := tprint("%plugins/registrations.miv", path);
@@ -123,7 +129,7 @@ load_registration_file :: () {
 	if !exists return;
 
 	plugin_filenames := split(regfile, cast(u8, #char "\n"));
-	for plugin_filenames if it.count != 0 register_dynlib(it, false);
+	for plugin_filenames if it.count != 0 register_dynlib(it, false, errors);
 }
 
 cleanup_registrations :: () {
@@ -147,7 +153,7 @@ cleanup_registrations :: () {
 	write_entire_file(regfile_path, builder_to_string(*sb));
 }
 
-get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) -> bool {
+get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, errors: *[..]Error) -> bool {
 	new_plugin: *Registration_Entry = null;
 	ok := true;
 	if extension {
@@ -168,7 +174,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 	file_handle: *libc.FILE;
 	file_handle = libc.fopen(temp_c_string(filepath), "r");
 	if !file_handle {
-		log_error("File does not exist or could not be opened: %", filepath);
+		give_error(errors, "File does not exist or could not be opened: %", filepath);
 		ok = false;
 		return false;
 	}
@@ -178,7 +184,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 	};
 
 	defer if !ok {
-		log("closed\n");
+		give_log(errors, "'%' closed because there was an error.", filepath);
 		libc.fclose(file_handle);
 	}
 
@@ -196,7 +202,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 	}
 
 	if !new_plugin {
-		log_error("Could not recognize file");
+		give_error(errors, "Could not load file '%' with any available plugin.", filepath);
 		ok = false;
 		return false;
 	}
@@ -214,7 +220,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 			if valid_ascii(found_mn) foun = found_mn;
 			else foun = tprint("%", cast([]u8, found_mn));
 
-			log_error("Mismatched magic number. The file type '%' expected the magic number '%', but got '%'.", new_plugin.name_filetype, expe, foun);
+			give_error(errors, "Mismatched magic number. The file type '%' expected the magic number '%', but got '%'.", new_plugin.name_filetype, expe, foun);
 			// Also do the whole magic number checking here so that the user can choose
 			ok = false;
 			return false;
@@ -224,7 +230,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 	pre_info_err := new_plugin.pre_render(*pre_info);
 	libc.fseek(file_handle, 0, libc.SEEK_SET);
 	if pre_info_err {
-		log_error("% file metadata reading error: %", new_plugin.name_filetype, pre_info_err);
+		give_error(errors, "% file metadata reading error: %", new_plugin.name_filetype, pre_info_err);
 		ok = false;
 		return false;
 	}
@@ -271,6 +277,14 @@ isolate_name :: (path: string) -> string {
 		}
 	}
 	return path;
+}
+
+give_log :: (errors: *[..]Error, message: string, args: ..Any) {
+	array_add(errors, .{.LOG, sprint(message, ..args), .[]});
+}
+
+give_error :: (errors: *[..]Error, message: string, args: ..Any) {
+	array_add(errors, .{.ERROR, sprint(message, ..args), .["ok"]});
 }
 
 libc :: #import "POSIX";
