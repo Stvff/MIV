@@ -48,14 +48,12 @@ Cleanup_Procedure :: #type (pre_info: *Pre_Rendering_Info) -> string #c_call;
 
 register_dynlib :: (dynlib_name: string, newly_imported: bool) -> bool {
 	exe_path := path_strip_filename(system.get_path_of_running_executable());
-	new_dynlib_path := tprint("%plugins/%", exe_path, path_filename(dynlib_name));
+	new_dynlib_path := tprint("%plugins/%", exe_path, isolate_name(dynlib_name));
 	if newly_imported {
 		file_move(dynlib_name, new_dynlib_path);
 	}
 
 	dynlib_cname := temp_c_string(new_dynlib_path);
-
-	log("%", new_dynlib_path);
 
 	handle := libc.dlopen(dynlib_cname, libc.RTLD_NOW);
 	if !handle {
@@ -102,7 +100,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool) -> bool {
 		libc.dlerror();
 
 		registration := Registration_Entry.{
-			plugin_filename = path_filename(dynlib_name),
+			plugin_filename = isolate_name(dynlib_name),
 			handle = handle,
 			provided = p,
 			pre_render = pre_render_handle,
@@ -110,7 +108,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool) -> bool {
 			cleanup = cleanup_handle,
 		};
 		array_add(*all_registrations, registration);
-		print("%\n", registration);
+		log("%\n", registration);
 
 		if amount <= 0 break;
 	}
@@ -137,7 +135,6 @@ cleanup_registrations :: () {
 		if !array_find(registered_names, it.plugin_filename) {
 			array_add(*registered_names, it.plugin_filename);
 			print(*sb, "%\n", it.plugin_filename);
-			log("%", it.plugin_filename);
 		}
 		if !array_find(closed_handles, it.handle) {
 			libc.dlclose(it.handle);
@@ -181,7 +178,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) ->
 	};
 
 	defer if !ok {
-		print("closed\n");
+		log("closed\n");
 		libc.fclose(file_handle);
 	}
 
@@ -242,6 +239,38 @@ valid_ascii :: (str: string) -> bool {
 		if #char "~" < it || it < #char " " return false;
 	}
 	return true;
+}
+
+get_extension :: (path: string) -> string {
+	ext: string;
+	ext.count = 0;
+	ext.data = path.data + path.count;
+	while ext.count != path.count {
+		ext.count += 1;
+		ext.data -= 1;
+		if ext[0] == "." {
+			ext.count -= 1;
+			ext.data += 1;
+			return ext;
+		}
+	}
+	return "";
+}
+
+isolate_name :: (path: string) -> string {
+	ext: string;
+	ext.count = 0;
+	ext.data = path.data + path.count;
+	while ext.count != path.count {
+		ext.count += 1;
+		ext.data -= 1;
+		if ext[0] == "/" {
+			ext.count -= 1;
+			ext.data += 1;
+			return ext;
+		}
+	}
+	return path;
 }
 
 libc :: #import "POSIX";

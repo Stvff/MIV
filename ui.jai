@@ -118,21 +118,23 @@ panel_subdivide :: (mother: *UI_Panel, n: int, direction: enum {HORIZONTAL; VERT
 	return panels;
 }
 
-panel_button :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool) -> bool {
+pointer_is_in_panel :: (p: *UI_Panel, pointer_position: [2]int) -> bool {
 	horizontal := p.pos[0] < pointer_position[0] && pointer_position[0] < p.pos[0] + p.size[0];
 	vertical := p.pos[1] < pointer_position[1] && pointer_position[1] < p.pos[1] + p.size[1];
+	return vertical && horizontal;
+}
 
-	if vertical && horizontal {
+panel_button :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool) -> bool {
+	in_panel := pointer_is_in_panel(p, pointer_position);
+
+	if in_panel {
 		tc := p.colors;
 		p.colors.body = tc.hover;
 		panel_recolor(p, p.colors);
 		p.colors = tc;
-		// Simp.set_render_target(*p.target);
-		// body := float_rgb(p.colors.hover);
-		// Simp.clear_render_target(body.x, body.y, body.z, body.w);
 	}
 
-	return vertical && horizontal && pressed;
+	return in_panel && pressed;
 }
 
 panel_text :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, align_h: Text_Align_Hor, align_v: Text_Align_Ver, split_on_h := false, split_on_v := false) {
@@ -170,6 +172,8 @@ panel_recolor :: (p: *UI_Panel, colors: Palette) {
 	Simp.clear_render_target(fcolors.x, fcolors.y, fcolors.z, fcolors.w);
 
 	/* drawing the borders */
+	border_size := 1;
+
 	Simp.immediate_begin();
 	Simp.set_shader_for_color();
 	border := float_rgb(p.colors.border);
@@ -177,11 +181,11 @@ panel_recolor :: (p: *UI_Panel, colors: Palette) {
 	bl := Vector2.{0, 0}; /* because I'm using the texture rendering approach, the offset from the bottomleft is 0 */
 	tr := bl + Vector2.{xx p.size[0], xx p.size[1]};
 	/* left and bottom */
-	Simp.immediate_quad(bl.x, bl.y, bl.x+2, tr.y, border);
-	Simp.immediate_quad(bl.x, bl.y, tr.x, bl.y+2, border);
+	Simp.immediate_quad(bl.x, bl.y, bl.x+border_size, tr.y, border);
+	Simp.immediate_quad(bl.x, bl.y, tr.x, bl.y+border_size, border);
 	/* top and right */
-	Simp.immediate_quad(bl.x, tr.y-2, tr.x, tr.y, border);
-	Simp.immediate_quad(tr.x-2, bl.y, tr.x, tr.y, border);
+	Simp.immediate_quad(bl.x, tr.y-border_size, tr.x, tr.y, border);
+	Simp.immediate_quad(tr.x-border_size, bl.y, tr.x, tr.y, border);
 
 	//print("colors: %\n", colors);
 	//Simp.immediate_flush();

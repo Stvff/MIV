@@ -1,8 +1,11 @@
 ## Deventer
+- [x] read files from the command line
 - [_] zooming on mouse
-	- [_] refactor/reorder of input, drawing, rendering, filehandling
+	- [x] refactor/reorder of input, drawing, rendering, filehandling
 - [x] Implement UI
+	- [_] user prompt popups
 	- [_] logs onscreen instead of in terminal
+		- [_] intelligent textflows
 	- [x] option buttons
 		- [_] option sliders/textfield
 - [x] registration file for plugins (always lives next to the exe, not cwd)
