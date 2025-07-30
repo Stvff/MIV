@@ -33,7 +33,7 @@ Provided_Registration_Entry :: struct {
 }
 
 Registration_Entry :: struct {
-	filepath: string;
+	plugin_filename: string;
 	handle: *void;
 	using provided: Provided_Registration_Entry;
 	pre_render: Pre_Rendering_Procedure;
@@ -46,8 +46,16 @@ Pre_Rendering_Procedure :: #type (info: *Pre_Rendering_Info) -> string #c_call;
 Rendering_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> string #c_call;
 Cleanup_Procedure :: #type (pre_info: *Pre_Rendering_Info) -> string #c_call;
 
-register_dynlib :: (dynlib_name: string) -> bool {
-	dynlib_cname := temp_c_string(dynlib_name);
+register_dynlib :: (dynlib_name: string, newly_imported: bool) -> bool {
+	exe_path := path_strip_filename(system.get_path_of_running_executable());
+	new_dynlib_path := tprint("%plugins/%", exe_path, path_filename(dynlib_name));
+	if newly_imported {
+		file_move(dynlib_name, new_dynlib_path);
+	}
+
+	dynlib_cname := temp_c_string(new_dynlib_path);
+
+	log("%", new_dynlib_path);
 
 	handle := libc.dlopen(dynlib_cname, libc.RTLD_NOW);
 	if !handle {
@@ -94,7 +102,7 @@ register_dynlib :: (dynlib_name: string) -> bool {
 		libc.dlerror();
 
 		registration := Registration_Entry.{
-			filepath = dynlib_name,
+			plugin_filename = path_filename(dynlib_name),
 			handle = handle,
 			provided = p,
 			pre_render = pre_render_handle,
@@ -109,14 +117,37 @@ register_dynlib :: (dynlib_name: string) -> bool {
 	return success;
 }
 
+load_registration_file :: () {
+	path := path_strip_filename(system.get_path_of_running_executable());
+	make_directory_if_it_does_not_exist(tprint("%plugins/", path));
+	regfile_path := tprint("%plugins/registrations.miv", path);
+	regfile, exists := read_entire_file(regfile_path, log_errors = false);
+	if !exists return;
+
+	plugin_filenames := split(regfile, cast(u8, #char "\n"));
+	for plugin_filenames if it.count != 0 register_dynlib(it, false);
+}
+
 cleanup_registrations :: () {
+	sb: String_Builder;
+
 	closed_handles: [..]*void;
+	registered_names: [..]string;
 	for all_registrations {
+		if !array_find(registered_names, it.plugin_filename) {
+			array_add(*registered_names, it.plugin_filename);
+			print(*sb, "%\n", it.plugin_filename);
+			log("%", it.plugin_filename);
+		}
 		if !array_find(closed_handles, it.handle) {
 			libc.dlclose(it.handle);
+			array_add(*closed_handles, it.handle);
 		}
-		array_add(*closed_handles, it.handle);
 	}
+
+	path := path_strip_filename(system.get_path_of_running_executable());
+	regfile_path := tprint("%plugins/registrations.miv", path);
+	write_entire_file(regfile_path, builder_to_string(*sb));
 }
 
 get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context) -> bool {
@@ -214,3 +245,4 @@ valid_ascii :: (str: string) -> bool {
 }
 
 libc :: #import "POSIX";
+system :: #import "System";

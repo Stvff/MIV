@@ -26,9 +26,7 @@ bg_palette :: Palette.{
 window_size: [2]int;
 
 main :: () {
-//	load_registration_file();
-//	register_dynlib("./meow_c.so");
-
+	load_registration_file();
 	defer cleanup_registrations();
 
 	/* UI definitions */
@@ -101,16 +99,7 @@ main :: () {
 			if it.window == os_window {
 				reset_panel(*canvas, .[it.width, it.height], palette);
 				window_size = canvas.size;
-				// window_width  = it.width;
-				// window_height = it.height;
-
-				/* if I ever dynamically adjust bar height, I would do it here */
-				// bar_height = fontsize*2;
-				// font_pixel_height = bar_height/2;
-				// main_font = Simp.get_font_at_size(FONT_DATA, font_pixel_height);
-
-				// canvas_width = window_width;
-				// canvas_height = window_height - bar_height;
+				/* if I ever dynamically adjust bar height, I would do it here (see how I did it in git) */
 
 				GL.glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(os_window).specific.glx_window, 0);
 			}
@@ -165,7 +154,7 @@ main :: () {
 		for files_to_open {
 			print("%\n", it);
 			ext := get_extension(it);
-			if ext == "so" register_dynlib(it);
+			if ext == "so" register_dynlib(it, true);
 			else {
 				old_name := img_ctx.pre_info.name;
 				old_handle := img_ctx.pre_info.fileptr;

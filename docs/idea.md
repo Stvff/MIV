@@ -1,10 +1,15 @@
 ## Deventer
 - [_] zooming on mouse
+	- [_] refactor/reorder of input, drawing, rendering, filehandling
 - [x] Implement UI
 	- [_] logs onscreen instead of in terminal
 	- [x] option buttons
 		- [_] option sliders/textfield
-- [_] registration file for plugins (always lives next to the exe, not cwd)
+- [x] registration file for plugins (always lives next to the exe, not cwd)
+	- [x] parse regfile
+	- [x] write regfile on MIV close
+	- [x] move plugin files to the plugins folder on import
+	- [x] create plugin directory if it doesn't exist (on program startup)
 - [_] next/prev in the current directory
 	- [_] some starts on preloading (mostly through the user importing more than 1 file at once)
 
