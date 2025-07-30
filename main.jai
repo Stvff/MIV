@@ -18,7 +18,7 @@ palette :: Palette.{
 
 bg_palette :: Palette.{
 	body = .[30, 25, 30, 255],
-	border = .[30, 25, 30, 255],
+	border = .[32, 25, 30, 255],
 	text = .[30, 25, 30, 255],
 	hover = .[30, 25, 30, 255],
 };

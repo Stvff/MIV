@@ -173,7 +173,8 @@ panel_recolor :: (p: *UI_Panel, colors: Palette) {
 	Simp.immediate_begin();
 	Simp.set_shader_for_color();
 	border := float_rgb(p.colors.border);
-	bl := Vector2.{xx p.pos[0], xx p.pos[1]};
+	// bl := Vector2.{xx p.pos[0], xx p.pos[1]};
+	bl := Vector2.{0, 0}; /* because I'm using the texture rendering approach, the offset from the bottomleft is 0 */
 	tr := bl + Vector2.{xx p.size[0], xx p.size[1]};
 	/* left and bottom */
 	Simp.immediate_quad(bl.x, bl.y, bl.x+2, tr.y, border);
