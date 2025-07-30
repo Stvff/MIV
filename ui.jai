@@ -10,7 +10,7 @@ UI_Panel :: struct {
 	pos: [2]int;
 //	has_margin: bool;
 	colors: Palette;
-	target: Simp.Texture;
+//	target: Simp.Texture;
 }
 
 Palette :: struct {
@@ -23,32 +23,15 @@ Creation_Side :: enum {TOP; BOTTOM; LEFT; RIGHT;}
 Text_Align_Ver :: enum {TOP; MIDDLE; BOTTOM;}
 Text_Align_Hor :: enum {LEFT; MIDDLE; RIGHT;}
 
-/* does not also panel_recolor */
-create_panel :: (size: [2]int, colors: Palette) -> UI_Panel {
-	p: UI_Panel;
-	p.size = size;
-	p.colors = colors;
-	p.target = Simp.texture_create_render_target(xx size[0], xx size[1], .RGBA8);
-	return p;
-}
+clipping_texture: Simp.Texture;
 
-/* does not also panel_recolor */
-reset_panel :: (p: *UI_Panel, size: [2]int, colors: Palette) {
-	Simp.texture_destroy(*p.target);
-	p.* = .{};
-	p.size = size;
-	p.colors = colors;
-	p.target = Simp.texture_create_render_target(xx size[0], xx size[1], .RGBA8);
-}
-
-panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side, inheret := true, colors := Palette.{}) -> UI_Panel {
+panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side, already_draw := true) -> UI_Panel {
 	r := ratio;
 	r.den = max(1, r.den);
 	r.num = clamp(abs(r.num), 1, r.den);
 
 	other := mother.*;
-	if inheret then other.colors = mother.colors;
-	else other.colors = colors;
+	other.colors = mother.colors;
 
 	if #complete side == {
 	case .TOP;
@@ -73,17 +56,15 @@ panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side, inheret :=
 		mother.size[0] -= other.size[0];
 	}
 
-	Simp.texture_destroy(*mother.target);
+	if already_draw {
+		panel_draw(mother);
+		panel_draw(*other);
+	}
 
-	mother.target = Simp.texture_create_render_target(xx mother.size[0], xx mother.size[1], .RGBA8);
-	panel_recolor(mother, mother.colors);
-
-	other.target = Simp.texture_create_render_target(xx other.size[0], xx other.size[1], .RGBA8);
-	panel_recolor(*other, other.colors);
 	return other;
 }
 
-panel_subdivide :: (mother: *UI_Panel, n: int, direction: enum {HORIZONTAL; VERTICAL;}, inheret := true, colors := Palette.{}) -> []UI_Panel {
+panel_subdivide :: (mother: *UI_Panel, n: int, direction: enum {HORIZONTAL; VERTICAL;}, already_draw := true) -> []UI_Panel {
 	panels: []UI_Panel; {
 		push_allocator(temp);
 		panels = NewArray(n, UI_Panel);
@@ -101,8 +82,6 @@ panel_subdivide :: (mother: *UI_Panel, n: int, direction: enum {HORIZONTAL; VERT
 
 	for * panels {
 		it.* = templ;
-		if inheret then it.colors = mother.colors;
-		else it.colors = colors;
 
 		if direction == .HORIZONTAL {
 			it.pos[0] += it_index*stride;
@@ -110,11 +89,9 @@ panel_subdivide :: (mother: *UI_Panel, n: int, direction: enum {HORIZONTAL; VERT
 			it.pos[1] += it_index*stride;
 		}
 
-		it.target = Simp.texture_create_render_target(xx it.size[0], xx it.size[1], .RGBA8);
-		panel_recolor(it, it.colors);
+		if already_draw panel_draw(it);
 	}
 
-	Simp.texture_destroy(*mother.target);
 	return panels;
 }
 
@@ -130,7 +107,7 @@ panel_button :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool) -> bool 
 	if in_panel {
 		tc := p.colors;
 		p.colors.body = tc.hover;
-		panel_recolor(p, p.colors);
+		panel_draw(p);
 		p.colors = tc;
 	}
 
@@ -160,26 +137,33 @@ panel_text :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, align_
 		y_pos = padding*3/4;
 	}
 
-	Simp.set_render_target(*text_panel.target);
+	/* All this commented out text _does_ work, but the texture looks all wrong, and also it's pretty slow again */
+	// Simp.texture_destroy(*clipping_texture);
+	// clipping_texture = Simp.texture_create_render_target(xx mother.size[0], xx mother.size[1], .RGBA8);
+	// Simp.set_render_target(*clipping_texture);
 	Simp.set_shader_for_text();
-	Simp.draw_prepared_text(font, x_pos, y_pos, float_rgb(text_panel.colors.text));
+	Simp.draw_prepared_text(font, x_pos + xx mother.pos[0], y_pos + xx mother.pos[1], float_rgb(text_panel.colors.text));
+	// Simp.immediate_flush();
+	// Simp.set_render_target(os_window);
+	// Simp.set_shader_for_images(*clipping_texture);
+	// bl := Vector2.{xx mother.pos[0], xx mother.pos[1]};
+	// tr := bl + Vector2.{xx mother.size[0], xx mother.size[1]};
+	// Simp.immediate_quad(bl.x, bl.y, tr.x, tr.y, .{1, 1, 1, 1});
+	// Simp.immediate_flush();
 }
 
-panel_recolor :: (p: *UI_Panel, colors: Palette) {
-	p.colors = colors;
-	Simp.set_render_target(*p.target);
-	fcolors := float_rgb(p.colors.body);
-	Simp.clear_render_target(fcolors.x, fcolors.y, fcolors.z, fcolors.w);
+panel_draw :: (p: *UI_Panel) {
+	Simp.immediate_begin();
+	Simp.set_shader_for_color();
+
+	bl := Vector2.{xx p.pos[0], xx p.pos[1]};
+	tr := bl + Vector2.{xx p.size[0], xx p.size[1]};
+	Simp.immediate_quad(bl.x, bl.y, tr.x, tr.y, float_rgb(p.colors.body));
 
 	/* drawing the borders */
 	border_size := 1;
 
-	Simp.immediate_begin();
-	Simp.set_shader_for_color();
 	border := float_rgb(p.colors.border);
-	// bl := Vector2.{xx p.pos[0], xx p.pos[1]};
-	bl := Vector2.{0, 0}; /* because I'm using the texture rendering approach, the offset from the bottomleft is 0 */
-	tr := bl + Vector2.{xx p.size[0], xx p.size[1]};
 	/* left and bottom */
 	Simp.immediate_quad(bl.x, bl.y, bl.x+border_size, tr.y, border);
 	Simp.immediate_quad(bl.x, bl.y, tr.x, bl.y+border_size, border);
@@ -187,25 +171,7 @@ panel_recolor :: (p: *UI_Panel, colors: Palette) {
 	Simp.immediate_quad(bl.x, tr.y-border_size, tr.x, tr.y, border);
 	Simp.immediate_quad(tr.x-border_size, bl.y, tr.x, tr.y, border);
 
-	//print("colors: %\n", colors);
-	//Simp.immediate_flush();
-}
-
-draw_panel :: (window: X11.Window, p: *UI_Panel, destroy := true) {
-	Simp.set_render_target(window);
-	Simp.set_shader_for_images(*p.target);
-	Simp.immediate_begin();
-
-//	print("size: %, pos: %\n", p.size, p.pos);
-
-	upc := int.[p.pos[0] + p.size[0], p.pos[1] + p.size[1]];
-	Simp.immediate_quad(cast(float, p.pos[0]), cast(float, p.pos[1]), cast(float, upc[0]), cast(float, upc[1]), .{1, 1, 1, 1});
-
-	if destroy {
-		Simp.immediate_flush();
-		Simp.texture_destroy(*p.target);
-		p.* = .{};
-	}
+	Simp.immediate_flush();
 }
 
 float_rgb :: (rgb: [4]u8) -> Vector4 {

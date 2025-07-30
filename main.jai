@@ -48,6 +48,7 @@ bg_palette :: Palette.{
 };
 
 window_size: [2]int;
+os_window: X11.Window;
 
 main :: () {
 	load_registration_file();
@@ -55,9 +56,6 @@ main :: () {
 
 	/* UI definitions */
 	fontsize := 20;
-
-	os_window: X11.Window;
-	canvas: UI_Panel;
 	{
 		window_width := 1400;
 		window_height := 800;
@@ -65,15 +63,13 @@ main :: () {
 		Simp.prepare_window(os_window, 4);
 		dnd_typelist := string.["url/url", "text/uri-list", "text/plain", "application/octet-stream"];
 		X11.enable_drag_and_drop(os_window, dnd_typelist);
-
-		canvas = create_panel(.[window_width, window_height], palette);
+		window_size = .[window_width, window_height];
 	}
-	window_size = canvas.size;
-
-	// Simp.set_render_target(window);
+	Simp.set_render_target(os_window);
 	bar_height := fontsize*2;
-	// canvas_width := window_width;
-	// canvas_height := window_height - bar_height;
+	clipping_texture = Simp.texture_create_render_target(10, 10, .RGBA8);
+
+	inp: Input_State;
 
 	/* Font loading */
 	font_pixel_height := bar_height/2;
@@ -98,10 +94,8 @@ main :: () {
 	}
 	gpu_texture: Simp.Texture;
 
-	inp: Input_State;
-
 	/* Timing */
-	target_frame_time: float64 = 1.0/120.0;
+	target_frame_time: float64 = 1.0/12000.0;
 	last_1s_time := current_time_monotonic();
 	prev_time := last_1s_time;
 
@@ -128,8 +122,7 @@ main :: () {
 		for Input.get_window_resizes() {
 			Simp.update_window(it.window);
 			if it.window == os_window {
-				reset_panel(*canvas, .[it.width, it.height], palette);
-				window_size = canvas.size;
+				window_size = .[it.width, it.height];
 				/* if I ever dynamically adjust bar height, I would do it here (see how I did it in git) */
 				GL.glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(os_window).specific.glx_window, 0);
 			}
@@ -228,20 +221,18 @@ main :: () {
 
 		{/* Drawing time */
 			/* First we define the broad outline of panels that we'll see (the ones that make the canvas smaller) */
-			reset_panel(*canvas, window_size, bg_palette);
-			defer draw_panel(os_window, *canvas, false);
+			canvas := UI_Panel.{
+				size = window_size,
+				colors = palette,
+			};
 
-			top_bar := panel_split(*canvas, .{bar_height, canvas.size[1]}, .TOP, false, palette);
-			defer draw_panel(os_window, *top_bar);
-			bottom_bar := panel_split(*canvas, .{bar_height - 4, canvas.size[1]}, .BOTTOM, false, palette);
-			defer draw_panel(os_window, *bottom_bar);
-
-			/* This needs to run after both an input change and a window change. */
-			/* I could have a seperate `if rescale` block or whatever, but for now this is simplest */
-			img_ctx.scale = clamp(img_ctx.scale, 1/cast(float, max(img_ctx.pre_info.width, img_ctx.pre_info.height)), cast(float, max(canvas.size[0], canvas.size[1])));
+			top_bar := panel_split(*canvas, .{bar_height, canvas.size[1]}, .TOP, false);
+			bottom_bar := panel_split(*canvas, .{bar_height - 4, canvas.size[1]}, .BOTTOM, false);
 
 			/* Image drawing */
 			if img_ctx.draw {
+				canvas.colors = bg_palette;
+				panel_draw(*canvas);
 
 				/* we have to process our inputs (not using the keyboard yet) */
 				if pointer_is_in_panel(*canvas, inp.ipointer) {
@@ -262,6 +253,7 @@ main :: () {
 						img_ctx.pre_pan_offset = img_ctx.offset;
 					}
 				}
+				img_ctx.scale = clamp(img_ctx.scale, 1/cast(float, max(img_ctx.pre_info.width, img_ctx.pre_info.height)), cast(float, max(canvas.size[0], canvas.size[1])));
 
 				screen_center := Vector2.{ cast(float, canvas.size[0])/2, cast(float, canvas.size[1])/2 };
 				image_center := Vector2.{ cast(float, img_ctx.pre_info.width)/2, cast(float, img_ctx.pre_info.height)/2 };
@@ -302,13 +294,16 @@ main :: () {
 					it.* += img_ctx.offset;
 					it.* *= img_ctx.scale;
 					it.* += screen_center;
+
+					it.* += .{xx canvas.pos[0], xx canvas.pos[1]};
 				}
 
-				Simp.set_render_target(*canvas.target);
 				Simp.set_shader_for_images(*gpu_texture);
 				Simp.immediate_begin();
 				Simp.immediate_quad(image_bounds[0], image_bounds[1], image_bounds[2], image_bounds[3]);
 			}
+			panel_draw(*top_bar);
+			panel_draw(*bottom_bar);
 
 			/* UI */
 			/* We have to reserve some space for buttons */
@@ -324,8 +319,6 @@ main :: () {
 				fit_button_text :: string.["1:1", "W", "H", "B"];
 				panel_text(*it, main_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
-
-			defer for fit_buttons draw_panel(os_window, *it);
 
 			text := isolate_name(img_ctx.pre_info.name);
 			panel_text(*top_bar, main_font, text, .RIGHT, .MIDDLE);
