@@ -193,7 +193,6 @@ main :: () {
 					if old_handle libc.fclose(old_handle);
 
 					/* retrieve previous offsets etc if available, for now we just reset */
-					img_ctx.offset = .{0, 0};
 					img_ctx.auto_fit = true;
 				}
 				print("%\n", img_ctx);
@@ -243,6 +242,7 @@ main :: () {
 
 			/* Image drawing */
 			if img_ctx.draw {
+
 				/* we have to process our inputs (not using the keyboard yet) */
 				if pointer_is_in_panel(*canvas, inp.ipointer) {
 					if inp.scroll_delta {
@@ -253,12 +253,11 @@ main :: () {
 					}
 					if inp.middle_button {
 						img_ctx.auto_fit = true;
-						img_ctx.offset = .{};
 					}
 
 					if inp.left_button {
 						img_ctx.auto_fit = false;
-						img_ctx.offset = img_ctx.pre_pan_offset + inp.fpointer - inp.pointer_when_pressed;
+						img_ctx.offset = img_ctx.pre_pan_offset + (inp.fpointer - inp.pointer_when_pressed)/img_ctx.scale;
 					} else {
 						img_ctx.pre_pan_offset = img_ctx.offset;
 					}
@@ -275,15 +274,19 @@ main :: () {
 					else now_fit = .FIT_WIDTH;
 				}
 
-				if img_ctx.auto_fit if now_fit == {
-				case .ONE_TO_ONE;
-					img_ctx.scale = 1;
-				case .FIT_WIDTH;
-					img_ctx.scale = screen_center.x/image_center.x;
-				case .FIT_HEIGHT;
-					img_ctx.scale = screen_center.y/image_center.y;
-				case .FIT_BEST; /* should be unreachable */
+				if img_ctx.auto_fit {
+					if now_fit == {
+					case .ONE_TO_ONE;
+						img_ctx.scale = 1;
+					case .FIT_WIDTH;
+						img_ctx.scale = screen_center.x/image_center.x;
+					case .FIT_HEIGHT;
+						img_ctx.scale = screen_center.y/image_center.y;
+					case .FIT_BEST; /* should be unreachable */
+					}
+					img_ctx.offset = .{};
 				}
+
 				image_bounds := Vector2.[
 					-image_center, .{image_center.x, -image_center.y}, image_center, .{-image_center.x, image_center.y}
 				];
@@ -294,8 +297,12 @@ main :: () {
 					cos(rad), -sin(rad),
 					sin(rad), cos(rad)
 				};
-				for * image_bounds { it.* = rot_mat*it.*; }
-				for * image_bounds { it.* *= img_ctx.scale; it.* += screen_center + img_ctx.offset; }
+				for * image_bounds {
+					it.* = rot_mat*it.*;
+					it.* += img_ctx.offset;
+					it.* *= img_ctx.scale;
+					it.* += screen_center;
+				}
 
 				Simp.set_render_target(*canvas.target);
 				Simp.set_shader_for_images(*gpu_texture);

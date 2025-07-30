@@ -1,6 +1,6 @@
 # MIV
-This project is somewhat of an experiment. As with most projects, I am not confident it will yield something generally useful, but it is definitely made to eventually be useful.
-![Screenshot of the image viewer, showing the first level of sokoworm.](/docs/screenshot.png "Screenshot of the image viewer, showing the first level of sokoworm.")\
+This project is somewhat of an experiment. As with most projects, I am not confident it will yield something generally useful, but it is definitely made to be eventually useful.
+![Screenshot of the image viewer, showing the first level of sokoworm.](/docs/screenshot.png "Screenshot of the image viewer, showing the first level of sokoworm.")
 
 ## Context
 Recently, while making [Sokoworm](https://stvff.github.io/sokoworm.html#top), which uses [PPM image files](https://en.wikipedia.org/wiki/Netpbm#File_formats)
