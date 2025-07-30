@@ -243,13 +243,11 @@ main :: () {
 
 			/* Image drawing */
 			if img_ctx.draw {
-				/* we have to process our inputs */
+				/* we have to process our inputs (not using the keyboard yet) */
 				if pointer_is_in_panel(*canvas, inp.ipointer) {
 					if inp.scroll_delta {
 						img_ctx.auto_fit = false;
-						delta := inp.scroll_delta;
-						if inp.shifted delta /= 200;
-						else delta /= 10;
+						delta := inp.scroll_delta / ifx inp.shifted then 200 else 10;
 						if delta < 0 img_ctx.scale /= 1 + abs(delta);
 						else img_ctx.scale *= 1 + abs(delta);
 					}
@@ -268,11 +266,11 @@ main :: () {
 
 				screen_center := Vector2.{ cast(float, canvas.size[0])/2, cast(float, canvas.size[1])/2 };
 				image_center := Vector2.{ cast(float, img_ctx.pre_info.width)/2, cast(float, img_ctx.pre_info.height)/2 };
-				screen_woh := screen_center.x/screen_center.y;
-				image_woh := image_center.x/image_center.y;
 
 				now_fit := img_ctx.fit;
 				if now_fit == .FIT_BEST {
+					screen_woh := screen_center.x/screen_center.y;
+					image_woh := image_center.x/image_center.y;
 					if screen_woh > image_woh now_fit = .FIT_HEIGHT;
 					else now_fit = .FIT_WIDTH;
 				}
@@ -290,6 +288,7 @@ main :: () {
 					-image_center, .{image_center.x, -image_center.y}, image_center, .{-image_center.x, image_center.y}
 				];
 
+				/* maybe shift arrow left right lolol */
 				rad := 2*PI*img_ctx.angle/360;
 				rot_mat := Matrix2.{
 					cos(rad), -sin(rad),

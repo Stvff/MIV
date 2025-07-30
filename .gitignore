@@ -1,7 +1,4 @@
 MIV
 .build/*
+test_pics/*
 *.so
-*.ppm
-*.pfm
-*.png
-*.jpeg
