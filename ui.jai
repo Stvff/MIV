@@ -8,9 +8,8 @@
 UI_Panel :: struct {
 	size: [2]int;
 	pos: [2]int;
-//	has_margin: bool;
+	border_size: int;
 	colors: Palette;
-//	target: Simp.Texture;
 }
 
 Palette :: struct {
@@ -114,7 +113,30 @@ panel_button :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool) -> bool 
 	return in_panel && pressed;
 }
 
-panel_text :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, align_h: Text_Align_Hor, align_v: Text_Align_Ver, split_on_h := false, split_on_v := false) {
+panel_text_split :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, side: enum {TOP; BOTTOM; LEFT; RIGHT;}) -> UI_Panel {
+	text_width := Simp.prepare_text(font, text);
+	padding := font.character_height;
+	text_panel := mother.*;
+
+	if #complete side == {
+	case .TOP;
+		text_panel = panel_split(mother, .{padding*5/4, mother.size[0]}, .TOP, true);
+		panel_text(*text_panel, font, text, .MIDDLE, .MIDDLE);
+	case .BOTTOM;
+		text_panel = panel_split(mother, .{padding*5/4, mother.size[0]}, .BOTTOM, true);
+		panel_text(*text_panel, font, text, .MIDDLE, .MIDDLE);
+	case .LEFT;
+		text_panel = panel_split(mother, .{text_width + padding, mother.size[0]}, .LEFT, true);
+		panel_text(*text_panel, font, text, .MIDDLE, .MIDDLE);
+	case .RIGHT;
+		text_panel = panel_split(mother, .{text_width + padding, mother.size[0]}, .RIGHT, true);
+		panel_text(*text_panel, font, text, .MIDDLE, .MIDDLE);
+	}
+
+	return text_panel;
+}
+
+panel_text :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, align_h: Text_Align_Hor, align_v: Text_Align_Ver) {
 	text_width := Simp.prepare_text(font, text);
 	padding := font.character_height;
 	x_pos, y_pos: int;
@@ -138,6 +160,7 @@ panel_text :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, align_
 	}
 
 	/* All this commented out text _does_ work, but the texture looks all wrong, and also it's pretty slow again */
+	/* theoretically text could be clipped with two textures, and that needs minimal resizes and similar */
 	// Simp.texture_destroy(*clipping_texture);
 	// clipping_texture = Simp.texture_create_render_target(xx mother.size[0], xx mother.size[1], .RGBA8);
 	// Simp.set_render_target(*clipping_texture);
@@ -161,15 +184,14 @@ panel_draw :: (p: *UI_Panel) {
 	Simp.immediate_quad(bl.x, bl.y, tr.x, tr.y, float_rgb(p.colors.body));
 
 	/* drawing the borders */
-	border_size := 1;
 
 	border := float_rgb(p.colors.border);
 	/* left and bottom */
-	Simp.immediate_quad(bl.x, bl.y, bl.x+border_size, tr.y, border);
-	Simp.immediate_quad(bl.x, bl.y, tr.x, bl.y+border_size, border);
+	Simp.immediate_quad(bl.x, bl.y, bl.x+p.border_size, tr.y, border);
+	Simp.immediate_quad(bl.x, bl.y, tr.x, bl.y+p.border_size, border);
 	/* top and right */
-	Simp.immediate_quad(bl.x, tr.y-border_size, tr.x, tr.y, border);
-	Simp.immediate_quad(tr.x-border_size, bl.y, tr.x, tr.y, border);
+	Simp.immediate_quad(bl.x, tr.y-p.border_size, tr.x, tr.y, border);
+	Simp.immediate_quad(tr.x-p.border_size, bl.y, tr.x, tr.y, border);
 
 	Simp.immediate_flush();
 }

@@ -95,6 +95,7 @@ main :: () {
 	};
 
 	/* window specific image context */
+	read_next_file_in_queue := true;
 	files_to_open: [..]string;
 	{
 		cli_args := get_command_line_arguments();
@@ -135,6 +136,7 @@ main :: () {
 				window_size = .[it.width, it.height];
 				/* if I ever dynamically adjust bar height, I would do it here (see how I did it in git) */
 				GL.glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(os_window).specific.glx_window, 0);
+				img_ctx.auto_fit = true;
 			}
 		}
 
@@ -184,11 +186,14 @@ main :: () {
 		inp.fpointer = get_pointer_position();
 		inp.ipointer = .[xx inp.fpointer.x, xx inp.fpointer.y];
 		/* Files added via command line or drop-in */
-		for files_to_open {
+		loading_time := current_time_monotonic();
+		if read_next_file_in_queue for files_to_open {
 			give_log(*errors, "%", it);
 			ext := get_extension(it);
-			if ext == "so" register_dynlib(it, true, *errors);
-			else {
+			if ext == "so" {
+				register_dynlib(it, true, *errors);
+				array_unordered_remove_by_index(*files_to_open, it_index);
+			} else if read_next_file_in_queue {
 				old_name := img_ctx.pre_info.name;
 				old_handle := img_ctx.pre_info.fileptr;
 				img_ctx.render = get_loading(copy_string(it), ext, *img_ctx, *errors);
@@ -198,10 +203,13 @@ main :: () {
 
 					/* retrieve previous offsets etc if available, for now we just reset */
 					img_ctx.auto_fit = true;
+
+					/* Also make the list of files that exist in this directory for us to scroll through */
+					array_unordered_remove_by_index(*files_to_open, it_index);
+					// read_next_file_in_queue = false;
 				}
 				give_log(*errors, "%", img_ctx);
 			}
-			array_unordered_remove_by_index(*files_to_open, 0);
 		}
 		img_ctx.draw = true;
 
@@ -228,6 +236,9 @@ main :: () {
 				Simp.texture_load_from_bitmap(*gpu_texture, *bitmap);
 			}
 			img_ctx.render = false;
+
+			loading_time = current_time_monotonic() - loading_time;
+			give_log(*errors, "Loading time: %, associated fps if we did nothing but this: %", to_float64_seconds(loading_time), 1/to_float64_seconds(loading_time));
 		}
 
 		{/* Drawing time */
@@ -235,6 +246,7 @@ main :: () {
 			canvas := UI_Panel.{
 				size = window_size,
 				colors = palette,
+				border_size = 1,
 			};
 
 			top_bar := panel_split(*canvas, .{bar_height, canvas.size[1]}, .TOP, false);
@@ -315,12 +327,19 @@ main :: () {
 			panel_draw(*top_bar);
 			panel_draw(*bottom_bar);
 
-			/* UI */
-			/* We have to reserve some space for buttons */
+			/** UI **/
+			/* top bar */
+			panel_text_split(*top_bar, main_font, "fit:", .LEFT);
 			fit_buttons_space := panel_split(*top_bar, .{bar_height*4, top_bar.size[0]}, .LEFT, true);
-			fit_buttons_space.colors.body = .[55, 55, 55, 255];
-			fit_buttons := panel_subdivide(*fit_buttons_space, 4, .HORIZONTAL, true);
-			if img_ctx.auto_fit && img_ctx.draw fit_buttons[img_ctx.fit].colors.text = .[255, 127, 0, 255];
+			fit_buttons_space.colors.body = .[50, 50, 50, 255];
+			panel_draw(*fit_buttons_space);
+			fit_buttons := panel_subdivide(*fit_buttons_space, 4, .HORIZONTAL, false);
+			if img_ctx.auto_fit && img_ctx.draw {
+				fit_buttons[img_ctx.fit].colors.text = .[255, 127, 0, 255];
+				fit_buttons[img_ctx.fit].colors.body = .[55, 55, 55, 255];
+				panel_draw(*fit_buttons[img_ctx.fit]);
+			}
+
 			for fit_buttons {
 				if panel_button(*it, inp.ipointer, inp.left_button_switch) {
 					img_ctx.fit = xx it_index;
@@ -333,16 +352,19 @@ main :: () {
 			text := isolate_name(img_ctx.pre_info.name);
 			panel_text(*top_bar, main_font, text, .RIGHT, .MIDDLE);
 
+			/* bottom bar */
 			if frame_time < target_frame_time then bottom_bar.colors.text = .[100, 210, 25, 255];
 			else bottom_bar.colors.text = .[220, 60, 25, 255];
-			text = sprint("fps: %", frame_count_over_1s);
+			text = tprint("fps: %", frame_count_over_1s);
 			panel_text(*bottom_bar, main_font, text, .RIGHT, .MIDDLE);
 			bottom_bar.colors.text = palette.text;
 
 			if img_ctx.draw {
-				text = sprint("%\%", formatFloat(img_ctx.scale*100, trailing_width = 2, zero_removal = .NO));
-				panel_text(*bottom_bar, main_font, text, .LEFT, .MIDDLE);
+				text = tprint("%\%", formatFloat(img_ctx.scale*100, trailing_width = 2, zero_removal = .NO));
+			} else {
+				text = "----.--%";
 			}
+			panel_text(*bottom_bar, main_font, text, .LEFT, .MIDDLE);
 
 		}
 		{/* Popups */
