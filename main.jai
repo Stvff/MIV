@@ -90,12 +90,19 @@ main :: () {
 	img_ctx := Image_Context.{
 		fit = .FIT_BEST,
 		scale = 1.0,
-		render = true,
+		render = false,
 		draw = true,
 	};
 
 	/* window specific image context */
-	read_next_file_in_queue := true;
+	fileq_setting: enum {HISTORY; DIRECTORY;} = .HISTORY;
+	file_history: [..]string;
+	file_history_index: int;
+	directory: [..]string;
+	directory_index: int;
+	current_q: *[..]string = *file_history;
+	current_q_index: *int = *file_history_index;
+
 	files_to_open: [..]string;
 	{
 		cli_args := get_command_line_arguments();
@@ -148,7 +155,7 @@ main :: () {
 		}
 		for event: Input.events_this_frame {
 			if event.type == .QUIT then running = false;
-			if event.type == .DRAG_AND_DROP_FILES array_add(*files_to_open, ..event.files);
+			if event.type == .DRAG_AND_DROP_FILES for event.files array_add(*files_to_open, copy_string(it));
 			/* Press */
 			if (event.type == .KEYBOARD) && event.key_pressed then if event.key_code == {
 				case .ESCAPE; running = false;
@@ -187,30 +194,50 @@ main :: () {
 		inp.ipointer = .[xx inp.fpointer.x, xx inp.fpointer.y];
 		/* Files added via command line or drop-in */
 		loading_time := current_time_monotonic();
-		if read_next_file_in_queue for files_to_open {
-			give_log(*errors, "%", it);
-			ext := get_extension(it);
+		position_adjusted := false;
+		backup_position := file_history_index;
+		if files_to_open.count {
+			print("%\n", files_to_open);
+		}
+		while files_to_open.count {
+			file_to_open := files_to_open[0];
+			give_log(*errors, "%", file_to_open);
+			ext := get_extension(file_to_open);
 			if ext == "so" {
-				register_dynlib(it, true, *errors);
-				array_unordered_remove_by_index(*files_to_open, it_index);
-			} else if read_next_file_in_queue {
-				old_name := img_ctx.pre_info.name;
-				old_handle := img_ctx.pre_info.fileptr;
-				img_ctx.render = get_loading(copy_string(it), ext, *img_ctx, *errors);
-				if img_ctx.render {
-					array_reset(*cast([]u8, old_name));
-					if old_handle libc.fclose(old_handle);
-
-					/* retrieve previous offsets etc if available, for now we just reset */
-					img_ctx.auto_fit = true;
-
-					/* Also make the list of files that exist in this directory for us to scroll through */
-					array_unordered_remove_by_index(*files_to_open, it_index);
-					// read_next_file_in_queue = false;
+				register_dynlib(file_to_open, true, *errors);
+				array_ordered_remove_by_index(*files_to_open, 0);
+			} else {
+				img_ctx.render = true;
+				array_add(*file_history, file_to_open);
+				if !position_adjusted {
+					backup_position = file_history_index;
+					file_history_index = file_history.count-1;
+					position_adjusted = true;
 				}
-				give_log(*errors, "%", img_ctx);
+				/* <Also make the list of files that exist in this directory for us to scroll through> */
+				array_ordered_remove_by_index(*files_to_open, 0);
 			}
 		}
+		if current_q.count == 0 img_ctx.render = false;
+		if img_ctx.render {
+			old_name := img_ctx.pre_info.name;
+			old_handle := img_ctx.pre_info.fileptr;
+			new_name := current_q.*[current_q_index.*];
+			img_ctx.render = get_loading(new_name, get_extension(new_name), *img_ctx, *errors);
+			if img_ctx.render {
+				//free(old_name);
+				if old_handle libc.fclose(old_handle);
+				/* retrieve previous offsets etc if available, for now we just reset */
+				img_ctx.auto_fit = true;
+			} else {
+				_, index := array_find(file_history, new_name);
+				array_ordered_remove_by_index(*file_history, index);
+				file_history_index = backup_position;
+				file_history_index = clamp(file_history_index, 0, file_history.count-1);
+			}
+			give_log(*errors, "%", img_ctx);
+		}
+
 		img_ctx.draw = true;
 
 		/* Image rendering (aka resolving the actual data) */
@@ -350,22 +377,63 @@ main :: () {
 			}
 
 			text := isolate_name(img_ctx.pre_info.name);
-			panel_text(*top_bar, main_font, text, .RIGHT, .MIDDLE);
+			panel_text_split(*top_bar, main_font, text, .RIGHT);
 
 			/* bottom bar */
-			if frame_time < target_frame_time then bottom_bar.colors.text = .[100, 210, 25, 255];
-			else bottom_bar.colors.text = .[220, 60, 25, 255];
-			text = tprint("fps: %", frame_count_over_1s);
-			panel_text(*bottom_bar, main_font, text, .RIGHT, .MIDDLE);
-			bottom_bar.colors.text = palette.text;
-
 			if img_ctx.draw {
 				text = tprint("%\%", formatFloat(img_ctx.scale*100, trailing_width = 2, zero_removal = .NO));
 			} else {
 				text = "----.--%";
 			}
-			panel_text(*bottom_bar, main_font, text, .LEFT, .MIDDLE);
+			panel_text_split(*bottom_bar, main_font, text, .LEFT);
 
+			if frame_time < target_frame_time then bottom_bar.colors.text = .[100, 210, 25, 255];
+			else bottom_bar.colors.text = .[220, 60, 25, 255];
+			text = tprint("fps: %", frame_count_over_1s);
+			panel_text(*bottom_bar, main_font, text, .LEFT, .MIDDLE);
+			bottom_bar.colors.text = palette.text;
+
+			/* Backwards and forwards buttons (bnf buttons) */
+			bnf_button_space := panel_split(*bottom_bar, .{bar_height*7/2, bottom_bar.size[0]}, .RIGHT, true);
+			bnf_button_space.colors.body = .[50, 50, 50, 255];
+			bnf_buttons := panel_subdivide(*bnf_button_space, 3, .HORIZONTAL, true);
+			if current_q_index.* > 0 && current_q.count != 0 {
+				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch) {
+					current_q_index.* -= 1;
+					img_ctx.render = true;
+				}
+			} else {
+				bnf_buttons[0].colors.body = palette.body;
+				panel_draw(*bnf_buttons[0]);
+			}
+			if current_q_index.* < current_q.count-1 && current_q.count != 0 {
+				if panel_button(*bnf_buttons[2], inp.ipointer, inp.left_button_switch) {
+					current_q_index.* += 1;
+					img_ctx.render = true;
+				}
+			} else {
+				bnf_buttons[2].colors.body = palette.body;
+				panel_draw(*bnf_buttons[2]);
+			}
+
+
+			panel_text(*bnf_buttons[0], main_font, "<", .MIDDLE, .MIDDLE);
+			panel_text(*bnf_buttons[2], main_font, ">", .MIDDLE, .MIDDLE);
+
+			bnf_buttons[1].colors.body = palette.body;
+			panel_draw(*bnf_buttons[1]);
+			// if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch) {
+			// 	fileq_setting = (fileq_setting + 1) % 2;
+			// 	if fileq_setting == .HISTORY {
+			// 		current_q = *file_history;
+			// 		current_q_index = *file_history_index;
+			// 	} else {
+			// 		current_q = *directory;
+			// 		current_q_index = *directory_index;
+			// 	}
+			// }
+			fileq_setting_text :: string.["hist", "dir"];
+			panel_text(*bnf_buttons[1], main_font, fileq_setting_text[fileq_setting], .MIDDLE, .MIDDLE);
 		}
 		{/* Popups */
 //			log("%", errors);

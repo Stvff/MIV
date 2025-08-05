@@ -4,8 +4,6 @@
 	- [x] refactor/reorder of input, drawing, rendering, filehandling
 - [x] Implement UI
 	- [x] user prompt popups
-	- [ ] logs onscreen instead of in terminal
-		- [ ] intelligent textflows (includes clipping)
 	- [x] option buttons
 		- [x] option sliders
 - [x] registration file for plugins (always lives next to the exe, not cwd)
@@ -14,7 +12,7 @@
 	- [x] move plugin files to the plugins folder on import
 	- [x] create plugin directory if it doesn't exist (on program startup)
 - [ ] next/prev in the current directory
-	- [ ] some starts on preloading (mostly through the user importing more than 1 file at once)
+	- [x] some starts on preloading (mostly through the user importing more than 1 file at once)
 - [ ] Documentation
 
 ## Apeldoorn
@@ -24,4 +22,7 @@
 - [ ] Options for AA (think about if this could be elaborate)
 - [ ] File/Directory watching
 - [ ] give functions the ability to respond responsibly based on user input option
+- [ ] logs onscreen instead of in terminal
+	- [ ] intelligent textflows (includes clipping)
 - [ ] Some pleasant and elaborate tooltips maybe
+- [ ] Custom icons?
