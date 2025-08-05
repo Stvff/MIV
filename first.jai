@@ -2,7 +2,7 @@
 
 exe_name :: "MIV";
 compile_MIV :: true;
-compile_meow_c :: true;
+compile_ppm_c :: true;
 compile_meow_jai :: false;
 
 build :: () {
@@ -36,8 +36,8 @@ build :: () {
 		}
 	}
 
-	if compile_meow_c {
-		command := string.["gcc", "-fPIC", "./plugins/meow.c", "-shared", "-o", "./plugins/meow_c.so"];
+	if compile_ppm_c {
+		command := string.["gcc", "-fPIC", "./plugins/ppm.c", "-shared", "-o", "./plugins/ppm.so"];
 		process_result, output_string, error_string, timeout_reached := Process.run_command(..command);
 		if process_result.exit_code != 0 {
 			log_error("Attempted command: %\n%", command, error_string);

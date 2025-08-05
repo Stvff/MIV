@@ -4,13 +4,13 @@ This project is somewhat of an experiment. As with most projects, I am not confi
 
 ## How to use
 ### Installing
-Put the executable in a folder with write access (somewhere underneath home), then make a symlink in a bin folder of choice.\
+Put the executable in a folder with write access (somewhere underneath home), then make a symlink in a bin folder of choice.
 
 ### Adding plugins
-To add plugins, simply drag them onto the window from your file explorer (or by doing running it in the terminal: `$> MIV your-plugin-name.so`). You can add multiple plugins at once.\
+To add plugins, simply drag them onto the window from your file explorer (or by doing running it in the terminal: `$> MIV your-plugin-name.so`). You can add multiple plugins at once.
 
 ### Viewing files
-To view files, you can also drag them onto the window, or add them from the terminal. Files that are added in this way can be viewed in 'hist' mode.
+To view files, you can drag them onto the window, or add them from the terminal. Files that are added in this way can be viewed in 'hist' mode.
 Pressing the 'hist' button will switch to 'dir' mode. In 'dir' mode, you can navigate the directory that the current file is in.
 
 ## Context
