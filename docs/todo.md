@@ -11,11 +11,12 @@
 	- [x] write regfile on MIV close
 	- [x] move plugin files to the plugins folder on import
 	- [x] create plugin directory if it doesn't exist (on program startup)
-- [ ] next/prev in the current directory
+- [x] next/prev in the current directory
 	- [x] some starts on preloading (mostly through the user importing more than 1 file at once)
 - [ ] Documentation
 
 ## Apeldoorn
+- [ ] One more supported image type
 - [ ] Option to select between zoom on screen center and pointer
 	- [ ] zoom on pointer
 - [ ] Options for the different persistence settings (between files, restarts, etc)
@@ -26,3 +27,8 @@
 	- [ ] intelligent textflows (includes clipping)
 - [ ] Some pleasant and elaborate tooltips maybe
 - [ ] Custom icons?
+
+## Amersfoort
+- [ ] different types of filesorting
+- [ ] More advanced plugin interactions
+- [ ] Being more elaborate about what failed during loading (which part of the directory, which type of error)

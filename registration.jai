@@ -4,7 +4,7 @@ all_registrations: [..]Registration_Entry;
 
 Pre_Rendering_Info :: struct {
 	name: string;
-	fileptr: *libc.FILE;
+	fileptr: *posix.FILE;
 	width, height: s64;
 
 	bit_depth: u8;
@@ -61,15 +61,15 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 
 	dynlib_cname := temp_c_string(new_dynlib_path);
 
-	handle := libc.dlopen(dynlib_cname, libc.RTLD_NOW);
+	handle := posix.dlopen(dynlib_cname, posix.RTLD_NOW);
 	if !handle {
-		give_error(errors, "Dynamic library loading error: %", to_string(libc.dlerror()));
+		give_error(errors, "Dynamic library loading error: %", to_string(posix.dlerror()));
 		return false;
 	}
-	libc.dlerror();
+	posix.dlerror();
 
-	reg_proc: Registration_Procedure = libc.dlsym(handle, "registration_procedure");
-	loading_error := to_string(libc.dlerror());
+	reg_proc: Registration_Procedure = posix.dlsym(handle, "registration_procedure");
+	loading_error := to_string(posix.dlerror());
 	if loading_error {
 		give_error(errors, "Dynamic function loading error: %", loading_error);
 		return false;
@@ -82,28 +82,28 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 		if amount < 0 break;
 
 		pre_render_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "pre_render"));
-		pre_render_handle := libc.dlsym(handle, pre_render_cname);
+		pre_render_handle := posix.dlsym(handle, pre_render_cname);
 		if !pre_render_handle {
-			give_error(errors, "Dynamic function loading error: %", to_string(libc.dlerror()));
+			give_error(errors, "Dynamic function loading error: %", to_string(posix.dlerror()));
 			success = false;
 		}
-		libc.dlerror();
+		posix.dlerror();
 
 		render_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "render"));
-		render_handle := libc.dlsym(handle, render_cname);
+		render_handle := posix.dlsym(handle, render_cname);
 		if !render_handle {
-			give_error(errors, "Dynamic function loading error: %", to_string(libc.dlerror()));
+			give_error(errors, "Dynamic function loading error: %", to_string(posix.dlerror()));
 			success = false;
 		}
-		libc.dlerror();
+		posix.dlerror();
 
 		cleanup_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "cleanup"));
-		cleanup_handle := libc.dlsym(handle, cleanup_cname);
+		cleanup_handle := posix.dlsym(handle, cleanup_cname);
 		if !cleanup_handle {
-			give_error(errors, "Dynamic function loading error: %", to_string(libc.dlerror()));
+			give_error(errors, "Dynamic function loading error: %", to_string(posix.dlerror()));
 			success = false;
 		}
-		libc.dlerror();
+		posix.dlerror();
 
 		registration := Registration_Entry.{
 			plugin_filename = isolate_name(dynlib_name),
@@ -143,7 +143,7 @@ cleanup_registrations :: () {
 			print(*sb, "%\n", it.plugin_filename);
 		}
 		if !array_find(closed_handles, it.handle) {
-			libc.dlclose(it.handle);
+			posix.dlclose(it.handle);
 			array_add(*closed_handles, it.handle);
 		}
 	}
@@ -171,8 +171,8 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 			}
 		}
 	}
-	file_handle: *libc.FILE;
-	file_handle = libc.fopen(temp_c_string(filepath), "r");
+	file_handle: *posix.FILE;
+	file_handle = posix.fopen(temp_c_string(filepath), "r");
 	if !file_handle {
 		give_error(errors, "File does not exist or could not be opened: %", filepath);
 		ok = false;
@@ -185,15 +185,15 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 
 	defer if !ok {
 		give_log(errors, "'%' closed because there was an error.", filepath);
-		libc.fclose(file_handle);
+		posix.fclose(file_handle);
 	}
 
 	if !new_plugin {
 		push_allocator(temp);
 		for * all_registrations {
 			found_mn := cast(string, NewArray(it.magic_number.count, u8));
-			libc.fread(found_mn.data, 1, xx found_mn.count, file_handle);
-			libc.fseek(file_handle, 0, libc.SEEK_SET);
+			posix.fread(found_mn.data, 1, xx found_mn.count, file_handle);
+			posix.fseek(file_handle, 0, posix.SEEK_SET);
 			if found_mn == it.magic_number {
 				new_plugin = it;
 				break;
@@ -211,8 +211,8 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 	defer array_reset(*cast([]u8, found_mn));
 
 	if new_plugin.magic_number {
-		libc.fread(found_mn.data, 1, xx found_mn.count, file_handle);
-		libc.fseek(file_handle, 0, libc.SEEK_SET);
+		posix.fread(found_mn.data, 1, xx found_mn.count, file_handle);
+		posix.fseek(file_handle, 0, posix.SEEK_SET);
 		if found_mn != new_plugin.magic_number {
 			expe, foun: string;
 			if valid_ascii(new_plugin.magic_number) expe = new_plugin.magic_number;
@@ -228,7 +228,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 	}
 
 	pre_info_err := new_plugin.pre_render(*pre_info);
-	libc.fseek(file_handle, 0, libc.SEEK_SET);
+	posix.fseek(file_handle, 0, posix.SEEK_SET);
 	if pre_info_err {
 		give_error(errors, "% file metadata reading error: %", new_plugin.name_filetype, pre_info_err);
 		ok = false;
@@ -279,6 +279,36 @@ isolate_name :: (path: string) -> string {
 	return path;
 }
 
+discover_directory :: (directory: *[..]string, file: string, index: *int, errors: *[..]Error) -> bool {
+	dir_name := path_strip_filename(file);
+	c_dir_name := temp_c_string(dir_name);
+	namelist: **posix.dirent;
+	filter :: (name: *posix.dirent) -> s32 #c_call { return 1; };
+
+	namelist_count := posix.scandir(c_dir_name, *namelist, filter, posix.alphasort);
+	if namelist_count == -1 {
+		give_error(errors, "Could not scan directory '%'.", c_dir_name);
+		return false;
+	}
+	array_reset(directory);
+
+	crt :: #system_library "libc";
+    c_free :: (memory: *void) #foreign crt "free";
+	for 0..namelist_count-1 {
+		//status: posix.stat_t;
+		//posix.lstat(*namelist[it].d_name[0], *status);
+		if namelist[it].d_type == .REG {
+			array_add(directory, copy_string(tprint("%1%2", dir_name, to_string(*namelist[it].d_name[0]) )) );
+		}
+
+		c_free(namelist[it]);
+	}
+	c_free(namelist);
+
+	_, index.* = array_find(directory.*, file);
+	return true;
+}
+
 give_log :: (errors: *[..]Error, message: string, args: ..Any) {
 	array_add(errors, .{.LOG, sprint(message, ..args), .[]});
 }
@@ -287,5 +317,5 @@ give_error :: (errors: *[..]Error, message: string, args: ..Any) {
 	array_add(errors, .{.ERROR, sprint(message, ..args), .["ok"]});
 }
 
-libc :: #import "POSIX";
+posix :: #import "POSIX";
 system :: #import "System";

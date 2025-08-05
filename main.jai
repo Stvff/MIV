@@ -17,6 +17,8 @@ Image_Context :: struct {
 Input_State :: struct {
 	arrow_up: bool;
 	arrow_down: bool;
+	arrow_left: bool;
+	arrow_right: bool;
 	scroll_delta: float;
 
 	w, a, s, d: bool;
@@ -131,7 +133,7 @@ main :: () {
 		}
 		frame_time := to_float64_seconds(now - prev_time);
 		if frame_time < target_frame_time {
-			libc.usleep(cast(u32, (target_frame_time - frame_time)*1_000_000));
+			posix.usleep(cast(u32, (target_frame_time - frame_time)*1_000_000));
 		}
 		prev_time = current_time_monotonic();
 
@@ -162,6 +164,8 @@ main :: () {
 				case .SHIFT; inp.shifted = true;
 				case .ARROW_UP; inp.arrow_up = true;
 				case .ARROW_DOWN; inp.arrow_down = true;
+				case .ARROW_LEFT; inp.arrow_left = true;
+				case .ARROW_RIGHT; inp.arrow_right = true;
 				case #char "W"; inp.w = true;
 				case #char "A"; inp.a = true;
 				case #char "S"; inp.s = true;
@@ -196,9 +200,6 @@ main :: () {
 		loading_time := current_time_monotonic();
 		position_adjusted := false;
 		backup_position := file_history_index;
-		if files_to_open.count {
-			print("%\n", files_to_open);
-		}
 		while files_to_open.count {
 			file_to_open := files_to_open[0];
 			give_log(*errors, "%", file_to_open);
@@ -213,6 +214,8 @@ main :: () {
 					backup_position = file_history_index;
 					file_history_index = file_history.count-1;
 					position_adjusted = true;
+
+					discover_directory(*directory, file_history[file_history_index], *directory_index, *errors);
 				}
 				/* <Also make the list of files that exist in this directory for us to scroll through> */
 				array_ordered_remove_by_index(*files_to_open, 0);
@@ -226,12 +229,12 @@ main :: () {
 			img_ctx.render = get_loading(new_name, get_extension(new_name), *img_ctx, *errors);
 			if img_ctx.render {
 				//free(old_name);
-				if old_handle libc.fclose(old_handle);
+				if old_handle posix.fclose(old_handle);
 				/* retrieve previous offsets etc if available, for now we just reset */
 				img_ctx.auto_fit = true;
 			} else {
-				_, index := array_find(file_history, new_name);
-				array_ordered_remove_by_index(*file_history, index);
+				f, index := array_find(file_history, new_name);
+				if f array_ordered_remove_by_index(*file_history, index);
 				file_history_index = backup_position;
 				file_history_index = clamp(file_history_index, 0, file_history.count-1);
 			}
@@ -398,7 +401,7 @@ main :: () {
 			bnf_button_space.colors.body = .[50, 50, 50, 255];
 			bnf_buttons := panel_subdivide(*bnf_button_space, 3, .HORIZONTAL, true);
 			if current_q_index.* > 0 && current_q.count != 0 {
-				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch) {
+				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch) || inp.arrow_left {
 					current_q_index.* -= 1;
 					img_ctx.render = true;
 				}
@@ -407,7 +410,7 @@ main :: () {
 				panel_draw(*bnf_buttons[0]);
 			}
 			if current_q_index.* < current_q.count-1 && current_q.count != 0 {
-				if panel_button(*bnf_buttons[2], inp.ipointer, inp.left_button_switch) {
+				if panel_button(*bnf_buttons[2], inp.ipointer, inp.left_button_switch) || inp.arrow_right {
 					current_q_index.* += 1;
 					img_ctx.render = true;
 				}
@@ -420,18 +423,25 @@ main :: () {
 			panel_text(*bnf_buttons[0], main_font, "<", .MIDDLE, .MIDDLE);
 			panel_text(*bnf_buttons[2], main_font, ">", .MIDDLE, .MIDDLE);
 
-			bnf_buttons[1].colors.body = palette.body;
-			panel_draw(*bnf_buttons[1]);
-			// if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch) {
-			// 	fileq_setting = (fileq_setting + 1) % 2;
-			// 	if fileq_setting == .HISTORY {
-			// 		current_q = *file_history;
-			// 		current_q_index = *file_history_index;
-			// 	} else {
-			// 		current_q = *directory;
-			// 		current_q_index = *directory_index;
-			// 	}
-			// }
+			// bnf_buttons[1].colors.body = palette.body;
+			// panel_draw(*bnf_buttons[1]);
+			if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch) {
+				fileq_setting = (fileq_setting + 1) % 2;
+				if fileq_setting == .HISTORY {
+					file_history_index = file_history.count-1;
+					current_q = *file_history;
+					current_q_index = *file_history_index;
+				} else {
+//					array_reset(*directory);
+//					directory_index = 0;
+//					array_add(*directory, file_history[file_history_index]);
+					discover_directory(*directory, file_history[file_history_index], *directory_index, *errors);
+
+					current_q = *directory;
+					current_q_index = *directory_index;
+				}
+				img_ctx.render = true;
+			}
 			fileq_setting_text :: string.["hist", "dir"];
 			panel_text(*bnf_buttons[1], main_font, fileq_setting_text[fileq_setting], .MIDDLE, .MIDDLE);
 		}
@@ -441,7 +451,7 @@ main :: () {
 			pressed_option := -2;
 			for error: errors {
 				if error.kind == .LOG {
-					log("%", error);
+					// log("%", error);
 					array_ordered_remove_by_index(*errors, it_index);
 					continue;
 				}
