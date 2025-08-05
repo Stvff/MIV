@@ -13,7 +13,7 @@
 	- [x] create plugin directory if it doesn't exist (on program startup)
 - [x] next/prev in the current directory
 	- [x] some starts on preloading (mostly through the user importing more than 1 file at once)
-- [ ] Documentation
+- [x] Documentation
 
 ## Apeldoorn
 - [ ] One more supported image type

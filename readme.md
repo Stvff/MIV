@@ -2,6 +2,17 @@
 This project is somewhat of an experiment. As with most projects, I am not confident it will yield something generally useful, but it is definitely made to be eventually useful.
 ![Screenshot of the image viewer, showing the first level of sokoworm.](/docs/screenshot.png "Screenshot of the image viewer, showing the first level of sokoworm.")
 
+## How to use
+### Installing
+Put the executable in a folder with write access (somewhere underneath home), then make a symlink in a bin folder of choice.\
+
+### Adding plugins
+To add plugins, simply drag them onto the window from your file explorer (or by doing running it in the terminal: `$> MIV your-plugin-name.so`). You can add multiple plugins at once.\
+
+### Viewing files
+To view files, you can also drag them onto the window, or add them from the terminal. Files that are added in this way can be viewed in 'hist' mode.
+Pressing the 'hist' button will switch to 'dir' mode. In 'dir' mode, you can navigate the directory that the current file is in.
+
 ## Context
 Recently, while making [Sokoworm](https://stvff.github.io/sokoworm.html#top), which uses [PPM image files](https://en.wikipedia.org/wiki/Netpbm#File_formats)
 as graphics outputs, I noticed that the feature-set of the average image viewer is quite limited. Many image viewers only support a relatively small set of image types,
