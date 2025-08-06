@@ -30,18 +30,18 @@ string pre_render(Pre_Rendering_Info *pre_info)
 string render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info)
 string cleanup(Pre_Rendering_Info *pre_info)
 ```
-The `string`, `Provided_Registration_Entry`, `Pre_Rendering_Info` and `Rendering_Info` types are defined in `plugins/MIV.h`.
-See `plugins/ppm.c` for a comprehensive example on how to use them.
+The `string`, `Provided_Registration_Entry`, `Pre_Rendering_Info` and `Rendering_Info` types are defined in [plugins/MIV.h](./plugins/MIV.h).
+See [plugins/ppm.c](./plugins/ppm.c) for a comprehensive example on how to use them.
 
-The `registration_procedure` provides information about what the plugin can read. The integer that the function returns is how many more times it should be called by MIV.
+The `registration_procedure()` provides information about what the plugin can read. The integer that the function returns is how many more times it should be called by MIV.
 If the plugin provides 3 file formats, it returns 2 after the first time it has been called, then 1 after the second, and 0 after the third.
 
-`pre_render` informs MIV about any metadata that a file might have, as well as its width and height, so that MIV can allocate an appropriately sized buffer.
+`pre_render()` informs MIV about any metadata that a file might have, as well as its width and height, so that MIV can allocate an appropriately sized buffer.
 Note that MIV opens the file, and that the plugin is presented with a file pointer (which `ftell()` is guarenteed to return 0 on).
 
-`render` extracts actual image data out of the file, and puts it in the buffer provided in the `Rendering_Info` struct.
+`render()` extracts actual image data out of the file, and puts it in the buffer provided in the `Rendering_Info` struct.
 
-Finally, `cleanup` can be used to clean up internal resources.
+Finally, `cleanup()` can be used to clean up internal resources.
 
 This API is expected to expand to allow for more advanced features.
 

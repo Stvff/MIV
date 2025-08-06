@@ -21,10 +21,11 @@
 	- [ ] zoom on pointer
 - [ ] Options for the different persistence settings (between files, restarts, etc)
 - [ ] Options for AA (think about if this could be elaborate)
-- [ ] File/Directory watching
+- [ ] Filewatching
 - [ ] give functions the ability to respond responsibly based on user input option
 - [ ] logs onscreen instead of in terminal
 	- [ ] intelligent textflows (includes clipping)
+		- [ ] scrollbars I'm afraid
 - [ ] Some pleasant and elaborate tooltips maybe
 - [ ] Custom icons?
 
