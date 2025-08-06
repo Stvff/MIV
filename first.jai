@@ -1,6 +1,8 @@
 #run build();
 
-exe_name :: "MIV";
+release :: true;
+
+exe_name :: "miv";
 compile_MIV :: true;
 compile_ppm_c :: true;
 compile_meow_jai :: false;
@@ -13,7 +15,7 @@ build :: () {
 		MIV_w := compiler_create_workspace("Build MIV");
 		options := get_build_options(); {
 			options.output_executable_name = exe_name;
-			options.backend = .X64;
+			if release options.backend = .LLVM; else options.backend = .X64;
 			options.text_output_flags = .OUTPUT_TIMING_INFO;
 			if options.backend == .LLVM then set_optimization(*options, .VERY_OPTIMIZED);
 		} set_build_options(options, MIV_w);
@@ -37,7 +39,9 @@ build :: () {
 	}
 
 	if compile_ppm_c {
-		command := string.["gcc", "-fPIC", "./plugins/ppm.c", "-shared", "-o", "./plugins/ppm.so"];
+		command: []string;
+		if release command = string.["gcc", "-fPIC", "-O3", "./plugins/ppm.c", "-shared", "-o", "./plugins/ppm.so"];
+		else command = string.["gcc", "-fPIC", "./plugins/ppm.c", "-shared", "-o", "./plugins/ppm.so"];
 		process_result, output_string, error_string, timeout_reached := Process.run_command(..command);
 		if process_result.exit_code != 0 {
 			log_error("Attempted command: %\n%", command, error_string);
