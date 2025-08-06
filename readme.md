@@ -4,14 +4,46 @@ This project is somewhat of an experiment. As with most projects, I am not confi
 
 ## How to use
 ### Installing
-Put the executable in a folder with write access (somewhere underneath home), then make a symlink in a bin folder of choice.
+Put the executable in a folder with write access (somewhere underneath home), then make a symbolic link in a bin folder of choice:
+```
+/bin/ $> sudo ln -s ~/your/preferred/path/miv miv
+```
 
 ### Adding plugins
-To add plugins, simply drag them onto the window from your file explorer (or by doing running it in the terminal: `$> MIV your-plugin-name.so`). You can add multiple plugins at once.
+To add plugins, simply drag them onto the window from your file explorer (or by doing running it in the terminal: `$> miv your-plugin-name.so`). You can add multiple plugins at once.
 
 ### Viewing files
 To view files, you can drag them onto the window, or add them from the terminal. Files that are added in this way can be viewed in 'hist' mode.
 Pressing the 'hist' button will switch to 'dir' mode. In 'dir' mode, you can navigate the directory that the current file is in.
+
+### Building
+If you don't want to download the files from the release, you can also clone this repo from github, then run `jai first.jai` in the directory.
+Of course, you will need jai beta access for this.
+
+### Making plugins
+To make a plugin, jai beta access is not required, and can be done in any compiled language.
+A valid MIV plugin must be a `.so` dynamic library, and define at least 4 functions:
+```
+int64_t registration_procedure(Provided_Registration_Entry *registration)
+
+string pre_render(Pre_Rendering_Info *pre_info)
+string render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info)
+string cleanup(Pre_Rendering_Info *pre_info)
+```
+The `string`, `Provided_Registration_Entry`, `Pre_Rendering_Info` and `Rendering_Info` types are defined in `plugins/MIV.h`.
+See `plugins/ppm.c` for a comprehensive example on how to use them.
+
+The `registration_procedure` provides information about what the plugin can read. The integer that the function returns is how many more times it should be called by MIV.
+If the plugin provides 3 file formats, it returns 2 after the first time it has been called, then 1 after the second, and 0 after the third.
+
+`pre_render` informs MIV about any metadata that a file might have, as well as its width and height, so that MIV can allocate an appropriately sized buffer.
+Note that MIV opens the file, and that the plugin is presented with a file pointer (which `ftell()` is guarenteed to return 0 on).
+
+`render` extracts actual image data out of the file, and puts it in the buffer provided in the `Rendering_Info` struct.
+
+Finally, `cleanup` can be used to clean up internal resources.
+
+This API is expected to expand to allow for more advanced features.
 
 ## Context
 Recently, while making [Sokoworm](https://stvff.github.io/sokoworm.html#top), which uses [PPM image files](https://en.wikipedia.org/wiki/Netpbm#File_formats)
