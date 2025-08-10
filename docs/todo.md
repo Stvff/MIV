@@ -22,6 +22,7 @@
 - [ ] Options for the different persistence settings (between files, restarts, etc)
 - [ ] Options for AA (think about if this could be elaborate)
 - [ ] Filewatching
+	- [ ] Handle events where the file was moved (maybe follow the file?)
 - [ ] give functions the ability to respond responsibly based on user input option
 - [ ] logs onscreen instead of in terminal
 	- [ ] intelligent textflows (includes clipping)
