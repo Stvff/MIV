@@ -121,15 +121,14 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 	return success;
 }
 
-load_registration_file :: (errors: *[..]Error) {
+load_registrations :: (errors: *[..]Error) {
 	path := path_strip_filename(system.get_path_of_running_executable());
-	make_directory_if_it_does_not_exist(tprint("%plugins/", path));
-	regfile_path := tprint("%plugins/registrations.miv", path);
-	regfile, exists := read_entire_file(regfile_path, log_errors = false);
-	if !exists return;
-
-	plugin_filenames := split(regfile, cast(u8, #char "\n"));
-	for plugin_filenames if it.count != 0 register_dynlib(it, false, errors);
+	path = tprint("%plugins/", path);
+	make_directory_if_it_does_not_exist(path);
+	plugin_filenames: [..]string;
+	index: int; /* only here to appease discover_directory */
+	discover_directory(*plugin_filenames, path, *index, errors);
+	for plugin_filenames if it.count != 0 && get_extension(it) == "so" then register_dynlib(it, false, errors);
 }
 
 cleanup_registrations :: () {
@@ -147,10 +146,6 @@ cleanup_registrations :: () {
 			array_add(*closed_handles, it.handle);
 		}
 	}
-
-	path := path_strip_filename(system.get_path_of_running_executable());
-	regfile_path := tprint("%plugins/registrations.miv", path);
-	write_entire_file(regfile_path, builder_to_string(*sb));
 }
 
 get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, errors: *[..]Error) -> bool {

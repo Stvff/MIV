@@ -63,7 +63,7 @@ os_window: X11.Window;
 
 main :: () {
 	errors: [..]Error;
-	load_registration_file(*errors);
+	load_registrations(*errors);
 	defer cleanup_registrations();
 
 	/* UI definitions */
@@ -512,6 +512,9 @@ main :: () {
 		Simp.immediate_flush();
 		Simp.swap_buffers(os_window);
 		reset_temporary_storage();
+	}
+	for errors {
+		log("%", it);
 	}
 }
 

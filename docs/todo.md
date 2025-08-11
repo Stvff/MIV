@@ -16,7 +16,7 @@
 - [x] Documentation
 
 ## Apeldoorn
-- [ ] remove registration file (since it is redundant)
+- [x] remove registration file (since it is redundant)
 - [ ] One more supported image type
 - [ ] Option to select between zoom on screen center and pointer
 	- [ ] zoom on pointer
