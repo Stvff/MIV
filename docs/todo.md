@@ -35,8 +35,7 @@
 		- [x] show index in file queue
 
 ## Bugs to fix
-- While scrolling through a directory, MIV attempts to open files it doesn't/shouldn't know instead of skipping them like it should.
-	- When such a file is opened, the index in the directory is still kept while the previous file renders, and it's very confusing.
+- Adding a file that isn't allowed from a different directory, while in directory mode, crashes MIV.
 - When another window is above MIV, MIV still reads the mouse position from that window.
 - When an older window is closed above MIV, MIV crashes?? Even subwindows of other programs (see OBS) have this effect.
 

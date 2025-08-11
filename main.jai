@@ -215,7 +215,15 @@ main :: () {
 					file_history_index = file_history.count-1;
 					position_adjusted = true;
 
-					discover_directory(*directory, file_history[file_history_index], *directory_index, *errors);
+					dir_success := discover_directory(*directory, file_history[file_history_index], *errors);
+					if !dir_success fileq_setting = .HISTORY;
+					else sanitize_directory(*directory, file_history[file_history_index], *directory_index);
+					if file_history_index == -1 {
+						file_history_index = 0;
+					}
+					if 0 <= file_history_index && file_history_index < file_history.count {
+						fileq_setting = .HISTORY;
+					}
 				}
 				/* <Also make the list of files that exist in this directory for us to scroll through> */
 				array_ordered_remove_by_index(*files_to_open, 0);
@@ -453,9 +461,13 @@ main :: () {
 				current_q = *file_history;
 				current_q_index = *file_history_index;
 			case .DIRECTORY;
-				discover_directory(*directory, file_history[file_history_index], *directory_index, *errors);
-				current_q = *directory;
-				current_q_index = *directory_index;
+				dir_success := discover_directory(*directory, file_history[file_history_index], *errors);
+				if !dir_success fileq_setting = .HISTORY;
+				else {
+					sanitize_directory(*directory, file_history[file_history_index], *directory_index);
+					current_q = *directory;
+					current_q_index = *directory_index;
+				}
 			}
 
 			if img_ctx.draw {

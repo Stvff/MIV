@@ -126,8 +126,7 @@ load_registrations :: (errors: *[..]Error) {
 	path = tprint("%plugins/", path);
 	make_directory_if_it_does_not_exist(path);
 	plugin_filenames: [..]string;
-	index: int; /* only here to appease discover_directory */
-	discover_directory(*plugin_filenames, path, *index, errors);
+	discover_directory(*plugin_filenames, path, errors);
 	for plugin_filenames if it.count != 0 && get_extension(it) == "so" then register_dynlib(it, false, errors);
 }
 
@@ -274,7 +273,7 @@ isolate_name :: (path: string) -> string {
 	return path;
 }
 
-discover_directory :: (directory: *[..]string, file: string, index: *int, errors: *[..]Error) -> bool {
+discover_directory :: (directory: *[..]string, file: string, errors: *[..]Error) -> bool {
 	dir_name := path_strip_filename(file);
 	c_dir_name := temp_c_string(dir_name);
 	namelist: **posix.dirent;
@@ -300,8 +299,23 @@ discover_directory :: (directory: *[..]string, file: string, index: *int, errors
 	}
 	c_free(namelist);
 
-	_, index.* = array_find(directory.*, file);
 	return true;
+}
+
+sanitize_directory :: (directory: *[..]string, file: string, index: *int) {
+	new_list: [..]string;
+	dummy_img_ctx: Image_Context;
+	dummy_errors: [..]Error;
+	dummy_errors.allocator = temp;
+	for directory.* {
+		if !get_loading(it, get_extension(it), *dummy_img_ctx, *dummy_errors) continue;
+		posix.fclose(dummy_img_ctx.pre_info.fileptr);
+		array_add(*new_list, it);
+	}
+	array_reset(directory);
+	directory.* = new_list;
+
+	_, index.* = array_find(directory.*, file);
 }
 
 give_log :: (errors: *[..]Error, message: string, args: ..Any) {
