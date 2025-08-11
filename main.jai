@@ -282,12 +282,14 @@ main :: () {
 			top_bar := panel_split(*canvas, .{bar_height, canvas.size[1]}, .TOP, false);
 			bottom_bar := panel_split(*canvas, .{bar_height - 4, canvas.size[1]}, .BOTTOM, false);
 
+			first_layer_is_pressable := img_ctx.draw && errors.count == 0;
+
 			/* Image drawing */
 			canvas.colors = bg_palette;
 			panel_draw(*canvas);
 			if img_ctx.draw {
 				/* we have to process our inputs (not using the keyboard yet) */
-				if pointer_is_in_panel(*canvas, inp.ipointer) {
+				if first_layer_is_pressable && pointer_is_in_panel(*canvas, inp.ipointer) {
 					if inp.scroll_delta {
 						img_ctx.auto_fit = false;
 						delta := inp.scroll_delta / ifx inp.shifted then 200 else 10;
@@ -364,14 +366,14 @@ main :: () {
 			fit_buttons_space.colors.body = .[50, 50, 50, 255];
 			panel_draw(*fit_buttons_space);
 			fit_buttons := panel_subdivide(*fit_buttons_space, 4, .HORIZONTAL, false);
-			if img_ctx.auto_fit && img_ctx.draw {
+			if img_ctx.auto_fit {
 				fit_buttons[img_ctx.fit].colors.text = .[255, 127, 0, 255];
 				fit_buttons[img_ctx.fit].colors.body = .[55, 55, 55, 255];
 				panel_draw(*fit_buttons[img_ctx.fit]);
 			}
 
 			for fit_buttons {
-				if panel_button(*it, inp.ipointer, inp.left_button_switch) {
+				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch) {
 					img_ctx.fit = xx it_index;
 					img_ctx.auto_fit = true;
 				}
@@ -380,6 +382,7 @@ main :: () {
 			}
 
 			text := isolate_name(img_ctx.pre_info.name);
+			if !img_ctx.draw text = "Drag an image or plugin into the window to start.";
 			panel_text_split(*top_bar, main_font, text, .RIGHT);
 
 			/* bottom bar */
@@ -400,7 +403,7 @@ main :: () {
 			bnf_button_space := panel_split(*bottom_bar, .{bar_height*7/2, bottom_bar.size[0]}, .RIGHT, true);
 			bnf_button_space.colors.body = .[50, 50, 50, 255];
 			bnf_buttons := panel_subdivide(*bnf_button_space, 3, .HORIZONTAL, true);
-			if current_q_index.* > 0 && current_q.count != 0 {
+			if first_layer_is_pressable && current_q_index.* > 0 && current_q.count != 0 {
 				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch) || inp.arrow_left {
 					current_q_index.* -= 1;
 					img_ctx.render = true;
@@ -409,7 +412,7 @@ main :: () {
 				bnf_buttons[0].colors.body = palette.body;
 				panel_draw(*bnf_buttons[0]);
 			}
-			if current_q_index.* < current_q.count-1 && current_q.count != 0 {
+			if first_layer_is_pressable && current_q_index.* < current_q.count-1 && current_q.count != 0 {
 				if panel_button(*bnf_buttons[2], inp.ipointer, inp.left_button_switch) || inp.arrow_right {
 					current_q_index.* += 1;
 					img_ctx.render = true;
@@ -425,7 +428,7 @@ main :: () {
 
 			// bnf_buttons[1].colors.body = palette.body;
 			// panel_draw(*bnf_buttons[1]);
-			if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch) {
+			if first_layer_is_pressable && panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch) {
 				fileq_setting = (fileq_setting + 1) % 2;
 				if fileq_setting == .HISTORY {
 					file_history_index = file_history.count-1;
