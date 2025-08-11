@@ -29,6 +29,7 @@
 		- [ ] scrollbars I'm afraid
 - [ ] Some pleasant and elaborate tooltips maybe
 - [ ] Custom icons?
+	- [ ] Make modes a radio button selector thing
 
 ## Amersfoort
 - [ ] different types of filesorting

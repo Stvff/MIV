@@ -9,3 +9,5 @@ Registration file is actually redundant, since we can read entire directories no
 
 Errors don't take away control from the rest of the screen, which means you can layer errors
 That might be ok, but then an error counter with 'n remaining errors' would be very useful regardless
+
+Fit buttons should be unpressable and highlighted instead of pressable and unhighlighted when there's no images.
