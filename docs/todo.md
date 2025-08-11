@@ -27,7 +27,7 @@
 - [ ] logs onscreen instead of in terminal
 	- [ ] intelligent textflows (includes clipping)
 		- [ ] scrollbars I'm afraid
-	- [ ] show count of errors in the errorbar
+	- [x] show count of errors in the errorbar
 - [ ] Some pleasant and elaborate tooltips maybe
 - [ ] Custom icons?
 	- [ ] Make modes a radio button selector thing

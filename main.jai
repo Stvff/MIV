@@ -469,6 +469,8 @@ main :: () {
 				panel_text(*error_screen, main_font, error.message, .MIDDLE, .MIDDLE);
 
 				divisions := panel_subdivide(*options_bar, 3, .HORIZONTAL, true);
+				if errors.count > 1 then panel_text(*divisions[2], main_font, tprint("% other error%", errors.count - 1, ifx errors.count-1 == 1 then "" else "s"), .RIGHT, .MIDDLE);
+
 				buttons := panel_subdivide(*divisions[1], ifx error.options[1].count then 2 else 1, .HORIZONTAL, true);
 				pressed_option = -1;
 				for buttons {
