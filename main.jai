@@ -400,9 +400,11 @@ main :: () {
 			bottom_bar.colors.text = palette.text;
 
 			/* Backwards and forwards buttons (bnf buttons) */
-			bnf_button_space := panel_split(*bottom_bar, .{bar_height*7/2, bottom_bar.size[0]}, .RIGHT, true);
-			bnf_button_space.colors.body = .[50, 50, 50, 255];
-			bnf_buttons := panel_subdivide(*bnf_button_space, 3, .HORIZONTAL, true);
+			bnf_menu_space := panel_split(*bottom_bar, .{bar_height*6, bottom_bar.size[0]}, .RIGHT, true);
+			bnf_menu_space.colors.body = .[50, 50, 50, 255];
+			bnf_button_space := panel_split(*bnf_menu_space, .{bar_height*2, bnf_menu_space.size[0]}, .RIGHT, true);
+
+			bnf_buttons := panel_subdivide(*bnf_button_space, 2, .HORIZONTAL, true);
 			if first_layer_is_pressable && current_q_index.* > 0 && current_q.count != 0 {
 				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch) || inp.arrow_left {
 					current_q_index.* -= 1;
@@ -413,40 +415,52 @@ main :: () {
 				panel_draw(*bnf_buttons[0]);
 			}
 			if first_layer_is_pressable && current_q_index.* < current_q.count-1 && current_q.count != 0 {
-				if panel_button(*bnf_buttons[2], inp.ipointer, inp.left_button_switch) || inp.arrow_right {
+				if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch) || inp.arrow_right {
 					current_q_index.* += 1;
 					img_ctx.render = true;
 				}
 			} else {
-				bnf_buttons[2].colors.body = palette.body;
-				panel_draw(*bnf_buttons[2]);
+				bnf_buttons[1].colors.body = palette.body;
+				panel_draw(*bnf_buttons[1]);
 			}
-
-
 			panel_text(*bnf_buttons[0], main_font, "<", .MIDDLE, .MIDDLE);
-			panel_text(*bnf_buttons[2], main_font, ">", .MIDDLE, .MIDDLE);
+			panel_text(*bnf_buttons[1], main_font, ">", .MIDDLE, .MIDDLE);
 
-			// bnf_buttons[1].colors.body = palette.body;
-			// panel_draw(*bnf_buttons[1]);
-			if first_layer_is_pressable && panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch) {
-				fileq_setting = (fileq_setting + 1) % 2;
-				if fileq_setting == .HISTORY {
-					file_history_index = file_history.count-1;
-					current_q = *file_history;
-					current_q_index = *file_history_index;
-				} else {
-//					array_reset(*directory);
-//					directory_index = 0;
-//					array_add(*directory, file_history[file_history_index]);
-					discover_directory(*directory, file_history[file_history_index], *directory_index, *errors);
-
-					current_q = *directory;
-					current_q_index = *directory_index;
-				}
-				img_ctx.render = true;
+			/* history or directory selector */
+			bnf_selector_space := panel_split(*bnf_menu_space, .{bar_height*3, bnf_menu_space.size[0]}, .LEFT, false);
+			bnf_menu_space.colors = palette;
+			panel_draw(*bnf_menu_space);
+			bnf_selector_buttons := panel_subdivide(*bnf_selector_space, 2, .HORIZONTAL, false);
+			{ /* the selected button */
+				selected := *bnf_selector_buttons[fileq_setting];
+				selected.colors.text = .[255, 127, 0, 255];
+				selected.colors.body = .[55, 55, 55, 255];
+				panel_draw(selected);
 			}
-			fileq_setting_text :: string.["hist", "dir"];
-			panel_text(*bnf_buttons[1], main_font, fileq_setting_text[fileq_setting], .MIDDLE, .MIDDLE);
+
+			fileq_setting_switch := false;
+			for bnf_selector_buttons {
+				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch) {
+					fileq_setting_switch = true;
+					fileq_setting = xx it_index;
+				}
+				fileq_setting_text :: string.["hist", "dir"];
+				panel_text(*it, main_font, fileq_setting_text[it_index], .MIDDLE, .MIDDLE);
+			}
+			if fileq_setting_switch if #complete fileq_setting == {
+			case .HISTORY;
+				file_history_index = file_history.count-1;
+				current_q = *file_history;
+				current_q_index = *file_history_index;
+			case .DIRECTORY;
+				discover_directory(*directory, file_history[file_history_index], *directory_index, *errors);
+				current_q = *directory;
+				current_q_index = *directory_index;
+			}
+
+			if img_ctx.draw {
+				panel_text(*bottom_bar, main_font, tprint("%/%", current_q_index.*+1, current_q.count), .RIGHT, .MIDDLE);
+			}
 		}
 		{/* Popups */
 //			log("%", errors);

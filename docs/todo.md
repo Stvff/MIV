@@ -16,6 +16,7 @@
 - [x] Documentation
 
 ## Apeldoorn
+- [ ] remove registration file (since it is redundant)
 - [ ] One more supported image type
 - [ ] Option to select between zoom on screen center and pointer
 	- [ ] zoom on pointer
@@ -30,7 +31,14 @@
 	- [x] show count of errors in the errorbar
 - [ ] Some pleasant and elaborate tooltips maybe
 - [ ] Custom icons?
-	- [ ] Make modes a radio button selector thing
+	- [x] Make modes a radio button selector thing
+		- [x] show index in file queue
+
+## Bugs to fix
+- While scrolling through a directory, MIV attempts to open files it doesn't/shouldn't know instead of skipping them like it should.
+	- When such a file is opened, the index in the directory is still kept while the previous file renders, and it's very confusing.
+- When another window is above MIV, MIV still reads the mouse position from that window.
+- When an older window is closed above MIV, MIV crashes?? Even subwindows of other programs (see OBS) have this effect.
 
 ## Amersfoort
 - [ ] different types of filesorting
