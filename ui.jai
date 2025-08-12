@@ -143,8 +143,8 @@ panel_subdivide :: (mother: *UI_Panel, n: int, direction: enum {HORIZONTAL; VERT
 }
 
 pointer_is_in_panel :: (p: *UI_Panel, pointer_position: [2]int) -> bool {
-	horizontal := p.pos[0] < pointer_position[0] && pointer_position[0] < p.pos[0] + p.size[0];
-	vertical := p.pos[1] < pointer_position[1] && pointer_position[1] < p.pos[1] + p.size[1];
+	horizontal := p.pos[0] <= pointer_position[0] && pointer_position[0] <= p.pos[0] + p.size[0];
+	vertical := p.pos[1] <= pointer_position[1] && pointer_position[1] <= p.pos[1] + p.size[1];
 	return vertical && horizontal;
 }
 

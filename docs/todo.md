@@ -49,6 +49,7 @@
 	- [x] show index in file queue
 
 ## Bugs to fix
+- When the directory can't be read (happens when it tries to read root), it should return to history mode
 - When another window is above MIV, MIV still reads the mouse position from that window.
 - When an older window is closed above MIV, MIV crashes?? Even subwindows of other programs (see OBS) have this effect.
 ```

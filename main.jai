@@ -62,7 +62,7 @@ main :: () {
 	clipping_texture = Simp.texture_create_render_target(10, 10, .RGBA8);
 
 	display_metadata := false;
-	display_persistence_menu := false;
+	display_settings_menu := false;
 	zoom_on_pointer := false;
 
 	inp: Input_State;
@@ -84,7 +84,7 @@ main :: () {
 	zoom_tips[0] = make_tooltip("Zoom on screen center", main_font);
 	zoom_tips[1] = make_tooltip("Zoom on pointer", main_font);
 
-	persistence_tip := make_tooltip("Menu for persistence of settings between files or restarts", main_font);
+	settings_tip := make_tooltip("Menu for persistence of settings between files or restarts", main_font);
 	fileq_tips: [2]Tool_Tip;
 	fileq_tips[0] = make_tooltip("Set file queue to dropped files", main_font);
 	fileq_tips[1] = make_tooltip("Set file queue to directory of the current file", main_font);
@@ -93,7 +93,7 @@ main :: () {
 	bnf_tips[1] = make_tooltip("Previous file in queue", main_font);
 	tooltips := *Tool_Tip.[
 		*metadata_tip, *fit_tips[0], *fit_tips[1], *fit_tips[2], *fit_tips[3], *aa_tip, *zoom_tips[0], *zoom_tips[1],
-		*persistence_tip, *fileq_tips[0], *fileq_tips[1], *bnf_tips[0], *bnf_tips[1]
+		*settings_tip, *fileq_tips[0], *fileq_tips[1], *bnf_tips[0], *bnf_tips[1]
 	];
 
 	/* Image context etc */
@@ -294,11 +294,12 @@ main :: () {
 
 			top_bar := panel_split(*canvas, .{bar_height, canvas.size[1]}, .TOP, false);
 			bottom_bar := panel_split(*canvas, .{bar_height - 4, canvas.size[1]}, .BOTTOM, false);
-			metadata_panel: UI_Panel;
+			settings_menu_panel, metadata_panel: UI_Panel;
 
-			if display_metadata {
+			if display_settings_menu
+				settings_menu_panel = panel_text_split(*canvas, main_font, "persistence  files  restarts", .LEFT, .NEAR);
+			if display_metadata
 				metadata_panel = panel_split(*canvas, .{bar_height*5, canvas.size[0]}, .LEFT, false);
-			}
 
 			first_layer_is_pressable := img_ctx.draw && errors.count == 0;
 
@@ -380,6 +381,14 @@ main :: () {
 			panel_draw(*top_bar);
 			panel_draw(*bottom_bar);
 
+			if display_settings_menu {
+				panel_draw(*settings_menu_panel);
+				top_row := panel_text_split(*settings_menu_panel, main_font, "persistence  files  restarts", .TOP, .MIDDLE);
+				row_1 := panel_text_split(*settings_menu_panel, main_font, "of offset", .TOP, .NEAR);
+				row_2 := panel_text_split(*settings_menu_panel, main_font, "of zoom", .TOP, .NEAR);
+				row_3 := panel_text_split(*settings_menu_panel, main_font, "of scaling", .TOP, .NEAR);
+			}
+
 			if display_metadata {
 				panel_draw(*metadata_panel);
 				panel_text_split(*metadata_panel, main_font, tprint("width: % px", img_ctx.pre_info.width), .TOP, .NEAR);
@@ -390,7 +399,7 @@ main :: () {
 
 			/** UI **/
 			/* top bar */
-			metadata_button := panel_split(*top_bar, .{bar_height*3/2, top_bar.size[0]}, .LEFT, false);
+			settings_button := panel_text_split(*top_bar, main_font, "Settings", .LEFT);
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 			fit_buttons_space := panel_split(*top_bar, .{bar_height*4, top_bar.size[0]}, .LEFT, false);
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
@@ -398,13 +407,13 @@ main :: () {
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 			zoom_buttons_space := panel_split(*top_bar, .{bar_height*2, top_bar.size[0]}, .LEFT, false);
 
-			/* metadata button */
-			metadata_button.colors = ifx display_metadata then selected_button_palette else button_palette;
-			panel_draw(*metadata_button);
-			if first_layer_is_pressable && panel_button(*metadata_button, inp.ipointer, inp.left_button_switch, *metadata_tip) {
-				display_metadata = !display_metadata;
+			/* persistence button */
+			settings_button.colors = ifx display_settings_menu then selected_button_palette else button_palette;
+			panel_draw(*settings_button);
+			if first_layer_is_pressable && panel_button(*settings_button, inp.ipointer, inp.left_button_switch, *settings_tip){
+				display_settings_menu = !display_settings_menu;
 			}
-			panel_text(*metadata_button, main_font, "<../>", .MIDDLE, .MIDDLE);
+			panel_text(*settings_button, main_font, "Settings", .MIDDLE, .MIDDLE);
 
 			/* fit buttons */
 			fit_buttons_space.colors = button_palette;
@@ -461,14 +470,14 @@ main :: () {
 			}
 			panel_text_split(*bottom_bar, main_font, text, .LEFT);
 
-			/* persistence button */
-			persistence_button := panel_text_split(*bottom_bar, main_font, "Persistence", .LEFT);
-			persistence_button.colors = ifx display_persistence_menu then selected_button_palette else button_palette;
-			panel_draw(*persistence_button);
-			if first_layer_is_pressable && panel_button(*persistence_button, inp.ipointer, inp.left_button_switch, *persistence_tip){
-				display_persistence_menu = !display_persistence_menu;
+			/* metadata button */
+			metadata_button := panel_split(*bottom_bar, .{bar_height*3/2, bottom_bar.size[0]}, .LEFT, false);
+			metadata_button.colors = ifx display_metadata then selected_button_palette else button_palette;
+			panel_draw(*metadata_button);
+			if first_layer_is_pressable && panel_button(*metadata_button, inp.ipointer, inp.left_button_switch, *metadata_tip) {
+				display_metadata = !display_metadata;
 			}
-			panel_text(*persistence_button, main_font, "Persistence", .MIDDLE, .MIDDLE);
+			panel_text(*metadata_button, main_font, "<../>", .MIDDLE, .MIDDLE);
 
 			/* fps counter */
 			bottom_bar.colors.text = ifx frame_time < target_frame_time then u8.[100, 210, 25, 255] else .[220, 60, 25, 255];
