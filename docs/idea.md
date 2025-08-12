@@ -22,6 +22,23 @@ What happens when an image is opened:
 6. MIV tells the library to render the image to the provided buffer
 7. MIV watches the file to see if it changes, restarts this whole process when it changes
 
+when switching to history mode, the current file's directory is investigated
+
+when an image is dropped in directory mode, the directory is investigated
+in case the directory is invalid, don't change anything
+in case that that image is invalid, it switches to the first available image in that directory
+in case that there is no available image in that directory, MIV renders and draws nothing, gives an "no readable files in dir" error, and switches to historymode on ok
+	else the eventually rendered file gets added to history
+
+when an image is dropped in history mode, the list of files is investigated, and all errors relayed.
+the last available image in history is rendered, and the errors displayed (ok does nothing but dismiss)
+in case that there are no valid images in history, rendering and drawing is turned off
+
+Dropping files puts them all in the history
+History is sanitized
+Best available image is chosen to view
+if directory mode, discover directory
+
 Some features:
 - Zoom (percentage is image pixel to screen pixel, zoomlimit is when 1 pixel completely covers the screen)
 - Pan (is in imagepixels removed from the center)

@@ -302,20 +302,25 @@ discover_directory :: (directory: *[..]string, file: string, errors: *[..]Error)
 	return true;
 }
 
-sanitize_directory :: (directory: *[..]string, file: string, index: *int) {
+sanitize_file_list :: (list: *[..]string, file: string, index: *int, errors: *[..]Error) {
 	new_list: [..]string;
 	dummy_img_ctx: Image_Context;
 	dummy_errors: [..]Error;
 	dummy_errors.allocator = temp;
-	for directory.* {
-		if !get_loading(it, get_extension(it), *dummy_img_ctx, *dummy_errors) continue;
+	if !errors errors = *dummy_errors;
+	for list.* {
+		if !get_loading(it, get_extension(it), *dummy_img_ctx, errors) continue;
 		posix.fclose(dummy_img_ctx.pre_info.fileptr);
 		array_add(*new_list, it);
 	}
-	array_reset(directory);
-	directory.* = new_list;
+	array_reset(list);
+	list.* = new_list;
 
-	_, index.* = array_find(directory.*, file);
+	found: bool;
+	found, index.* = array_find(list.*, file);
+	if !found {
+		index.* = list.count - 1;
+	}
 }
 
 give_log :: (errors: *[..]Error, message: string, args: ..Any) {

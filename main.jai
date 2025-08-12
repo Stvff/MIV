@@ -196,63 +196,60 @@ main :: () {
 		/* mouse */
 		inp.fpointer = get_pointer_position();
 		inp.ipointer = .[xx inp.fpointer.x, xx inp.fpointer.y];
+
 		/* Files added via command line or drop-in */
 		loading_time := current_time_monotonic();
 		position_adjusted := false;
-		backup_position := file_history_index;
 		while files_to_open.count {
 			file_to_open := files_to_open[0];
 			give_log(*errors, "%", file_to_open);
 			ext := get_extension(file_to_open);
 			if ext == "so" {
 				register_dynlib(file_to_open, true, *errors);
-				array_ordered_remove_by_index(*files_to_open, 0);
 			} else {
-				img_ctx.render = true;
 				array_add(*file_history, file_to_open);
+				img_ctx.render = true;
 				if !position_adjusted {
-					backup_position = file_history_index;
 					file_history_index = file_history.count-1;
 					position_adjusted = true;
-
-					dir_success := discover_directory(*directory, file_history[file_history_index], *errors);
-					if !dir_success fileq_setting = .HISTORY;
-					else sanitize_directory(*directory, file_history[file_history_index], *directory_index);
-					if file_history_index == -1 {
-						file_history_index = 0;
-					}
-					if 0 <= file_history_index && file_history_index < file_history.count {
-						fileq_setting = .HISTORY;
-					}
 				}
-				/* <Also make the list of files that exist in this directory for us to scroll through> */
-				array_ordered_remove_by_index(*files_to_open, 0);
+			}
+			/* TODO: make this pointer math instead of this relatively expensive operation */
+			array_ordered_remove_by_index(*files_to_open, 0);
+		}
+
+		/* Choosing the file to render */
+		if position_adjusted {
+			/* if position_adjusted? */
+			sanitize_file_list(*file_history, file_history[file_history_index], *file_history_index, *errors);
+			if fileq_setting == .DIRECTORY {
+				/* I'm assuming there's always a valid file in this directory */
+				discover_directory(*directory, file_history[file_history_index], *errors);
+				sanitize_file_list(*directory, file_history[file_history_index], *directory_index, null);
 			}
 		}
 		if current_q.count == 0 img_ctx.render = false;
+
+		/* image pre-render */
 		if img_ctx.render {
 			old_name := img_ctx.pre_info.name;
 			old_handle := img_ctx.pre_info.fileptr;
 			new_name := current_q.*[current_q_index.*];
 			img_ctx.render = get_loading(new_name, get_extension(new_name), *img_ctx, *errors);
 			if img_ctx.render {
-				//free(old_name);
 				if old_handle posix.fclose(old_handle);
 				/* retrieve previous offsets etc if available, for now we just reset */
 				img_ctx.auto_fit = true;
 			} else {
 				f, index := array_find(file_history, new_name);
 				if f array_ordered_remove_by_index(*file_history, index);
-				file_history_index = backup_position;
 				file_history_index = clamp(file_history_index, 0, file_history.count-1);
 			}
 			give_log(*errors, "%", img_ctx);
 		}
-
 		img_ctx.draw = true;
 
 		/* Image rendering (aka resolving the actual data) */
-		/* At some point we might want to move this to after panning and zooming, to get up-to-date subviews */
 		if !img_ctx.plugin { img_ctx.render = false; img_ctx.draw = false; }
 		if img_ctx.render {
 			using img_ctx.render_info;
@@ -461,13 +458,11 @@ main :: () {
 				current_q = *file_history;
 				current_q_index = *file_history_index;
 			case .DIRECTORY;
-				dir_success := discover_directory(*directory, file_history[file_history_index], *errors);
-				if !dir_success fileq_setting = .HISTORY;
-				else {
-					sanitize_directory(*directory, file_history[file_history_index], *directory_index);
-					current_q = *directory;
-					current_q_index = *directory_index;
-				}
+				/* I'm assuming there's always a valid file in this directory */
+				discover_directory(*directory, file_history[file_history_index], *errors);
+				sanitize_file_list(*directory, file_history[file_history_index], *directory_index, null);
+				current_q = *directory;
+				current_q_index = *directory_index;
 			}
 
 			if img_ctx.draw {
@@ -475,8 +470,6 @@ main :: () {
 			}
 		}
 		{/* Popups */
-//			log("%", errors);
-//			log("\n");
 			pressed_option := -2;
 			for error: errors {
 				if error.kind == .LOG {
