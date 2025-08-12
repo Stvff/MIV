@@ -18,10 +18,17 @@
 ## Apeldoorn
 - [x] remove registration file (since it is redundant)
 - [ ] One more supported image type
-- [ ] Option to select between zoom on screen center and pointer
+- [x] Option to select between zoom on screen center and pointer
 	- [ ] zoom on pointer
 - [ ] Options for the different persistence settings (between files, restarts, etc)
-- [ ] Options for AA (think about if this could be elaborate)
+	- [ ] Make a settings file
+- [x] Options for AA
+	- [ ] Implement AA
+	- [ ] There's linear upscaling and downscaling and nearest upscaling and downscaling, should this be two toggles?
+- [x] Option for metadata
+	- [ ] Display/elaborate on metadata
+- [ ] Option for plugin settings
+	- [ ] Implement some API for plugin settings
 - [ ] Filewatching
 	- [ ] Handle events where the file was moved (maybe follow the file?)
 - [ ] give functions the ability to respond responsibly based on user input option

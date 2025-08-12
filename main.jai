@@ -5,6 +5,7 @@ Image_Context :: struct {
 	scale: float;
 	angle: float;
 
+	linear_upscaling: bool;
 	auto_fit: bool;
 	render: bool;
 	draw: bool;
@@ -37,27 +38,6 @@ Input_State :: struct {
 	}
 }
 
-palette :: Palette.{
-	body = .[65, 65, 65, 255],
-	border = .[75, 75, 75, 255],
-	text = .[255, 255, 255, 255],
-	hover = .[150, 150, 150, 255],
-};
-
-bg_palette :: Palette.{
-	body = .[30, 25, 30, 255],
-	border = .[32, 25, 30, 255],
-	text = .[30, 25, 30, 255],
-	hover = .[30, 25, 30, 255],
-};
-
-error_message_palette :: Palette.{
-	body = .[160, 20, 20, 120],
-	border = .[160, 30, 30, 120],
-	text = .[255, 235, 235, 255],
-	hover = .[160, 40, 40, 120],
-};
-
 window_size: [2]int;
 os_window: X11.Window;
 
@@ -81,12 +61,18 @@ main :: () {
 	bar_height := fontsize*2;
 	clipping_texture = Simp.texture_create_render_target(10, 10, .RGBA8);
 
+	display_metadata := false;
+	zoom_on_pointer := false;
+
 	inp: Input_State;
 
 	/* Font loading */
 	font_pixel_height := bar_height/2;
 	main_font: *Simp.Dynamic_Font;
 	main_font = Simp.get_font_at_size(FONT_DATA, font_pixel_height);
+
+	/* tooltips */
+	metadata_tip := Tool_Tip.{tip = "Toggle image data view", font = main_font};
 
 	/* Image context etc */
 	img_ctx := Image_Context.{
@@ -366,14 +352,29 @@ main :: () {
 
 			/** UI **/
 			/* top bar */
-			panel_text_split(*top_bar, main_font, "fit:", .LEFT);
-			fit_buttons_space := panel_split(*top_bar, .{bar_height*4, top_bar.size[0]}, .LEFT, true);
-			fit_buttons_space.colors.body = .[50, 50, 50, 255];
+			metadata_button := panel_split(*top_bar, .{bar_height*3/2, top_bar.size[0]}, .LEFT, false);
+			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
+			fit_buttons_space := panel_split(*top_bar, .{bar_height*4, top_bar.size[0]}, .LEFT, false);
+			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
+			aa_button := panel_split(*top_bar, .{bar_height*6/5, top_bar.size[0]}, .LEFT, false);
+			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
+			zoom_buttons_space := panel_split(*top_bar, .{bar_height*2, top_bar.size[0]}, .LEFT, false);
+
+			/* metadata button */
+			if display_metadata metadata_button.colors = selected_button_palette;
+			else metadata_button.colors = button_palette;
+			panel_draw(*metadata_button);
+			if first_layer_is_pressable && panel_button(*metadata_button, inp.ipointer, inp.left_button_switch, *metadata_tip) {
+				display_metadata = !display_metadata;
+			}
+			panel_text(*metadata_button, main_font, "<../>", .MIDDLE, .MIDDLE);
+
+			/* fit buttons */
+			fit_buttons_space.colors = button_palette;
 			panel_draw(*fit_buttons_space);
 			fit_buttons := panel_subdivide(*fit_buttons_space, 4, .HORIZONTAL, false);
 			if img_ctx.auto_fit {
-				fit_buttons[img_ctx.fit].colors.text = .[255, 127, 0, 255];
-				fit_buttons[img_ctx.fit].colors.body = .[55, 55, 55, 255];
+				fit_buttons[img_ctx.fit].colors = selected_button_palette;
 				panel_draw(*fit_buttons[img_ctx.fit]);
 			}
 
@@ -386,6 +387,32 @@ main :: () {
 				panel_text(*it, main_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
 
+			/* AA button */
+			if img_ctx.linear_upscaling aa_button.colors = selected_button_palette;
+			else aa_button.colors = button_palette;
+			panel_draw(*aa_button);
+			if first_layer_is_pressable && panel_button(*aa_button, inp.ipointer, inp.left_button_switch) {
+				img_ctx.linear_upscaling = !img_ctx.linear_upscaling;
+			}
+			panel_text(*aa_button, main_font, "AA", .MIDDLE, .MIDDLE);
+
+			/* zoom setting button */
+			zoom_buttons_space.colors = button_palette;
+			panel_draw(*zoom_buttons_space);
+			zoom_buttons := panel_subdivide(*zoom_buttons_space, 2, .HORIZONTAL, false);
+
+			zoom_buttons[xx zoom_on_pointer].colors = selected_button_palette;
+			panel_draw(*zoom_buttons[xx zoom_on_pointer]);
+
+			for zoom_buttons {
+				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch){
+					zoom_on_pointer = xx it_index;
+				}
+				zoom_button_text :: string.["+", "^"];
+				panel_text(*it, main_font, zoom_button_text[it_index], .MIDDLE, .MIDDLE);
+			}
+
+			/* filename display */
 			text := isolate_name(img_ctx.pre_info.name);
 			if !img_ctx.draw text = "Drag an image or plugin into the window to start.";
 			panel_text_split(*top_bar, main_font, text, .RIGHT);
@@ -403,10 +430,11 @@ main :: () {
 			text = tprint("fps: %", frame_count_over_1s);
 			panel_text(*bottom_bar, main_font, text, .LEFT, .MIDDLE);
 			bottom_bar.colors.text = palette.text;
+			show_fps := false;
 
 			/* Backwards and forwards buttons (bnf buttons) */
-			bnf_menu_space := panel_split(*bottom_bar, .{bar_height*6, bottom_bar.size[0]}, .RIGHT, true);
-			bnf_menu_space.colors.body = .[50, 50, 50, 255];
+			bnf_menu_space := panel_split(*bottom_bar, .{bar_height*6, bottom_bar.size[0]}, .RIGHT, !show_fps);
+			bnf_menu_space.colors = button_palette;
 			bnf_button_space := panel_split(*bnf_menu_space, .{bar_height*2, bnf_menu_space.size[0]}, .RIGHT, true);
 
 			bnf_buttons := panel_subdivide(*bnf_button_space, 2, .HORIZONTAL, true);
@@ -438,8 +466,7 @@ main :: () {
 			bnf_selector_buttons := panel_subdivide(*bnf_selector_space, 2, .HORIZONTAL, false);
 			{ /* the selected button */
 				selected := *bnf_selector_buttons[fileq_setting];
-				selected.colors.text = .[255, 127, 0, 255];
-				selected.colors.body = .[55, 55, 55, 255];
+				selected.colors = selected_button_palette;
 				panel_draw(selected);
 			}
 

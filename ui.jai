@@ -8,12 +8,20 @@
 UI_Panel :: struct {
 	size: [2]int;
 	pos: [2]int;
-	border_size: int;
+	border_size := 1;
 	colors: Palette;
 }
 
 Palette :: struct {
 	body, border, text, hover: [4]u8;
+}
+
+Tool_Tip :: struct {
+	tip: string;
+	hovering: bool;
+	hover_started: Apollo_Time;
+	colors := default_tool_tip_palette;
+	font: *Simp.Dynamic_Font;
 }
 
 Ratio :: struct {num, den: int;}
@@ -23,6 +31,47 @@ Text_Align_Ver :: enum {TOP; MIDDLE; BOTTOM;}
 Text_Align_Hor :: enum {LEFT; MIDDLE; RIGHT;}
 
 clipping_texture: Simp.Texture;
+
+palette :: Palette.{
+	body = .[65, 65, 65, 255],
+	border = .[75, 75, 75, 255],
+	text = .[255, 255, 255, 255],
+	hover = .[150, 150, 150, 255],
+};
+
+button_palette :: Palette.{
+	body = .[50, 50, 50, 255],
+	border = .[75, 75, 75, 255],
+	text = .[255, 255, 255, 255],
+	hover = .[150, 150, 150, 255],
+};
+
+selected_button_palette :: Palette.{
+	body = .[55, 55, 55, 255],
+	border = .[75, 75, 75, 255],
+	text = .[255, 127, 0, 255],
+	hover = .[150, 150, 150, 255],
+};
+
+bg_palette :: Palette.{
+	body = .[30, 25, 30, 255],
+	border = .[32, 25, 30, 255],
+	text = .[30, 25, 30, 255],
+	hover = .[30, 25, 30, 255],
+};
+
+error_message_palette :: Palette.{
+	body = .[160, 20, 20, 120],
+	border = .[160, 30, 30, 120],
+	text = .[255, 235, 235, 255],
+	hover = .[160, 40, 40, 120],
+};
+
+default_tool_tip_palette :: Palette.{
+	body = .[100, 100, 230, 255],
+	border = .[110, 110, 240, 255],
+	text = .[255, 255, 255, 255],
+};
 
 panel_split :: (mother: *UI_Panel, ratio: Ratio, side: Creation_Side, already_draw: bool) -> UI_Panel {
 	r := ratio;
@@ -100,7 +149,7 @@ pointer_is_in_panel :: (p: *UI_Panel, pointer_position: [2]int) -> bool {
 	return vertical && horizontal;
 }
 
-panel_button :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool) -> bool {
+panel_button :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool, tip: *Tool_Tip = null) -> bool {
 	in_panel := pointer_is_in_panel(p, pointer_position);
 
 	if in_panel {
@@ -108,6 +157,25 @@ panel_button :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool) -> bool 
 		p.colors.body = tc.hover;
 		panel_draw(p);
 		p.colors = tc;
+	}
+
+	if tip {
+		if in_panel {
+			if !tip.hovering {
+				tip.hovering = true;
+				tip.hover_started = current_time_monotonic();
+			}
+		} else {
+			return in_panel && pressed;
+		}
+		text_width := Simp.prepare_text(tip.font, tip.tip);
+		padding := tip.font.character_height;
+		tip_panel: UI_Panel;
+		tip_panel.size = .[text_width + padding, padding*2];
+		tip_panel.pos = pointer_position;
+		tip_panel.colors = tip.colors;
+		// panel_draw(*tip_panel);
+		// panel_text(*tip_panel, tip.font, tip.tip, .MIDDLE, .MIDDLE);
 	}
 
 	return in_panel && pressed;
