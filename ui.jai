@@ -186,24 +186,24 @@ make_tooltip :: (tip: string, font: *Simp.Dynamic_Font, colors := default_tool_t
 	return tooltip;
 }
 
-panel_text_split :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, side: enum {TOP; BOTTOM; LEFT; RIGHT;}) -> UI_Panel {
+panel_text_split :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, side: Creation_Side, other_align: enum {NEAR; MIDDLE; FAR;} = .MIDDLE) -> UI_Panel {
 	text_width := Simp.prepare_text(font, text);
 	padding := font.character_height;
 	text_panel := mother.*;
 
 	if #complete side == {
 	case .TOP;
-		text_panel = panel_split(mother, .{padding*5/4, mother.size[0]}, .TOP, true);
-		panel_text(*text_panel, font, text, .MIDDLE, .MIDDLE);
+		text_panel = panel_split(mother, .{padding*3/2, mother.size[1]}, .TOP, true);
+		panel_text(*text_panel, font, text, xx other_align, .MIDDLE);
 	case .BOTTOM;
-		text_panel = panel_split(mother, .{padding*5/4, mother.size[0]}, .BOTTOM, true);
-		panel_text(*text_panel, font, text, .MIDDLE, .MIDDLE);
+		text_panel = panel_split(mother, .{padding*3/2, mother.size[1]}, .BOTTOM, true);
+		panel_text(*text_panel, font, text, xx other_align, .MIDDLE);
 	case .LEFT;
 		text_panel = panel_split(mother, .{text_width + padding, mother.size[0]}, .LEFT, true);
-		panel_text(*text_panel, font, text, .MIDDLE, .MIDDLE);
+		panel_text(*text_panel, font, text, .MIDDLE, xx other_align);
 	case .RIGHT;
 		text_panel = panel_split(mother, .{text_width + padding, mother.size[0]}, .RIGHT, true);
-		panel_text(*text_panel, font, text, .MIDDLE, .MIDDLE);
+		panel_text(*text_panel, font, text, .MIDDLE, xx other_align);
 	}
 
 	return text_panel;

@@ -72,7 +72,7 @@ main :: () {
 	main_font = Simp.get_font_at_size(FONT_DATA, font_pixel_height);
 
 	/* tooltips */
-	metadata_tip := make_tooltip("Toggle image data view", main_font);
+	metadata_tip := make_tooltip("Toggle image metadata view", main_font);
 	fit_tips: [4]Tool_Tip;
 	fit_tips[0] = make_tooltip("Fit pixel to pixel", main_font);
 	fit_tips[1] = make_tooltip("Fit to screen width", main_font);
@@ -288,6 +288,11 @@ main :: () {
 
 			top_bar := panel_split(*canvas, .{bar_height, canvas.size[1]}, .TOP, false);
 			bottom_bar := panel_split(*canvas, .{bar_height - 4, canvas.size[1]}, .BOTTOM, false);
+			metadata_panel: UI_Panel;
+
+			if display_metadata {
+				metadata_panel = panel_split(*canvas, .{bar_height*5, canvas.size[0]}, .LEFT, false);
+			}
 
 			first_layer_is_pressable := img_ctx.draw && errors.count == 0;
 
@@ -368,6 +373,14 @@ main :: () {
 			}
 			panel_draw(*top_bar);
 			panel_draw(*bottom_bar);
+
+			if display_metadata {
+				panel_draw(*metadata_panel);
+				panel_text_split(*metadata_panel, main_font, tprint("width: % px", img_ctx.pre_info.width), .TOP, .NEAR);
+				panel_text_split(*metadata_panel, main_font, tprint("height: % px", img_ctx.pre_info.height), .TOP, .NEAR);
+				panel_text_split(*metadata_panel, main_font, tprint("bit depth: % bits", img_ctx.pre_info.bit_depth), .TOP, .NEAR);
+				panel_text_split(*metadata_panel, main_font, tprint("channels: %", img_ctx.pre_info.channels), .TOP, .NEAR);
+			}
 
 			/** UI **/
 			/* top bar */
