@@ -38,9 +38,15 @@
 		- [ ] scrollbars I'm afraid
 	- [x] show count of errors in the errorbar
 - [x] Some pleasant and elaborate tooltips
-- [ ] Custom icons?
-	- [x] Make modes a radio button selector thing
-		- [x] show index in file queue
+- [ ] Custom icons
+	- [ ] Fit buttons
+	- [ ] Mode buttons
+	- [ ] Next/prev
+	- [ ] Zoom buttons
+	- [ ] Settings
+	- [ ] Metadata or plugin settings??
+- [x] Make modes a radio button selector thing
+	- [x] show index in file queue
 
 ## Bugs to fix
 - When another window is above MIV, MIV still reads the mouse position from that window.

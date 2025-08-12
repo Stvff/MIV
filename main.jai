@@ -62,6 +62,7 @@ main :: () {
 	clipping_texture = Simp.texture_create_render_target(10, 10, .RGBA8);
 
 	display_metadata := false;
+	display_persistence_menu := false;
 	zoom_on_pointer := false;
 
 	inp: Input_State;
@@ -82,13 +83,18 @@ main :: () {
 	zoom_tips: [2]Tool_Tip;
 	zoom_tips[0] = make_tooltip("Zoom on screen center", main_font);
 	zoom_tips[1] = make_tooltip("Zoom on pointer", main_font);
+
+	persistence_tip := make_tooltip("Menu for persistence of settings between files or restarts", main_font);
 	fileq_tips: [2]Tool_Tip;
 	fileq_tips[0] = make_tooltip("Set file queue to dropped files", main_font);
 	fileq_tips[1] = make_tooltip("Set file queue to directory of the current file", main_font);
 	bnf_tips: [2]Tool_Tip;
 	bnf_tips[0] = make_tooltip("Next file in queue", main_font);
 	bnf_tips[1] = make_tooltip("Previous file in queue", main_font);
-	tooltips := *Tool_Tip.[*metadata_tip, *fit_tips[0], *fit_tips[1], *fit_tips[2], *fit_tips[3], *aa_tip, *zoom_tips[0], *zoom_tips[1], *fileq_tips[0], *fileq_tips[1], *bnf_tips[0], *bnf_tips[1]];
+	tooltips := *Tool_Tip.[
+		*metadata_tip, *fit_tips[0], *fit_tips[1], *fit_tips[2], *fit_tips[3], *aa_tip, *zoom_tips[0], *zoom_tips[1],
+		*persistence_tip, *fileq_tips[0], *fileq_tips[1], *bnf_tips[0], *bnf_tips[1]
+	];
 
 	/* Image context etc */
 	img_ctx := Image_Context.{
@@ -393,8 +399,7 @@ main :: () {
 			zoom_buttons_space := panel_split(*top_bar, .{bar_height*2, top_bar.size[0]}, .LEFT, false);
 
 			/* metadata button */
-			if display_metadata metadata_button.colors = selected_button_palette;
-			else metadata_button.colors = button_palette;
+			metadata_button.colors = ifx display_metadata then selected_button_palette else button_palette;
 			panel_draw(*metadata_button);
 			if first_layer_is_pressable && panel_button(*metadata_button, inp.ipointer, inp.left_button_switch, *metadata_tip) {
 				display_metadata = !display_metadata;
@@ -420,8 +425,7 @@ main :: () {
 			}
 
 			/* AA button */
-			if img_ctx.linear_upscaling aa_button.colors = selected_button_palette;
-			else aa_button.colors = button_palette;
+			aa_button.colors = ifx img_ctx.linear_upscaling then selected_button_palette else button_palette;
 			panel_draw(*aa_button);
 			if first_layer_is_pressable && panel_button(*aa_button, inp.ipointer, inp.left_button_switch, *aa_tip) {
 				img_ctx.linear_upscaling = !img_ctx.linear_upscaling;
@@ -457,8 +461,17 @@ main :: () {
 			}
 			panel_text_split(*bottom_bar, main_font, text, .LEFT);
 
-			if frame_time < target_frame_time then bottom_bar.colors.text = .[100, 210, 25, 255];
-			else bottom_bar.colors.text = .[220, 60, 25, 255];
+			/* persistence button */
+			persistence_button := panel_text_split(*bottom_bar, main_font, "Persistence", .LEFT);
+			persistence_button.colors = ifx display_persistence_menu then selected_button_palette else button_palette;
+			panel_draw(*persistence_button);
+			if first_layer_is_pressable && panel_button(*persistence_button, inp.ipointer, inp.left_button_switch, *persistence_tip){
+				display_persistence_menu = !display_persistence_menu;
+			}
+			panel_text(*persistence_button, main_font, "Persistence", .MIDDLE, .MIDDLE);
+
+			/* fps counter */
+			bottom_bar.colors.text = ifx frame_time < target_frame_time then u8.[100, 210, 25, 255] else .[220, 60, 25, 255];
 			text = tprint("fps: %", frame_count_over_1s);
 			panel_text(*bottom_bar, main_font, text, .LEFT, .MIDDLE);
 			bottom_bar.colors.text = palette.text;
@@ -524,6 +537,7 @@ main :: () {
 				current_q_index = *directory_index;
 			}
 
+			/* queue position */
 			if img_ctx.draw {
 				panel_text(*bottom_bar, main_font, tprint("%/%", current_q_index.*+1, current_q.count), .RIGHT, .MIDDLE);
 			}
