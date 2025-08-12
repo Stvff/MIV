@@ -72,7 +72,23 @@ main :: () {
 	main_font = Simp.get_font_at_size(FONT_DATA, font_pixel_height);
 
 	/* tooltips */
-	metadata_tip := Tool_Tip.{tip = "Toggle image data view", font = main_font};
+	metadata_tip := make_tooltip("Toggle image data view", main_font);
+	fit_tips: [4]Tool_Tip;
+	fit_tips[0] = make_tooltip("Fit pixel to pixel", main_font);
+	fit_tips[1] = make_tooltip("Fit to screen width", main_font);
+	fit_tips[2] = make_tooltip("Fit to screen height", main_font);
+	fit_tips[3] = make_tooltip("Use best fit", main_font);
+	aa_tip := make_tooltip("Toggle anti-aliasing", main_font);
+	zoom_tips: [2]Tool_Tip;
+	zoom_tips[0] = make_tooltip("Zoom on screen center", main_font);
+	zoom_tips[1] = make_tooltip("Zoom on pointer", main_font);
+	fileq_tips: [2]Tool_Tip;
+	fileq_tips[0] = make_tooltip("Set file queue to dropped files", main_font);
+	fileq_tips[1] = make_tooltip("Set file queue to directory of the current file", main_font);
+	bnf_tips: [2]Tool_Tip;
+	bnf_tips[0] = make_tooltip("Next file in queue", main_font);
+	bnf_tips[1] = make_tooltip("Previous file in queue", main_font);
+	tooltips := *Tool_Tip.[*metadata_tip, *fit_tips[0], *fit_tips[1], *fit_tips[2], *fit_tips[3], *aa_tip, *zoom_tips[0], *zoom_tips[1], *fileq_tips[0], *fileq_tips[1], *bnf_tips[0], *bnf_tips[1]];
 
 	/* Image context etc */
 	img_ctx := Image_Context.{
@@ -130,7 +146,7 @@ main :: () {
 			if it.window == os_window {
 				window_size = .[it.width, it.height];
 				/* if I ever dynamically adjust bar height, I would do it here (see how I did it in git) */
-				GL.glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(os_window).specific.glx_window, 0);
+				glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(os_window).specific.glx_window, 0);
 				img_ctx.auto_fit = true;
 			}
 		}
@@ -345,6 +361,9 @@ main :: () {
 
 				Simp.set_shader_for_images(*gpu_texture);
 				Simp.immediate_begin();
+				glBindTexture(GL_TEXTURE_2D, gpu_texture.gl_handle);
+				if img_ctx.linear_upscaling glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				else glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 				Simp.immediate_quad(image_bounds[0], image_bounds[1], image_bounds[2], image_bounds[3]);
 			}
 			panel_draw(*top_bar);
@@ -379,7 +398,7 @@ main :: () {
 			}
 
 			for fit_buttons {
-				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch) {
+				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *fit_tips[it_index]) {
 					img_ctx.fit = xx it_index;
 					img_ctx.auto_fit = true;
 				}
@@ -391,7 +410,7 @@ main :: () {
 			if img_ctx.linear_upscaling aa_button.colors = selected_button_palette;
 			else aa_button.colors = button_palette;
 			panel_draw(*aa_button);
-			if first_layer_is_pressable && panel_button(*aa_button, inp.ipointer, inp.left_button_switch) {
+			if first_layer_is_pressable && panel_button(*aa_button, inp.ipointer, inp.left_button_switch, *aa_tip) {
 				img_ctx.linear_upscaling = !img_ctx.linear_upscaling;
 			}
 			panel_text(*aa_button, main_font, "AA", .MIDDLE, .MIDDLE);
@@ -405,7 +424,7 @@ main :: () {
 			panel_draw(*zoom_buttons[xx zoom_on_pointer]);
 
 			for zoom_buttons {
-				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch){
+				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *zoom_tips[it_index]){
 					zoom_on_pointer = xx it_index;
 				}
 				zoom_button_text :: string.["+", "^"];
@@ -439,7 +458,7 @@ main :: () {
 
 			bnf_buttons := panel_subdivide(*bnf_button_space, 2, .HORIZONTAL, true);
 			if first_layer_is_pressable && current_q_index.* > 0 && current_q.count != 0 {
-				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch) || inp.arrow_left {
+				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch, *bnf_tips[0]) || inp.arrow_left {
 					current_q_index.* -= 1;
 					img_ctx.render = true;
 				}
@@ -448,7 +467,7 @@ main :: () {
 				panel_draw(*bnf_buttons[0]);
 			}
 			if first_layer_is_pressable && current_q_index.* < current_q.count-1 && current_q.count != 0 {
-				if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch) || inp.arrow_right {
+				if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch, *bnf_tips[1]) || inp.arrow_right {
 					current_q_index.* += 1;
 					img_ctx.render = true;
 				}
@@ -472,7 +491,7 @@ main :: () {
 
 			fileq_setting_switch := false;
 			for bnf_selector_buttons {
-				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch) {
+				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *fileq_tips[it_index]) {
 					fileq_setting_switch = true;
 					fileq_setting = xx it_index;
 				}
@@ -540,6 +559,19 @@ main :: () {
 			/* This latter one especially will need text flow functions (since it should be notifications in the bottomright). */
 			/* I'm thinking to have the width be limited, and for the cut-off to initially not care about whitespace */
 		}
+		{/* tooltips */
+			for tooltips {
+				if it.hovering == .Orange then it.hovering = .Red;
+				if it.hovering == .Green && to_float64_seconds(current_time_monotonic() - it.hover_started) > 0.5 {
+					if it.panel.pos[0] > window_size[0]/2 it.panel.pos[0] -= it.panel.size[0];
+					if it.panel.pos[1] > window_size[1]/2 it.panel.pos[1] -= it.panel.size[1]*7/4;
+					else it.panel.pos[1] += it.panel.size[1]/2;
+					panel_draw(*it.panel);
+					panel_text(*it.panel, main_font, it.tip, .MIDDLE, .MIDDLE);
+					it.hovering = .Orange;
+				}
+			}
+		}
 
 		Simp.immediate_flush();
 		Simp.swap_buffers(os_window);
@@ -565,7 +597,7 @@ Winc :: #import "Window_Creation";
 Input :: #import "Input";
 Simp :: #import "Simp";
 X11 :: #import "X11";
-GL :: #import "GL";
+#import "GL";
 
 #import "Math";
 #import "File";

@@ -23,10 +23,10 @@
 - [ ] Options for the different persistence settings (between files, restarts, etc)
 	- [ ] Make a settings file
 - [x] Options for AA
-	- [ ] Implement AA
+	- [x] Implement AA
 	- [ ] There's linear upscaling and downscaling and nearest upscaling and downscaling, should this be two toggles?
 - [x] Option for metadata
-	- [ ] Display/elaborate on metadata
+	- [ ] Display/elaborate on metadata (this also kinda needs textflows/clipping)
 - [ ] Option for plugin settings
 	- [ ] Implement some API for plugin settings
 - [ ] Filewatching
@@ -36,7 +36,7 @@
 	- [ ] intelligent textflows (includes clipping)
 		- [ ] scrollbars I'm afraid
 	- [x] show count of errors in the errorbar
-- [ ] Some pleasant and elaborate tooltips maybe
+- [x] Some pleasant and elaborate tooltips
 - [ ] Custom icons?
 	- [x] Make modes a radio button selector thing
 		- [x] show index in file queue

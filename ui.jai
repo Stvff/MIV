@@ -18,10 +18,9 @@ Palette :: struct {
 
 Tool_Tip :: struct {
 	tip: string;
-	hovering: bool;
+	hovering: enum {Red; Orange; Green;};
 	hover_started: Apollo_Time;
-	colors := default_tool_tip_palette;
-	font: *Simp.Dynamic_Font;
+	panel: UI_Panel;
 }
 
 Ratio :: struct {num, den: int;}
@@ -69,7 +68,7 @@ error_message_palette :: Palette.{
 
 default_tool_tip_palette :: Palette.{
 	body = .[100, 100, 230, 255],
-	border = .[110, 110, 240, 255],
+	border = .[30, 30, 200, 255],
 	text = .[255, 255, 255, 255],
 };
 
@@ -161,24 +160,30 @@ panel_button :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool, tip: *To
 
 	if tip {
 		if in_panel {
-			if !tip.hovering {
-				tip.hovering = true;
+			if tip.hovering == .Red {
+				tip.hovering = .Green;
 				tip.hover_started = current_time_monotonic();
+			} else if tip.hovering == .Orange {
+				tip.hovering = .Green;
 			}
 		} else {
+			tip.hovering = .Red;
 			return in_panel && pressed;
 		}
-		text_width := Simp.prepare_text(tip.font, tip.tip);
-		padding := tip.font.character_height;
-		tip_panel: UI_Panel;
-		tip_panel.size = .[text_width + padding, padding*2];
-		tip_panel.pos = pointer_position;
-		tip_panel.colors = tip.colors;
-		// panel_draw(*tip_panel);
-		// panel_text(*tip_panel, tip.font, tip.tip, .MIDDLE, .MIDDLE);
+		tip.panel.pos = pointer_position;
 	}
 
 	return in_panel && pressed;
+}
+
+make_tooltip :: (tip: string, font: *Simp.Dynamic_Font, colors := default_tool_tip_palette) -> Tool_Tip {
+	text_width := Simp.prepare_text(font, tip);
+	padding := font.character_height;
+	tooltip: Tool_Tip;
+	tooltip.tip = tip;
+	tooltip.panel.size = .[text_width + padding, padding*2];
+	tooltip.panel.colors = colors;
+	return tooltip;
 }
 
 panel_text_split :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, side: enum {TOP; BOTTOM; LEFT; RIGHT;}) -> UI_Panel {

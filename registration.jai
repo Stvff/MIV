@@ -328,7 +328,7 @@ give_log :: (errors: *[..]Error, message: string, args: ..Any) {
 }
 
 give_error :: (errors: *[..]Error, message: string, args: ..Any) {
-	array_add(errors, .{.ERROR, sprint(message, ..args), .["ok"]});
+	array_add(errors, .{.ERROR, sprint(message, ..args), .["dismiss"]});
 }
 
 posix :: #import "POSIX";
