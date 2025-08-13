@@ -275,13 +275,14 @@ isolate_name :: (path: string) -> string {
 
 discover_directory :: (directory: *[..]string, file: string, errors: *[..]Error) -> bool {
 	dir_name := path_strip_filename(file);
+	if !dir_name.count dir_name = "./";
 	c_dir_name := temp_c_string(dir_name);
 	namelist: **posix.dirent;
 	filter :: (name: *posix.dirent) -> s32 #c_call { return 1; };
 
 	namelist_count := posix.scandir(c_dir_name, *namelist, filter, posix.alphasort);
 	if namelist_count == -1 {
-		give_error(errors, "Could not scan directory '%'.", c_dir_name);
+		give_error(errors, "Could not scan directory '%'.", dir_name);
 		return false;
 	}
 	array_reset(directory);
