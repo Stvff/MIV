@@ -121,16 +121,54 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 	return success;
 }
 
-load_registrations :: (errors: *[..]Error) {
+
+Settings_File_0 :: struct {
+	version: u8;
+	pers_between_files: Persistence_Setting;
+	pers_between_restarts: Persistence_Setting;
+	aa_setting_on_previous_close: bool;
+	scale_on_previous_close: float #align 1;
+	offset_on_previous_close: Vector2 #align 1;
+}
+
+Persistence_Setting :: struct {
+	of_aa: bool;
+	of_scale: bool;
+	of_offset: bool;
+}
+
+Default_Settings :: Settings_File_0.{};
+
+load_registrations :: (errors: *[..]Error) -> Settings_File_0 {
 	path := path_strip_filename(system.get_path_of_running_executable());
 	path = tprint("%plugins/", path);
 	make_directory_if_it_does_not_exist(path);
 	plugin_filenames: [..]string;
 	discover_directory(*plugin_filenames, path, errors);
 	for plugin_filenames if it.count != 0 && get_extension(it) == "so" then register_dynlib(it, false, errors);
+
+	settings_filename := tprint("%0%0", path, "settings.miv");
+	settings_file_string, exists := read_entire_file(settings_filename, log_errors = false);
+	if !exists return Default_Settings;
+
+	settings_file_buffer := cast([]u8, settings_file_string);
+	settings_file: Settings_File_0;
+	if settings_file_buffer[0] == {
+	case 0;
+		if settings_file_buffer.count != size_of(Settings_File_0) return Default_Settings;
+		settings_file = cast(*Settings_File_0, settings_file_buffer.data).*;
+	case; return Default_Settings;
+	}
+
+	return settings_file;
 }
 
-cleanup_registrations :: () {
+write_settings_file :: (settings_file: Settings_File_0) {
+	path := tprint("%plugins/settings.miv", path_strip_filename(system.get_path_of_running_executable()));
+	write_entire_file(path, *settings_file, size_of(type_of(settings_file)));
+}
+
+cleanup_registrations :: (settings_file: Settings_File_0) {
 	sb: String_Builder;
 
 	closed_handles: [..]*void;
@@ -145,6 +183,7 @@ cleanup_registrations :: () {
 			array_add(*closed_handles, it.handle);
 		}
 	}
+	write_settings_file(settings_file);
 }
 
 get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, errors: *[..]Error) -> bool {

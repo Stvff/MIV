@@ -2,3 +2,4 @@ miv
 .build/*
 test_pics/*
 *.so
+*.miv

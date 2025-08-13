@@ -43,8 +43,8 @@ os_window: X11.Window;
 
 main :: () {
 	errors: [..]Error;
-	load_registrations(*errors);
-	defer cleanup_registrations();
+	settings := load_registrations(*errors);
+	defer cleanup_registrations(settings);
 
 	/* UI definitions */
 	fontsize := 20;
@@ -59,12 +59,6 @@ main :: () {
 	}
 	Simp.set_render_target(os_window);
 	bar_height := fontsize*2;
-	clipping_texture = Simp.texture_create_render_target(10, 10, .RGBA8);
-
-	display_metadata := false;
-	display_settings_menu := false;
-	persistence_settings: [2][3]bool;
-	zoom_on_pointer := false;
 
 	inp: Input_State;
 
@@ -122,6 +116,24 @@ main :: () {
 		array_add(*files_to_open, ..cli_args);
 	}
 	gpu_texture: Simp.Texture;
+
+	/* program_settings */
+	display_metadata := false;
+	display_settings_menu := false;
+	zoom_on_pointer := false;
+	if settings.pers_between_restarts.of_aa then img_ctx.linear_upscaling = settings.aa_setting_on_previous_close;
+	// if settings.pers_between_restarts.of_scale || settings.pers_between_restarts.of_offset then img_ctx.auto_fit = false;
+	// if settings.pers_between_restarts.of_scale then img_ctx.scale = settings.scale_on_previous_close;
+	// if settings.pers_between_restarts.of_offset then img_ctx.linear_upscaling = settings.aa_setting_on_previous_close;
+	defer {
+		if settings.pers_between_restarts.of_aa then settings.aa_setting_on_previous_close = img_ctx.linear_upscaling;
+		if settings.pers_between_restarts.of_scale then settings.scale_on_previous_close = img_ctx.scale;
+		if settings.pers_between_restarts.of_offset {
+			settings.offset_on_previous_close = img_ctx.offset;
+			settings.offset_on_previous_close.x /= xx img_ctx.pre_info.width;
+			settings.offset_on_previous_close.y /= xx img_ctx.pre_info.height;
+		}
+	}
 
 	/* Timing */
 	target_frame_time: float64 = 1.0/120.0;
@@ -241,14 +253,21 @@ main :: () {
 
 		/* image pre-render */
 		if img_ctx.render {
-			old_name := img_ctx.pre_info.name;
-			old_handle := img_ctx.pre_info.fileptr;
+			old_pre_info := img_ctx.pre_info;
 			new_name := current_q.*[current_q_index.*];
 			img_ctx.render = get_loading(new_name, get_extension(new_name), *img_ctx, *errors);
 			if img_ctx.render {
-				if old_handle posix.fclose(old_handle);
+				if old_pre_info.fileptr posix.fclose(old_pre_info.fileptr);
 				/* retrieve previous offsets etc if available, for now we just reset */
-				img_ctx.auto_fit = true;
+				if !settings.pers_between_files.of_scale && !settings.pers_between_files.of_offset
+					img_ctx.auto_fit = true;
+
+				if settings.pers_between_files.of_offset {
+					img_ctx.offset.x = img_ctx.offset.x*(xx img_ctx.pre_info.width)/(xx old_pre_info.width);
+					img_ctx.offset.y = img_ctx.offset.y*(xx img_ctx.pre_info.height)/(xx old_pre_info.height);
+				} else img_ctx.offset = .{};
+
+				if !settings.pers_between_files.of_aa img_ctx.linear_upscaling = false;
 			} else {
 				f, index := array_find(file_history, new_name);
 				if f array_ordered_remove_by_index(*file_history, index);
@@ -408,18 +427,20 @@ main :: () {
 
 				panel_text(*table[0][1], main_font, "of offset", .MIDDLE, .MIDDLE);
 				panel_text(*table[0][2], main_font, "of zoom", .MIDDLE, .MIDDLE);
-				panel_text(*table[0][3], main_font, "of scaling", .MIDDLE, .MIDDLE);
+				panel_text(*table[0][3], main_font, "of aa", .MIDDLE, .MIDDLE);
+
+				settings_table: *[2][3]bool = xx *settings.pers_between_files;
 				for row: 1..3 for col: 1..2 {
 					button_text := "off";
 					table[col][row].colors = button_palette;
-					if persistence_settings[col-1][row-1] {
+					if settings_table.*[col-1][row-1] {
 						button_text = "on";
 						table[col][row].colors = selected_button_palette;
 					}
 
 					panel_draw(*table[col][row]);
 					if first_layer_is_pressable && panel_button(*table[col][row], inp.ipointer, inp.left_button_switch) {
-						persistence_settings[col-1][row-1] = !persistence_settings[col-1][row-1];
+						settings_table.*[col-1][row-1] = !settings_table.*[col-1][row-1];
 					}
 					panel_text(*table[col][row], main_font, button_text, .MIDDLE, .MIDDLE);
 				}
