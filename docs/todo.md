@@ -20,7 +20,8 @@
 - [ ] One more supported image type
 - [x] Option to select between zoom on screen center and pointer
 	- [ ] zoom on pointer
-- [ ] Options for the different persistence settings (between files, restarts, etc)
+- [x] Options for the different persistence settings (between files, restarts, etc)
+	- [ ] Implement that actual persistence
 	- [ ] Make a settings file
 - [x] Options for AA
 	- [x] Implement AA

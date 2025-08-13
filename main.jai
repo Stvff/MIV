@@ -63,6 +63,7 @@ main :: () {
 
 	display_metadata := false;
 	display_settings_menu := false;
+	persistence_settings: [2][3]bool;
 	zoom_on_pointer := false;
 
 	inp: Input_State;
@@ -297,7 +298,7 @@ main :: () {
 			settings_menu_panel, metadata_panel: UI_Panel;
 
 			if display_settings_menu
-				settings_menu_panel = panel_text_split(*canvas, main_font, "persistence  files  restarts", .LEFT, .NEAR);
+				settings_menu_panel = panel_split(*canvas, .{bar_height*8, canvas.size[0]}, .LEFT, false);
 			if display_metadata
 				metadata_panel = panel_split(*canvas, .{bar_height*5, canvas.size[0]}, .LEFT, false);
 
@@ -381,12 +382,47 @@ main :: () {
 			panel_draw(*top_bar);
 			panel_draw(*bottom_bar);
 
+			/* settings menu */
 			if display_settings_menu {
 				panel_draw(*settings_menu_panel);
-				top_row := panel_text_split(*settings_menu_panel, main_font, "persistence  files  restarts", .TOP, .MIDDLE);
-				row_1 := panel_text_split(*settings_menu_panel, main_font, "of offset", .TOP, .NEAR);
-				row_2 := panel_text_split(*settings_menu_panel, main_font, "of zoom", .TOP, .NEAR);
-				row_3 := panel_text_split(*settings_menu_panel, main_font, "of scaling", .TOP, .NEAR);
+				table_space := panel_split(*settings_menu_panel, .{bar_height*9/2, settings_menu_panel.size[1]}, .TOP, false);
+				first_col := panel_split(*table_space, .{bar_height*3, table_space.size[0]}, .LEFT, false);
+				remaining_cols := panel_subdivide(*table_space, 2, .HORIZONTAL, false);
+				cols: [3]UI_Panel = .[first_col, remaining_cols[0], remaining_cols[1]];
+				table: [3][4]UI_Panel;
+				for col: 0..2 {
+					col_p := *cols[col];
+					row_p := panel_split(col_p, .{bar_height*3/2, col_p.size[1]}, .TOP, true);
+					table[col][0] = row_p;
+
+					remaining_rows := panel_subdivide(col_p, 3, .VERTICAL, true);
+					table[col][1] = remaining_rows[0];
+					table[col][2] = remaining_rows[1];
+					table[col][3] = remaining_rows[2];
+				}
+				panel_text(*table[0][0], main_font, "Persistence", .MIDDLE, .MIDDLE);
+				panel_text(*table[1][0], main_font, "between", .MIDDLE, .TOP);
+				panel_text(*table[1][0], main_font, "files", .MIDDLE, .BOTTOM);
+				panel_text(*table[2][0], main_font, "between", .MIDDLE, .TOP);
+				panel_text(*table[2][0], main_font, "restarts", .MIDDLE, .BOTTOM);
+
+				panel_text(*table[0][1], main_font, "of offset", .MIDDLE, .MIDDLE);
+				panel_text(*table[0][2], main_font, "of zoom", .MIDDLE, .MIDDLE);
+				panel_text(*table[0][3], main_font, "of scaling", .MIDDLE, .MIDDLE);
+				for row: 1..3 for col: 1..2 {
+					button_text := "off";
+					table[col][row].colors = button_palette;
+					if persistence_settings[col-1][row-1] {
+						button_text = "on";
+						table[col][row].colors = selected_button_palette;
+					}
+
+					panel_draw(*table[col][row]);
+					if first_layer_is_pressable && panel_button(*table[col][row], inp.ipointer, inp.left_button_switch) {
+						persistence_settings[col-1][row-1] = !persistence_settings[col-1][row-1];
+					}
+					panel_text(*table[col][row], main_font, button_text, .MIDDLE, .MIDDLE);
+				}
 			}
 
 			if display_metadata {
