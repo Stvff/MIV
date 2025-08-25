@@ -130,8 +130,6 @@ main :: () {
 		if settings.pers_between_restarts.of_scale then settings.scale_on_previous_close = img_ctx.scale;
 		if settings.pers_between_restarts.of_offset {
 			settings.offset_on_previous_close = img_ctx.offset;
-			settings.offset_on_previous_close.x /= xx img_ctx.pre_info.width;
-			settings.offset_on_previous_close.y /= xx img_ctx.pre_info.height;
 		}
 	}
 
@@ -167,6 +165,7 @@ main :: () {
 				/* if I ever dynamically adjust bar height, I would do it here (see how I did it in git) */
 				glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(os_window).specific.glx_window, 0);
 				img_ctx.auto_fit = true;
+				img_ctx.offset = .{};
 			}
 		}
 
@@ -260,15 +259,10 @@ main :: () {
 			img_ctx.render = get_loading(new_name, get_extension(new_name), *img_ctx, *errors);
 			if img_ctx.render {
 				if old_pre_info.fileptr posix.fclose(old_pre_info.fileptr);
-				/* retrieve previous offsets etc if available, for now we just reset */
-				if !settings.pers_between_files.of_scale && !settings.pers_between_files.of_offset
-					img_ctx.auto_fit = true;
+				/* retrieve previous offsets etc from some per-file history */
 
-				if settings.pers_between_files.of_offset {
-					// img_ctx.offset.x = img_ctx.offset.x*(xx old_pre_info.width)/(xx img_ctx.pre_info.width);
-					// img_ctx.offset.y = img_ctx.offset.y*(xx old_pre_info.height)/(xx img_ctx.pre_info.height);
-				} else img_ctx.offset = .{};
-
+				if !settings.pers_between_files.of_scale img_ctx.auto_fit = true;
+				if !settings.pers_between_files.of_offset img_ctx.offset = .{0, 0};
 				if !settings.pers_between_files.of_aa img_ctx.linear_upscaling = false;
 			} else {
 				f, index := array_find(file_history, new_name);
@@ -339,6 +333,7 @@ main :: () {
 					}
 					if inp.middle_button {
 						img_ctx.auto_fit = true;
+						img_ctx.offset = .{};
 					}
 
 					if inp.left_button {
@@ -371,7 +366,6 @@ main :: () {
 						img_ctx.scale = screen_center.y/image_center.y;
 					case .FIT_BEST; /* should be unreachable */
 					}
-					img_ctx.offset = .{};
 				}
 
 				image_bounds := Vector2.[
@@ -487,6 +481,7 @@ main :: () {
 				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *fit_tips[it_index]) {
 					img_ctx.fit = xx it_index;
 					img_ctx.auto_fit = true;
+					img_ctx.offset = .{};
 				}
 				fit_button_text :: string.["1:1", "W", "H", "B"];
 				panel_text(*it, main_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);
