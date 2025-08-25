@@ -221,8 +221,9 @@ main :: () {
 		/* Files added via command line or drop-in */
 		loading_time := current_time_monotonic();
 		position_adjusted := false;
-		while files_to_open.count {
-			file_to_open := files_to_open[0];
+		temp_files_to_open := files_to_open;
+		while temp_files_to_open.count {
+			file_to_open := temp_files_to_open[0];
 			give_log(*errors, "%", file_to_open);
 			ext := get_extension(file_to_open);
 			if ext == "so" {
@@ -235,9 +236,10 @@ main :: () {
 					position_adjusted = true;
 				}
 			}
-			/* TODO: make this pointer math instead of this relatively expensive operation */
-			array_ordered_remove_by_index(*files_to_open, 0);
+			temp_files_to_open.data += 1;
+			temp_files_to_open.count -= 1;
 		}
+		array_reset(*files_to_open);
 
 		/* Choosing the file to render */
 		if position_adjusted {
@@ -263,8 +265,8 @@ main :: () {
 					img_ctx.auto_fit = true;
 
 				if settings.pers_between_files.of_offset {
-					img_ctx.offset.x = img_ctx.offset.x*(xx img_ctx.pre_info.width)/(xx old_pre_info.width);
-					img_ctx.offset.y = img_ctx.offset.y*(xx img_ctx.pre_info.height)/(xx old_pre_info.height);
+					// img_ctx.offset.x = img_ctx.offset.x*(xx old_pre_info.width)/(xx img_ctx.pre_info.width);
+					// img_ctx.offset.y = img_ctx.offset.y*(xx old_pre_info.height)/(xx img_ctx.pre_info.height);
 				} else img_ctx.offset = .{};
 
 				if !settings.pers_between_files.of_aa img_ctx.linear_upscaling = false;
