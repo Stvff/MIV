@@ -50,7 +50,6 @@
 	- [x] show index in file queue
 
 ## Bugs to fix
-- the AA persistence setting is linked to the offset persistence
 - When another window is above MIV, MIV still reads the mouse position from that window.
 - When an older window is closed above MIV, MIV crashes?? Even subwindows of other programs (see OBS) have this effect.
 ```

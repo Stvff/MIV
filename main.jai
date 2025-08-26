@@ -421,12 +421,12 @@ main :: () {
 				panel_text(*table[2][0], main_font, "between", .MIDDLE, .TOP);
 				panel_text(*table[2][0], main_font, "restarts", .MIDDLE, .BOTTOM);
 
-				panel_text(*table[0][1], main_font, "of offset", .MIDDLE, .MIDDLE);
+				panel_text(*table[0][1], main_font, "of aa", .MIDDLE, .MIDDLE);
 				panel_text(*table[0][2], main_font, "of zoom", .MIDDLE, .MIDDLE);
-				panel_text(*table[0][3], main_font, "of aa", .MIDDLE, .MIDDLE);
+				panel_text(*table[0][3], main_font, "of offset", .MIDDLE, .MIDDLE);
 
 				settings_table: *[2][3]bool = xx *settings.pers_between_files;
-				for row: 1..3 for col: 1..2 {
+				for col: 1..2 for row: 1..3 {
 					button_text := "off";
 					table[col][row].colors = button_palette;
 					if settings_table.*[col-1][row-1] {
