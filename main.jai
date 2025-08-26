@@ -457,6 +457,9 @@ main :: () {
 				panel_text_split(*metadata_panel, main_font, tprint("height: % px", img_ctx.pre_info.height), .TOP, .NEAR);
 				panel_text_split(*metadata_panel, main_font, tprint("bit depth: % bits", img_ctx.pre_info.bit_depth), .TOP, .NEAR);
 				panel_text_split(*metadata_panel, main_font, tprint("channels: %", img_ctx.pre_info.channels), .TOP, .NEAR);
+				for img_ctx.pre_info.metadata {
+					panel_text_split(*metadata_panel, main_font, tprint("%: %", it[0], it[1]), .TOP, .NEAR);
+				}
 			}
 
 			/** UI **/

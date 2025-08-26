@@ -4,7 +4,7 @@ release :: false;
 
 exe_name :: "miv";
 compile_MIV :: true;
-compile_ppm_c :: false;
+compile_ppm_c :: true;
 compile_meow_jai :: false;
 
 build :: () {

@@ -61,6 +61,7 @@ typedef struct {
 	int max_ppm_value;
 	int64_t start_of_image;
 	bool is_binary;
+	char pixel_value_string_buffer[16];
 } Specifics;
 
 string ppm_pre_render(Pre_Rendering_Info *pre_info) {
@@ -132,6 +133,13 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	if (pre_info->bit_depth > 8) {
 		return to_string("The PPM plugin currently does not support conversion of 16 bit to 8 bit");
 	}
+
+	/* adding the max pixel value to the metadata */
+	pre_info->metadata_count += 1;
+	pre_info->metadata = realloc(pre_info->metadata, pre_info->metadata_count*sizeof(string[2]));
+	pre_info->metadata[pre_info->metadata_count-1][0] = to_string("Max pixel value");
+	sprintf((char*) &specifics->pixel_value_string_buffer, "%d", specifics->max_ppm_value);
+	pre_info->metadata[pre_info->metadata_count-1][1] = to_string((char*) &specifics->pixel_value_string_buffer);
 
 	return (string){0};
 }

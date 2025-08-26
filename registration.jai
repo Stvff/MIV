@@ -9,7 +9,7 @@ Pre_Rendering_Info :: struct {
 
 	bit_depth: u8;
 	channels: u8;
-	metadata: string;
+	metadata: [][2]string;
 
 	user_ptr: *void;
 }

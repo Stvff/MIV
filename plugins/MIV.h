@@ -27,7 +27,8 @@ typedef struct {
 
 	uint8_t bit_depth;
 	uint8_t channels;
-	string metadata;
+	int64_t metadata_count;
+	string (*metadata)[2];
 
 	void *user_ptr;
 } Pre_Rendering_Info;

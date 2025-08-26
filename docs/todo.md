@@ -28,7 +28,8 @@
 	- [ ] There's linear upscaling and downscaling and nearest upscaling and downscaling, should this be two toggles?
 - [x] Option for metadata
 	- [x] Display metadata
-	- [ ] Let plugins provide custom metadata (this is the thing that needs textflows/scrollbars/clipping)
+	- [x] Let plugins provide custom metadata
+	- [ ] Add textflows to that custom metadata
 - [ ] Option for plugin settings
 	- [ ] Implement some API for plugin settings
 - [ ] Filewatching
