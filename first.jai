@@ -27,12 +27,13 @@ build :: () {
 
 			add_build_file("main.jai", MIV_w);
 
+			tip_amount := 0;
 			while true {
 				message := compiler_wait_for_message();
 				if message.kind == {
-					case .COMPLETE; break;
-					case .ERROR;
-						continue;
+				case .COMPLETE; break;
+				case .ERROR;
+					continue;
 				}
 			}
 		}

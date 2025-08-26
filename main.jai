@@ -68,27 +68,29 @@ main :: () {
 	main_font = Simp.get_font_at_size(FONT_DATA, font_pixel_height);
 
 	/* tooltips */
-	tooltips: [..]Tool_Tip;
-	array_reserve(*tooltips, 15);
+	/* Counting this manually is inconvenient; I'd like to write a metaprogram that counts the amount of tooltips here, but it's hard. */
+	/* The reason this isn't a dynamic array is because the pointer of that is unstable. Saving indices into a buffer is messy during usage. */
+	tooltips: [13]Tool_Tip;
+	used_tooltips := 0;
 
-	metadata_tip := make_tooltip("Toggle image metadata view", main_font, *tooltips);
+	metadata_tip := make_tooltip("Toggle image metadata view", main_font, *tooltips, *used_tooltips);
 	fit_tips: [4]*Tool_Tip;
-	fit_tips[0] = make_tooltip("Fit pixel to pixel", main_font, *tooltips);
-	fit_tips[1] = make_tooltip("Fit to screen width", main_font, *tooltips);
-	fit_tips[2] = make_tooltip("Fit to screen height", main_font, *tooltips);
-	fit_tips[3] = make_tooltip("Use best fit", main_font, *tooltips);
-	aa_tip := make_tooltip("Toggle anti-aliasing", main_font, *tooltips);
+	fit_tips[0] = make_tooltip("Fit pixel to pixel", main_font, *tooltips, *used_tooltips);
+	fit_tips[1] = make_tooltip("Fit to screen width", main_font, *tooltips, *used_tooltips);
+	fit_tips[2] = make_tooltip("Fit to screen height", main_font, *tooltips, *used_tooltips);
+	fit_tips[3] = make_tooltip("Use best fit", main_font, *tooltips, *used_tooltips);
+	aa_tip := make_tooltip("Toggle anti-aliasing", main_font, *tooltips, *used_tooltips);
 	zoom_tips: [2]*Tool_Tip;
-	zoom_tips[0] = make_tooltip("Zoom on screen center", main_font, *tooltips);
-	zoom_tips[1] = make_tooltip("Zoom on pointer", main_font, *tooltips);
+	zoom_tips[0] = make_tooltip("Zoom on screen center", main_font, *tooltips, *used_tooltips);
+	zoom_tips[1] = make_tooltip("Zoom on pointer", main_font, *tooltips, *used_tooltips);
 
-	settings_tip := make_tooltip("Menu for persistence of settings between files or restarts", main_font, *tooltips);
+	settings_tip := make_tooltip("Menu for persistence of settings between files or restarts", main_font, *tooltips, *used_tooltips);
 	fileq_tips: [2]*Tool_Tip;
-	fileq_tips[0] = make_tooltip("Set file queue to dropped files", main_font, *tooltips);
-	fileq_tips[1] = make_tooltip("Set file queue to directory of the current file", main_font, *tooltips);
+	fileq_tips[0] = make_tooltip("Set file queue to dropped files", main_font, *tooltips, *used_tooltips);
+	fileq_tips[1] = make_tooltip("Set file queue to directory of the current file", main_font, *tooltips, *used_tooltips);
 	bnf_tips: [2]*Tool_Tip;
-	bnf_tips[0] = make_tooltip("Next file in queue", main_font, *tooltips);
-	bnf_tips[1] = make_tooltip("Previous file in queue", main_font, *tooltips);
+	bnf_tips[0] = make_tooltip("Next file in queue", main_font, *tooltips, *used_tooltips);
+	bnf_tips[1] = make_tooltip("Previous file in queue", main_font, *tooltips, *used_tooltips);
 
 	/* Image context etc */
 	img_ctx := Image_Context.{
