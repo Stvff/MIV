@@ -43,7 +43,7 @@ os_window: X11.Window;
 
 main :: () {
 	errors: [..]Error;
-	settings := load_registrations(*errors);
+	settings: Settings_File_0 = load_registrations(*errors);
 	defer cleanup_registrations(settings);
 
 	/* UI definitions */
@@ -68,28 +68,27 @@ main :: () {
 	main_font = Simp.get_font_at_size(FONT_DATA, font_pixel_height);
 
 	/* tooltips */
-	metadata_tip := make_tooltip("Toggle image metadata view", main_font);
-	fit_tips: [4]Tool_Tip;
-	fit_tips[0] = make_tooltip("Fit pixel to pixel", main_font);
-	fit_tips[1] = make_tooltip("Fit to screen width", main_font);
-	fit_tips[2] = make_tooltip("Fit to screen height", main_font);
-	fit_tips[3] = make_tooltip("Use best fit", main_font);
-	aa_tip := make_tooltip("Toggle anti-aliasing", main_font);
-	zoom_tips: [2]Tool_Tip;
-	zoom_tips[0] = make_tooltip("Zoom on screen center", main_font);
-	zoom_tips[1] = make_tooltip("Zoom on pointer", main_font);
+	tooltips: [..]Tool_Tip;
+	array_reserve(*tooltips, 15);
 
-	settings_tip := make_tooltip("Menu for persistence of settings between files or restarts", main_font);
-	fileq_tips: [2]Tool_Tip;
-	fileq_tips[0] = make_tooltip("Set file queue to dropped files", main_font);
-	fileq_tips[1] = make_tooltip("Set file queue to directory of the current file", main_font);
-	bnf_tips: [2]Tool_Tip;
-	bnf_tips[0] = make_tooltip("Next file in queue", main_font);
-	bnf_tips[1] = make_tooltip("Previous file in queue", main_font);
-	tooltips := *Tool_Tip.[
-		*metadata_tip, *fit_tips[0], *fit_tips[1], *fit_tips[2], *fit_tips[3], *aa_tip, *zoom_tips[0], *zoom_tips[1],
-		*settings_tip, *fileq_tips[0], *fileq_tips[1], *bnf_tips[0], *bnf_tips[1]
-	];
+	metadata_tip := make_tooltip("Toggle image metadata view", main_font, *tooltips);
+	fit_tips: [4]*Tool_Tip;
+	fit_tips[0] = make_tooltip("Fit pixel to pixel", main_font, *tooltips);
+	fit_tips[1] = make_tooltip("Fit to screen width", main_font, *tooltips);
+	fit_tips[2] = make_tooltip("Fit to screen height", main_font, *tooltips);
+	fit_tips[3] = make_tooltip("Use best fit", main_font, *tooltips);
+	aa_tip := make_tooltip("Toggle anti-aliasing", main_font, *tooltips);
+	zoom_tips: [2]*Tool_Tip;
+	zoom_tips[0] = make_tooltip("Zoom on screen center", main_font, *tooltips);
+	zoom_tips[1] = make_tooltip("Zoom on pointer", main_font, *tooltips);
+
+	settings_tip := make_tooltip("Menu for persistence of settings between files or restarts", main_font, *tooltips);
+	fileq_tips: [2]*Tool_Tip;
+	fileq_tips[0] = make_tooltip("Set file queue to dropped files", main_font, *tooltips);
+	fileq_tips[1] = make_tooltip("Set file queue to directory of the current file", main_font, *tooltips);
+	bnf_tips: [2]*Tool_Tip;
+	bnf_tips[0] = make_tooltip("Next file in queue", main_font, *tooltips);
+	bnf_tips[1] = make_tooltip("Previous file in queue", main_font, *tooltips);
 
 	/* Image context etc */
 	img_ctx := Image_Context.{
@@ -121,10 +120,8 @@ main :: () {
 	display_metadata := false;
 	display_settings_menu := false;
 	zoom_on_pointer := false;
-	if settings.pers_between_restarts.of_aa then img_ctx.linear_upscaling = settings.aa_setting_on_previous_close;
-	// if settings.pers_between_restarts.of_scale || settings.pers_between_restarts.of_offset then img_ctx.auto_fit = false;
-	// if settings.pers_between_restarts.of_scale then img_ctx.scale = settings.scale_on_previous_close;
-	// if settings.pers_between_restarts.of_offset then img_ctx.linear_upscaling = settings.aa_setting_on_previous_close;
+
+	first_image_open := true;
 	defer {
 		if settings.pers_between_restarts.of_aa then settings.aa_setting_on_previous_close = img_ctx.linear_upscaling;
 		if settings.pers_between_restarts.of_scale then settings.scale_on_previous_close = img_ctx.scale;
@@ -264,6 +261,16 @@ main :: () {
 				if !settings.pers_between_files.of_scale img_ctx.auto_fit = true;
 				if !settings.pers_between_files.of_offset img_ctx.offset = .{0, 0};
 				if !settings.pers_between_files.of_aa img_ctx.linear_upscaling = false;
+
+				if first_image_open {
+					if settings.pers_between_restarts.of_aa then img_ctx.linear_upscaling = settings.aa_setting_on_previous_close;
+					if settings.pers_between_restarts.of_scale {
+						img_ctx.scale = settings.scale_on_previous_close;
+						img_ctx.auto_fit = false;
+					} else img_ctx.auto_fit = true;
+					if settings.pers_between_restarts.of_offset then img_ctx.offset = settings.offset_on_previous_close;
+					first_image_open = false;
+				}
 			} else {
 				f, index := array_find(file_history, new_name);
 				if f array_ordered_remove_by_index(*file_history, index);
@@ -463,7 +470,7 @@ main :: () {
 			/* persistence button */
 			settings_button.colors = ifx display_settings_menu then selected_button_palette else button_palette;
 			panel_draw(*settings_button);
-			if first_layer_is_pressable && panel_button(*settings_button, inp.ipointer, inp.left_button_switch, *settings_tip){
+			if first_layer_is_pressable && panel_button(*settings_button, inp.ipointer, inp.left_button_switch, settings_tip){
 				display_settings_menu = !display_settings_menu;
 			}
 			panel_text(*settings_button, main_font, "Settings", .MIDDLE, .MIDDLE);
@@ -478,7 +485,7 @@ main :: () {
 			}
 
 			for fit_buttons {
-				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *fit_tips[it_index]) {
+				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, fit_tips[it_index]) {
 					img_ctx.fit = xx it_index;
 					img_ctx.auto_fit = true;
 					img_ctx.offset = .{};
@@ -490,7 +497,7 @@ main :: () {
 			/* AA button */
 			aa_button.colors = ifx img_ctx.linear_upscaling then selected_button_palette else button_palette;
 			panel_draw(*aa_button);
-			if first_layer_is_pressable && panel_button(*aa_button, inp.ipointer, inp.left_button_switch, *aa_tip) {
+			if first_layer_is_pressable && panel_button(*aa_button, inp.ipointer, inp.left_button_switch, aa_tip) {
 				img_ctx.linear_upscaling = !img_ctx.linear_upscaling;
 			}
 			panel_text(*aa_button, main_font, "AA", .MIDDLE, .MIDDLE);
@@ -504,7 +511,7 @@ main :: () {
 			panel_draw(*zoom_buttons[xx zoom_on_pointer]);
 
 			for zoom_buttons {
-				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *zoom_tips[it_index]){
+				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, zoom_tips[it_index]){
 					zoom_on_pointer = xx it_index;
 				}
 				zoom_button_text :: string.["+", "^"];
@@ -528,7 +535,7 @@ main :: () {
 			metadata_button := panel_split(*bottom_bar, .{bar_height*3/2, bottom_bar.size[0]}, .LEFT, false);
 			metadata_button.colors = ifx display_metadata then selected_button_palette else button_palette;
 			panel_draw(*metadata_button);
-			if first_layer_is_pressable && panel_button(*metadata_button, inp.ipointer, inp.left_button_switch, *metadata_tip) {
+			if first_layer_is_pressable && panel_button(*metadata_button, inp.ipointer, inp.left_button_switch, metadata_tip) {
 				display_metadata = !display_metadata;
 			}
 			panel_text(*metadata_button, main_font, "<../>", .MIDDLE, .MIDDLE);
@@ -547,7 +554,7 @@ main :: () {
 
 			bnf_buttons := panel_subdivide(*bnf_button_space, 2, .HORIZONTAL, true);
 			if first_layer_is_pressable && current_q_index.* > 0 && current_q.count != 0 {
-				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch, *bnf_tips[0]) || inp.arrow_left {
+				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch, bnf_tips[0]) || inp.arrow_left {
 					current_q_index.* -= 1;
 					img_ctx.render = true;
 				}
@@ -556,7 +563,7 @@ main :: () {
 				panel_draw(*bnf_buttons[0]);
 			}
 			if first_layer_is_pressable && current_q_index.* < current_q.count-1 && current_q.count != 0 {
-				if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch, *bnf_tips[1]) || inp.arrow_right {
+				if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch, bnf_tips[1]) || inp.arrow_right {
 					current_q_index.* += 1;
 					img_ctx.render = true;
 				}
@@ -580,7 +587,7 @@ main :: () {
 
 			fileq_setting_switch := false;
 			for bnf_selector_buttons {
-				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *fileq_tips[it_index]) {
+				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, fileq_tips[it_index]) {
 					fileq_setting_switch = true;
 					fileq_setting = xx it_index;
 				}
@@ -650,7 +657,7 @@ main :: () {
 			/* I'm thinking to have the width be limited, and for the cut-off to initially not care about whitespace */
 		}
 		{/* tooltips */
-			for tooltips {
+			for * tooltips {
 				if it.hovering == .Orange then it.hovering = .Red;
 				if it.hovering == .Green && to_float64_seconds(current_time_monotonic() - it.hover_started) > 0.5 {
 					if it.panel.pos[0] > window_size[0]/2 it.panel.pos[0] -= it.panel.size[0];

@@ -157,7 +157,9 @@ load_registrations :: (errors: *[..]Error) -> Settings_File_0 {
 	case 0;
 		if settings_file_buffer.count != size_of(Settings_File_0) return Default_Settings;
 		settings_file = cast(*Settings_File_0, settings_file_buffer.data).*;
-	case; return Default_Settings;
+	case;
+		log("Unsupported settings file version '%'.", settings_file_buffer[0]);
+		return Default_Settings;
 	}
 
 	return settings_file;

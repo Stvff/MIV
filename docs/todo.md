@@ -21,7 +21,7 @@
 - [x] Option to select between zoom on screen center and pointer
 	- [ ] zoom on pointer
 - [x] Options for the different persistence settings (between files, restarts, etc)
-	- [ ] Implement that actual persistence
+	- [x] Implement that actual persistence
 	- [x] Make a settings file
 - [x] Options for AA
 	- [x] Implement AA
@@ -33,7 +33,6 @@
 	- [ ] Implement some API for plugin settings
 - [ ] Filewatching
 	- [ ] Handle events where the file was moved (maybe follow the file?)
-- [ ] give functions the ability to respond responsibly based on user input option
 - [ ] logs onscreen instead of in terminal
 	- [ ] intelligent textflows (includes clipping)
 		- [ ] scrollbars I'm afraid
@@ -62,5 +61,6 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 
 ## Amersfoort
 - [ ] different types of filesorting
-- [ ] More advanced plugin interactions
+- [ ] give functions the ability to respond responsibly based on user input option
+	- [ ] More advanced plugin interactions
 - [ ] Being more elaborate about what failed during loading (which part of the directory, which type of error)

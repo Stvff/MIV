@@ -176,14 +176,15 @@ panel_button :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool, tip: *To
 	return in_panel && pressed;
 }
 
-make_tooltip :: (tip: string, font: *Simp.Dynamic_Font, colors := default_tool_tip_palette) -> Tool_Tip {
+make_tooltip :: (tip: string, font: *Simp.Dynamic_Font, tooltips: *[..]Tool_Tip, colors := default_tool_tip_palette) -> *Tool_Tip {
 	text_width := Simp.prepare_text(font, tip);
 	padding := font.character_height;
 	tooltip: Tool_Tip;
 	tooltip.tip = tip;
 	tooltip.panel.size = .[text_width + padding, padding*2];
 	tooltip.panel.colors = colors;
-	return tooltip;
+	array_add(tooltips, tooltip);
+	return *(tooltips.*[tooltips.count-1]);
 }
 
 panel_text_split :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, side: Creation_Side, other_align: enum {NEAR; MIDDLE; FAR;} = .MIDDLE) -> UI_Panel {
