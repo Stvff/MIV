@@ -40,13 +40,6 @@
 		- [ ] scrollbars I'm afraid
 	- [x] show count of errors in the errorbar
 - [x] Some pleasant and elaborate tooltips
-- [ ] Custom icons
-	- [ ] Fit buttons
-	- [ ] Mode buttons
-	- [ ] Next/prev
-	- [ ] Zoom buttons
-	- [ ] Settings
-	- [ ] Metadata or plugin settings??
 - [x] Make modes a radio button selector thing
 	- [x] show index in file queue
 
@@ -63,6 +56,13 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 ```
 
 ## Amersfoort
+- [ ] Custom icons
+	- [ ] Fit buttons
+	- [ ] Mode buttons
+	- [ ] Next/prev
+	- [ ] Zoom buttons
+	- [ ] Settings
+	- [ ] Metadata or plugin settings??
 - [ ] different types of filesorting
 - [ ] give functions the ability to respond responsibly based on user input option
 	- [ ] More advanced plugin interactions
