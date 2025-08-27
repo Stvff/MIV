@@ -270,10 +270,14 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 		return false;
 	}
 
-	if img_ctx.watcher.callback && !add_directories(*img_ctx.watcher, path_strip_filename(filepath)) {
-		give_error(errors, "The directory of '%' could not be opened for tracking file changes", filepath);
-		ok = false;
-		return false;
+	if img_ctx.watcher.callback {
+		dir := path_strip_filename(filepath);
+		if !dir then dir = "./";
+		if !add_directories(*img_ctx.watcher, dir) {
+			give_error(errors, "The directory of '%' could not be opened for tracking file changes", filepath);
+			ok = false;
+			return false;
+		}
 	}
 
 	img_ctx.pre_info = pre_info;
@@ -283,7 +287,10 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 }
 
 file_change_callback :: (watcher: *File_Watcher(Image_Context), change: *File_Change, img_ctx: *Image_Context) {
-	log("% had a %", img_ctx.pre_info.name, change.*);
+//	log("% had a %", img_ctx.pre_info.name, change.*);
+	if isolate_name(change.full_path) == isolate_name(img_ctx.pre_info.name) && (change.events & .MODIFIED) {
+		img_ctx.watcher_says_rerender = true;
+	}
 }
 
 valid_ascii :: (str: string) -> bool {

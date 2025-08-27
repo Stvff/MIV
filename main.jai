@@ -10,6 +10,8 @@ Image_Context :: struct {
 	render: bool;
 	draw: bool;
 
+	watcher_says_rerender: bool;
+	watcher_says_something_moved_somewhere: bool;
 	watcher: File_Watcher(Image_Context);
 
 	plugin: *Registration_Entry;
@@ -42,6 +44,7 @@ Input_State :: struct {
 
 window_size: [2]int;
 os_window: X11.Window;
+TARGET_FRAME_TIME :: 1.0/120.0;
 
 main :: () {
 	errors: [..]Error;
@@ -102,12 +105,11 @@ main :: () {
 		draw = true,
 	};
 
-	if !init(*img_ctx.watcher, file_change_callback, *img_ctx, events_to_watch = .ALL_EVENTS, merge_window_seconds = 0.5, verbose = true) {
+	if !init(*img_ctx.watcher, file_change_callback, *img_ctx, events_to_watch = .ALL_EVENTS, merge_window_seconds = 2*TARGET_FRAME_TIME, verbose = false, watch_recursively = false) {
 		give_error(*errors, "Could not initialize watcher");
 		return;
 	}
 	defer deinit(img_ctx.watcher);
-	print("%\n", img_ctx.watcher);
 
 	/* window specific image context */
 	fileq_setting: enum {HISTORY; DIRECTORY;} = .HISTORY;
@@ -142,7 +144,7 @@ main :: () {
 	}
 
 	/* Timing */
-	target_frame_time: float64 = 1.0/120.0;
+	target_frame_time: float64 = TARGET_FRAME_TIME;
 	last_1s_time := current_time_monotonic();
 	prev_time := last_1s_time;
 
@@ -260,7 +262,10 @@ main :: () {
 		}
 		if current_q.count == 0 img_ctx.render = false;
 
-		process_changes(*img_ctx.watcher);
+		if process_changes(*img_ctx.watcher) && img_ctx.watcher_says_rerender {
+			img_ctx.watcher_says_rerender = false;
+			img_ctx.render = true;
+		}
 		/* image pre-render */
 		if img_ctx.render {
 			old_pre_info := img_ctx.pre_info;
@@ -560,7 +565,7 @@ main :: () {
 			text = tprint("fps: %", frame_count_over_1s);
 			panel_text(*bottom_bar, main_font, text, .LEFT, .MIDDLE);
 			bottom_bar.colors.text = palette.text;
-			show_fps := false;
+			show_fps := true;
 
 			/* Backwards and forwards buttons (bnf buttons) */
 			bnf_menu_space := panel_split(*bottom_bar, .{bar_height*6, bottom_bar.size[0]}, .RIGHT, !show_fps);

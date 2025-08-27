@@ -32,8 +32,9 @@
 	- [ ] Add textflows to that custom metadata
 - [ ] Option for plugin settings
 	- [ ] Implement some API for plugin settings
-- [ ] Filewatching
+- [x] Filewatching
 	- [ ] Handle events where the file was moved (maybe follow the file?)
+	- [ ] Reload various file lists when something was detected
 - [ ] logs onscreen instead of in terminal
 	- [ ] intelligent textflows (includes clipping)
 		- [ ] scrollbars I'm afraid
@@ -50,6 +51,7 @@
 	- [x] show index in file queue
 
 ## Bugs to fix
+- The watcher just accumulates directories as it opens files. Reset the watcher when opening a new file
 - When another window is above MIV, MIV still reads the mouse position from that window.
 - When an older window is closed above MIV, MIV crashes?? Even subwindows of other programs (see OBS) have this effect.
 ```
