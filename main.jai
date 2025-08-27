@@ -10,6 +10,8 @@ Image_Context :: struct {
 	render: bool;
 	draw: bool;
 
+	watcher: File_Watcher(Image_Context);
+
 	plugin: *Registration_Entry;
 	pre_info: Pre_Rendering_Info;
 	render_info: Rendering_Info;
@@ -99,6 +101,13 @@ main :: () {
 		render = false,
 		draw = true,
 	};
+
+	if !init(*(img_ctx.watcher), file_change_callback, *img_ctx, events_to_watch = .ALL_EVENTS, merge_window_seconds = 0.5, verbose = true) {
+		give_error(*errors, "Could not initialize watcher");
+		return;
+	}
+	defer deinit(img_ctx.watcher);
+	print("%\n", img_ctx.watcher);
 
 	/* window specific image context */
 	fileq_setting: enum {HISTORY; DIRECTORY;} = .HISTORY;
@@ -703,5 +712,6 @@ X11 :: #import "X11";
 
 #import "Math";
 #import "File";
+#import "File_Watcher";
 #import "String";
 #import "Basic";

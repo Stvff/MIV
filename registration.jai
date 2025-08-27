@@ -270,9 +270,20 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 		return false;
 	}
 
+	if !add_directories(*(img_ctx.watcher), path_strip_filename(filepath)) {
+		give_error(errors, "The directory of '%' could not be opened for tracking file changes", filepath);
+		ok = false;
+		return false;
+	}
+
 	img_ctx.pre_info = pre_info;
 	img_ctx.plugin = new_plugin;
+
 	return true;
+}
+
+file_change_callback :: (watcher: *File_Watcher(Image_Context), change: *File_Change, img_ctx: *Image_Context) {
+	log("% had a %", img_ctx.pre_info.name, change.*);
 }
 
 valid_ascii :: (str: string) -> bool {
