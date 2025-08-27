@@ -270,7 +270,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 		return false;
 	}
 
-	if !add_directories(*(img_ctx.watcher), path_strip_filename(filepath)) {
+	if img_ctx.watcher.callback && !add_directories(*img_ctx.watcher, path_strip_filename(filepath)) {
 		give_error(errors, "The directory of '%' could not be opened for tracking file changes", filepath);
 		ok = false;
 		return false;

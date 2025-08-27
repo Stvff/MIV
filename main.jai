@@ -102,7 +102,7 @@ main :: () {
 		draw = true,
 	};
 
-	if !init(*(img_ctx.watcher), file_change_callback, *img_ctx, events_to_watch = .ALL_EVENTS, merge_window_seconds = 0.5, verbose = true) {
+	if !init(*img_ctx.watcher, file_change_callback, *img_ctx, events_to_watch = .ALL_EVENTS, merge_window_seconds = 0.5, verbose = true) {
 		give_error(*errors, "Could not initialize watcher");
 		return;
 	}
@@ -260,6 +260,7 @@ main :: () {
 		}
 		if current_q.count == 0 img_ctx.render = false;
 
+		process_changes(*img_ctx.watcher);
 		/* image pre-render */
 		if img_ctx.render {
 			old_pre_info := img_ctx.pre_info;
