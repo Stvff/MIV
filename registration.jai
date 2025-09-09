@@ -2,41 +2,7 @@
 all_registrations: [..]Registration_Entry;
 /* /global variables */
 
-Pre_Rendering_Info :: struct {
-	name: string;
-	fileptr: *posix.FILE;
-	width, height: s64;
-
-	bit_depth: u8;
-	channels: u8;
-	metadata: [][2]string;
-
-	user_ptr: *void;
-}
-
-Rendering_Info :: struct {
-	column_range: [2]s64;
-	row_range: [2]s64;
-
-	buffer_width: s64;
-	buffer_height: s64;
-	buffer: [][4]u8;
-}
-
-Provided_Registration_Entry :: struct {
-	name_filetype: string;
-	procedure_prefix: string;
-	extension: string;
-	magic_number: string;
-	bytes_before_magic_number: int;
-	extension_is_case_sensitive: bool;
-}
-
-Error :: struct {
-	kind: enum{ERROR; LOG;};
-	message: string;
-	options: [2]string;
-}
+#load "plugins/MIV.jai";
 
 Registration_Entry :: struct {
 	plugin_filename: string;
@@ -398,6 +364,12 @@ sanitize_file_list :: (list: *[..]string, file: string, index: *int, errors: *[.
 	}
 }
 
+Error :: struct {
+	kind: enum{ERROR; LOG;};
+	message: string;
+	options: [2]string;
+}
+
 give_log :: (errors: *[..]Error, message: string, args: ..Any) {
 	array_add(errors, .{.LOG, sprint(message, ..args), .[]});
 }
@@ -406,5 +378,4 @@ give_error :: (errors: *[..]Error, message: string, args: ..Any) {
 	array_add(errors, .{.ERROR, sprint(message, ..args), .["dismiss"]});
 }
 
-posix :: #import "POSIX";
 system :: #import "System";

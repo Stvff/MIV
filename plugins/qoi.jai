@@ -25,4 +25,4 @@ TOTAL_IMAGE_FORMATS :: 1;
 	return "Not implemented";
 }
 
-#load "miv.jai";
+#load "MIV.jai";
