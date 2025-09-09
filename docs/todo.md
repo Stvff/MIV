@@ -33,8 +33,7 @@
 - [ ] Option for plugin settings
 	- [ ] Implement some API for plugin settings
 - [x] Filewatching
-	- [ ] Handle events where the file was moved (maybe follow the file?)
-	- [ ] Reload various file lists when something was detected
+	- [x] Reload various file lists when something was detected
 - [ ] logs onscreen instead of in terminal
 	- [ ] intelligent textflows (includes clipping)
 		- [ ] scrollbars I'm afraid
@@ -68,3 +67,5 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 - [ ] Being more elaborate about what failed during loading (which part of the directory, which type of error)
 - [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
 - [ ] Exif data
+- [ ] Follow files when they are moved, also in the history
+

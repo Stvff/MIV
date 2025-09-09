@@ -294,9 +294,17 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 }
 
 file_change_callback :: (watcher: *File_Watcher(Image_Context), change: *File_Change, img_ctx: *Image_Context) {
-	log("% had a %", img_ctx.pre_info.name, change.*);
-	if isolate_name(change.full_path) == isolate_name(img_ctx.pre_info.name) && (change.events & .MODIFIED) {
+	/* If the file change is in the dir, redo the dir */
+	/* If the file change is in the history, change the correct filename */
+	/* To do that second one, I need to first find the index, and then rename it */
+	this_file := isolate_name(img_ctx.pre_info.name);
+	changed_file := isolate_name(change.full_path);
+	// log("% had a %", img_ctx.pre_info.name, change.*);
+	// log("that is, '%' and '%'", this_file, changed_file);
+	if changed_file == this_file && (change.events & .MODIFIED) {
 		img_ctx.watcher_says_rerender = true;
+	} else {
+		img_ctx.watcher_says_something_moved_somewhere = true;
 	}
 }
 

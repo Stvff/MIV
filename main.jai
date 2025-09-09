@@ -250,6 +250,17 @@ main :: () {
 		}
 		array_reset(*files_to_open);
 
+		/* The watcher */
+		process_changes(*img_ctx.watcher);
+		if img_ctx.watcher_says_something_moved_somewhere {
+			img_ctx.watcher_says_something_moved_somewhere = false;
+			position_adjusted = true;
+		}
+		if img_ctx.watcher_says_rerender {
+			img_ctx.watcher_says_rerender = false;
+			img_ctx.render = true;
+		}
+
 		/* Choosing the file to render */
 		if position_adjusted {
 			/* if position_adjusted? */
@@ -262,10 +273,6 @@ main :: () {
 		}
 		if current_q.count == 0 img_ctx.render = false;
 
-		if process_changes(*img_ctx.watcher) && img_ctx.watcher_says_rerender {
-			img_ctx.watcher_says_rerender = false;
-			img_ctx.render = true;
-		}
 		/* image pre-render */
 		if img_ctx.render {
 			old_pre_info := img_ctx.pre_info;
