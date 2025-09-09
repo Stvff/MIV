@@ -18,6 +18,8 @@
 ## Apeldoorn
 - [x] remove registration file (since it is redundant)
 - [ ] One more supported image type
+	- [ ] I have decided it should be qoi as a practice run
+	- [ ] Finish the pnm plugin to really support all types
 - [x] Option to select between zoom on screen center and pointer
 	- [ ] zoom on pointer
 - [x] Options for the different persistence settings (between files, restarts, etc)
@@ -25,13 +27,13 @@
 	- [x] Make a settings file
 - [x] Options for AA
 	- [x] Implement AA
-	- [ ] There's linear upscaling and downscaling and nearest upscaling and downscaling, should this be two toggles?
 - [x] Option for metadata
 	- [x] Display metadata
 	- [x] Let plugins provide custom metadata
 	- [ ] Add textflows to that custom metadata
 - [ ] Option for plugin settings
 	- [ ] Implement some API for plugin settings
+		- [ ] Catagorize what sort of settings there should be, and if it should be per filetype or per plugin
 - [x] Filewatching
 	- [x] Reload various file lists when something was detected
 - [ ] logs onscreen instead of in terminal
@@ -68,4 +70,5 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 - [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
 - [ ] Exif data
 - [ ] Follow files when they are moved, also in the history
+- [ ] Nicer looking upscaling
 

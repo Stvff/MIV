@@ -1,5 +1,6 @@
 miv
 .build/*
+plugins/.build/*
 test_pics/*
 *.so
 *.miv

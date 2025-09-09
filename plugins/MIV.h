@@ -7,7 +7,7 @@ typedef struct {
 	uint8_t *data;
 } string;
 
-string to_string(char* str) {
+string to_string(char *str) {
 	return (string){strlen(str), str};
 }
 
