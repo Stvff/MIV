@@ -18,6 +18,7 @@ typedef struct {
 	string magic_number;
 	uint8_t has_magic_number;
 	uint8_t extension_is_case_sensitive;
+	uint8_t has_settings;
 } Provided_Registration_Entry;
 
 typedef struct {
@@ -43,3 +44,8 @@ typedef struct {
 	int64_t buffer_count;
 	uint8_t (*buffer)[4];
 } Rendering_Info;
+
+typedef struct {
+	int64_t options_count;
+	uint8_t *options_data;
+} Settings_Info;

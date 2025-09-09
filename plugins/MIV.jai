@@ -5,6 +5,7 @@ Provided_Registration_Entry :: struct {
 	magic_number: string;
 	bytes_before_magic_number: int;
 	extension_is_case_sensitive: bool;
+	has_settings: bool;
 }
 
 Pre_Rendering_Info :: struct {
@@ -26,6 +27,10 @@ Rendering_Info :: struct {
 	buffer_width: s64;
 	buffer_height: s64;
 	buffer: [][4]u8;
+}
+
+Settings_Info :: struct {
+	options: []bool;
 }
 
 posix :: #import "POSIX";

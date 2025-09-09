@@ -33,7 +33,9 @@
 	- [ ] Add textflows to that custom metadata
 - [ ] Option for plugin settings
 	- [ ] Implement some API for plugin settings
-		- [ ] Catagorize what sort of settings there should be, and if it should be per filetype or per plugin
+		- [ ] Catagorize what sort of settings there should be
+		- [ ] Some sort of settings persistence?
+	- [ ] Draw it on the UI
 - [x] Filewatching
 	- [x] Reload various file lists when something was detected
 - [ ] logs onscreen instead of in terminal

@@ -10,12 +10,14 @@ Registration_Entry :: struct {
 	using provided: Provided_Registration_Entry;
 	pre_render: Pre_Rendering_Procedure;
 	render: Rendering_Procedure;
+	settings: Settings_Procedure;
 	cleanup: Cleanup_Procedure;
 }
 
 Registration_Procedure :: #type (registration: *Provided_Registration_Entry) -> s64 #c_call;
 Pre_Rendering_Procedure :: #type (info: *Pre_Rendering_Info) -> string #c_call;
 Rendering_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> string #c_call;
+Settings_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings_info: *Settings_Info) -> string #c_call;
 Cleanup_Procedure :: #type (pre_info: *Pre_Rendering_Info) -> string #c_call;
 
 register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Error) -> bool {
@@ -63,6 +65,17 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 		}
 		posix.dlerror();
 
+		settings_handle: *void;
+		if p.has_settings {
+			settings_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "settings"));
+			settings_handle := posix.dlsym(handle, settings_cname);
+			if !settings_handle {
+				give_error(errors, "Dynamic function loading error: %", to_string(posix.dlerror()));
+				success = false;
+			}
+			posix.dlerror();
+		}
+
 		cleanup_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "cleanup"));
 		cleanup_handle := posix.dlsym(handle, cleanup_cname);
 		if !cleanup_handle {
@@ -77,6 +90,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 			provided = p,
 			pre_render = pre_render_handle,
 			render = render_handle,
+			settings = settings_handle,
 			cleanup = cleanup_handle,
 		};
 		array_add(*all_registrations, registration);
