@@ -271,6 +271,13 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 	}
 
 	if img_ctx.watcher.callback {
+		deinit(img_ctx.watcher);
+		if !init(*img_ctx.watcher, file_change_callback, img_ctx, events_to_watch = .ALL_EVENTS, merge_window_seconds = 2*TARGET_FRAME_TIME, verbose = false, watch_recursively = false) {
+			give_error(errors, "Could not initialize watcher");
+			ok = false;
+			return false;
+		}
+
 		dir := path_strip_filename(filepath);
 		if !dir then dir = "./";
 		if !add_directories(*img_ctx.watcher, dir) {
@@ -287,7 +294,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 }
 
 file_change_callback :: (watcher: *File_Watcher(Image_Context), change: *File_Change, img_ctx: *Image_Context) {
-//	log("% had a %", img_ctx.pre_info.name, change.*);
+	log("% had a %", img_ctx.pre_info.name, change.*);
 	if isolate_name(change.full_path) == isolate_name(img_ctx.pre_info.name) && (change.events & .MODIFIED) {
 		img_ctx.watcher_says_rerender = true;
 	}

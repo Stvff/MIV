@@ -109,7 +109,7 @@ main :: () {
 		give_error(*errors, "Could not initialize watcher");
 		return;
 	}
-	defer deinit(img_ctx.watcher);
+	defer if img_ctx.watcher.callback deinit(img_ctx.watcher);
 
 	/* window specific image context */
 	fileq_setting: enum {HISTORY; DIRECTORY;} = .HISTORY;
@@ -565,7 +565,7 @@ main :: () {
 			text = tprint("fps: %", frame_count_over_1s);
 			panel_text(*bottom_bar, main_font, text, .LEFT, .MIDDLE);
 			bottom_bar.colors.text = palette.text;
-			show_fps := true;
+			show_fps := false;
 
 			/* Backwards and forwards buttons (bnf buttons) */
 			bnf_menu_space := panel_split(*bottom_bar, .{bar_height*6, bottom_bar.size[0]}, .RIGHT, !show_fps);

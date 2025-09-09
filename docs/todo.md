@@ -44,7 +44,6 @@
 	- [x] show index in file queue
 
 ## Bugs to fix
-- The watcher just accumulates directories as it opens files. Reset the watcher when opening a new file
 - When another window is above MIV, MIV still reads the mouse position from that window.
 - When an older window is closed above MIV, MIV crashes?? Even subwindows of other programs (see OBS) have this effect.
 ```
@@ -67,3 +66,5 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 - [ ] give functions the ability to respond responsibly based on user input option
 	- [ ] More advanced plugin interactions
 - [ ] Being more elaborate about what failed during loading (which part of the directory, which type of error)
+- [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
+- [ ] Exif data
