@@ -2,6 +2,7 @@ Image_Context :: struct {
 	fit : enum {ONE_TO_ONE; FIT_WIDTH; FIT_HEIGHT; FIT_BEST;}
 	offset: Vector2;
 	pre_pan_offset: Vector2;
+	zoom_alignment: Zoom_Alignment_Setting;
 	scale: float;
 	angle: float;
 
@@ -48,7 +49,7 @@ TARGET_FRAME_TIME :: 1.0/120.0;
 
 main :: () {
 	errors: [..]Error;
-	settings: Settings_File_0 = load_registrations(*errors);
+	settings: Settings_File_1 = load_registrations(*errors);
 	defer cleanup_registrations(settings);
 
 	/* UI definitions */
@@ -132,7 +133,6 @@ main :: () {
 	/* program_settings */
 	display_metadata := false;
 	display_settings_menu := false;
-	zoom_on_pointer := false;
 
 	first_image_open := true;
 	defer {
@@ -141,6 +141,7 @@ main :: () {
 		if settings.pers_between_restarts.of_offset {
 			settings.offset_on_previous_close = img_ctx.offset;
 		}
+		settings.zoom_alignment_on_previous_close = img_ctx.zoom_alignment;
 	}
 
 	/* Timing */
@@ -293,6 +294,7 @@ main :: () {
 						img_ctx.auto_fit = false;
 					} else img_ctx.auto_fit = true;
 					if settings.pers_between_restarts.of_offset then img_ctx.offset = settings.offset_on_previous_close;
+					img_ctx.zoom_alignment = settings.zoom_alignment_on_previous_close;
 					first_image_open = false;
 				}
 			} else {
@@ -356,7 +358,13 @@ main :: () {
 			if img_ctx.draw {
 				/* we have to process our inputs (not using the keyboard yet) */
 				if first_layer_is_pressable && pointer_is_in_panel(*canvas, inp.ipointer) {
-					if inp.scroll_delta {
+					if inp.scroll_delta if img_ctx.zoom_alignment == {
+					case .CENTER;
+						img_ctx.auto_fit = false;
+						delta := inp.scroll_delta / ifx inp.shifted then 200 else 10;
+						if delta < 0 img_ctx.scale /= 1 + abs(delta);
+						else img_ctx.scale *= 1 + abs(delta);
+					case .POINTER;
 						img_ctx.auto_fit = false;
 						delta := inp.scroll_delta / ifx inp.shifted then 200 else 10;
 						if delta < 0 img_ctx.scale /= 1 + abs(delta);
@@ -534,12 +542,12 @@ main :: () {
 			panel_draw(*zoom_buttons_space);
 			zoom_buttons := panel_subdivide(*zoom_buttons_space, 2, .HORIZONTAL, false);
 
-			zoom_buttons[xx zoom_on_pointer].colors = selected_button_palette;
-			panel_draw(*zoom_buttons[xx zoom_on_pointer]);
+			zoom_buttons[xx img_ctx.zoom_alignment].colors = selected_button_palette;
+			panel_draw(*zoom_buttons[xx img_ctx.zoom_alignment]);
 
 			for zoom_buttons {
 				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, zoom_tips[it_index]){
-					zoom_on_pointer = xx it_index;
+					img_ctx.zoom_alignment = xx it_index;
 				}
 				zoom_button_text :: string.["+", "^"];
 				panel_text(*it, main_font, zoom_button_text[it_index], .MIDDLE, .MIDDLE);

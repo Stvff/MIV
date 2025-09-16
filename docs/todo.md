@@ -18,7 +18,7 @@
 ## Apeldoorn
 - [x] remove registration file (since it is redundant)
 - [ ] One more supported image type
-	- [ ] I have decided it should be qoi as a practice run
+	- [ ] qoi
 	- [ ] Finish the pnm plugin to really support all types
 - [x] Option to select between zoom on screen center and pointer
 	- [ ] zoom on pointer
