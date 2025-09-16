@@ -30,7 +30,6 @@
 - [x] Option for metadata
 	- [x] Display metadata
 	- [x] Let plugins provide custom metadata
-	- [ ] Add textflows to that custom metadata
 - [ ] Option for plugin settings
 	- [ ] Implement some API for plugin settings
 		- [ ] Catagorize what sort of settings there should be
@@ -38,9 +37,6 @@
 	- [ ] Draw it on the UI
 - [x] Filewatching
 	- [x] Reload various file lists when something was detected
-- [ ] logs onscreen instead of in terminal
-	- [ ] intelligent textflows (includes clipping)
-		- [ ] scrollbars I'm afraid
 	- [x] show count of errors in the errorbar
 - [x] Some pleasant and elaborate tooltips
 - [x] Make modes a radio button selector thing
@@ -58,6 +54,9 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 ```
 
 ## Amersfoort
+- [ ] intelligent textflows (includes clipping)
+	- [ ] scrollbars I'm afraid
+	- [ ] logs onscreen instead of in terminal
 - [ ] Custom icons
 	- [ ] Fit buttons
 	- [ ] Mode buttons
@@ -73,4 +72,3 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 - [ ] Exif data
 - [ ] Follow files when they are moved, also in the history
 - [ ] Nicer looking upscaling
-

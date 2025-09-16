@@ -76,7 +76,7 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	fseek(pre_info->fileptr, 0, SEEK_SET);
 	char c = fgetc(pre_info->fileptr);
 	if (c != 'P') {
-		string warning = to_string("PPM files must start with either 'P3' or 'P6', but the first character was ' '");
+		string warning = to_string("PPM files must start with either 'P3' or 'P6', but the first character was ' '.");
 		char *bare_warning = warning.data;
 		warning.data = malloc(warning.count + 1);
 		memcpy(warning.data, bare_warning, warning.count+1);
@@ -85,7 +85,7 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	}
 	c = fgetc(pre_info->fileptr);
 	if (c != '3' && c != '6') {
-		string warning = to_string("PPM files must start with either 'P3' or 'P6', but the second character was ' '");
+		string warning = to_string("PPM files must start with either 'P3' or 'P6', but the second character was ' '.");
 		char *bare_warning = warning.data;
 		warning.data = malloc(warning.count + 1);
 		memcpy(warning.data, bare_warning, warning.count+1);
@@ -131,7 +131,7 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	else if (specifics->max_ppm_value <= 65535) pre_info->bit_depth = 16;
 	pre_info->channels = 3;
 	if (pre_info->bit_depth > 8) {
-		return to_string("The PPM plugin currently does not support conversion of 16 bit to 8 bit");
+		return to_string("The PPM plugin currently does not support conversion of 16 bit to 8 bit.");
 	}
 
 	/* adding the max pixel value to the metadata */
