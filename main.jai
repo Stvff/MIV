@@ -356,6 +356,9 @@ main :: () {
 			canvas.colors = bg_palette;
 			panel_draw(*canvas);
 			if img_ctx.draw {
+				screen_center := Vector2.{ cast(float, canvas.size[0])/2, cast(float, canvas.size[1])/2 };
+				image_center := Vector2.{ cast(float, img_ctx.pre_info.width)/2, cast(float, img_ctx.pre_info.height)/2 };
+
 				/* we have to process our inputs (not using the keyboard yet) */
 				if first_layer_is_pressable && pointer_is_in_panel(*canvas, inp.ipointer) {
 					if inp.scroll_delta if img_ctx.zoom_alignment == {
@@ -367,8 +370,12 @@ main :: () {
 					case .POINTER;
 						img_ctx.auto_fit = false;
 						delta := inp.scroll_delta / ifx inp.shifted then 200 else 10;
+						old_scale := img_ctx.scale;
 						if delta < 0 img_ctx.scale /= 1 + abs(delta);
 						else img_ctx.scale *= 1 + abs(delta);
+						diff := screen_center - inp.fpointer;
+						diff = diff/old_scale - diff/img_ctx.scale;
+						img_ctx.offset += diff;
 					}
 					if inp.middle_button {
 						img_ctx.auto_fit = true;
@@ -383,9 +390,6 @@ main :: () {
 					}
 				}
 				img_ctx.scale = clamp(img_ctx.scale, 1/cast(float, max(img_ctx.pre_info.width, img_ctx.pre_info.height)), cast(float, max(canvas.size[0], canvas.size[1])));
-
-				screen_center := Vector2.{ cast(float, canvas.size[0])/2, cast(float, canvas.size[1])/2 };
-				image_center := Vector2.{ cast(float, img_ctx.pre_info.width)/2, cast(float, img_ctx.pre_info.height)/2 };
 
 				now_fit := img_ctx.fit;
 				if now_fit == .FIT_BEST {
