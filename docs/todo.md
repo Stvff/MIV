@@ -21,7 +21,7 @@
 	- [ ] qoi
 	- [ ] Finish the pnm plugin to really support all types
 - [x] Option to select between zoom on screen center and pointer
-	- [ ] zoom on pointer
+	- [x] zoom on pointer
 - [x] Options for the different persistence settings (between files, restarts, etc)
 	- [x] Implement that actual persistence
 	- [x] Make a settings file

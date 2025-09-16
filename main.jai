@@ -356,6 +356,7 @@ main :: () {
 			canvas.colors = bg_palette;
 			panel_draw(*canvas);
 			if img_ctx.draw {
+				screen_offset := Vector2.{ cast(float, canvas.pos[0]), cast(float, canvas.pos[1]) };
 				screen_center := Vector2.{ cast(float, canvas.size[0])/2, cast(float, canvas.size[1])/2 };
 				image_center := Vector2.{ cast(float, img_ctx.pre_info.width)/2, cast(float, img_ctx.pre_info.height)/2 };
 
@@ -373,7 +374,7 @@ main :: () {
 						old_scale := img_ctx.scale;
 						if delta < 0 img_ctx.scale /= 1 + abs(delta);
 						else img_ctx.scale *= 1 + abs(delta);
-						diff := screen_center - inp.fpointer;
+						diff := screen_offset + screen_center - inp.fpointer;
 						diff = diff/old_scale - diff/img_ctx.scale;
 						img_ctx.offset += diff;
 					}

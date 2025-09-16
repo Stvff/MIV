@@ -62,6 +62,6 @@ MIV is a modular image viewer, where file formats are supported through plugins 
 MIV arranges the windowing, the UI, file collection and preloading, and the plugins decode the images.
 
 The current roadmap can be found in [docs/todo.md](./docs/todo.md).\
-As for now, I'm trying to get a passable image viewer with automatic file reloading for PPM files. This way, I'm creating a 'reference plugin' in C (see `MIV.h` and `meow.c`) that other people can then reference, should they choose to participate.
+As for now, I'm trying to get a passable image viewer with automatic file reloading for PPM and QOI files. This way, I'm creating a 'reference plugin' in C (see `MIV.h` and `ppm.c`) that other people can then reference, should they choose to participate.
 
 To be more specific about features, I am aiming for feature parity with the [Linux Mint xviewer](https://github.com/linuxmint/xviewer?tab=readme-ov-file) in terms of the image viewing experience.
