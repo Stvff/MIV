@@ -41,6 +41,8 @@
 - [x] Some pleasant and elaborate tooltips
 - [x] Make modes a radio button selector thing
 	- [x] show index in file queue
+- [ ] Enter directory mode if `files_to_open` is only one file.
+- [ ] Begin custom icons
 
 ## Bugs to fix
 - When another window is above MIV, MIV still reads the mouse position from that window.
@@ -57,7 +59,7 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 - [ ] intelligent textflows (includes clipping)
 	- [ ] scrollbars I'm afraid
 	- [ ] logs onscreen instead of in terminal
-- [ ] Custom icons
+- [ ] Modernize Custom icons
 	- [ ] Fit buttons
 	- [ ] Queueue mode buttons
 	- [ ] Next/prev

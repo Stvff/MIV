@@ -499,7 +499,7 @@ main :: () {
 
 			/** UI **/
 			/* top bar */
-			settings_button := panel_text_split(*top_bar, main_font, "Settings", .LEFT);
+			settings_button := panel_split(*top_bar, .{bar_height*6/5, top_bar.size[0]}, .LEFT, false);
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 			fit_buttons_space := panel_split(*top_bar, .{bar_height*4, top_bar.size[0]}, .LEFT, false);
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
@@ -513,7 +513,7 @@ main :: () {
 			if first_layer_is_pressable && panel_button(*settings_button, inp.ipointer, inp.left_button_switch, settings_tip){
 				display_settings_menu = !display_settings_menu;
 			}
-			panel_text(*settings_button, main_font, "Settings", .MIDDLE, .MIDDLE);
+			panel_text(*settings_button, icon_font, "S", .MIDDLE, .MIDDLE);
 
 			/* fit buttons */
 			fit_buttons_space.colors = button_palette;
@@ -530,8 +530,8 @@ main :: () {
 					img_ctx.auto_fit = true;
 					img_ctx.offset = .{};
 				}
-				fit_button_text :: string.["1:1", "W", "H", "B"];
-				panel_text(*it, main_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);
+				fit_button_text :: string.["1", "W", "H", "B"];
+				panel_text(*it, icon_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
 
 			/* AA button */
@@ -540,7 +540,7 @@ main :: () {
 			if first_layer_is_pressable && panel_button(*aa_button, inp.ipointer, inp.left_button_switch, aa_tip) {
 				img_ctx.linear_upscaling = !img_ctx.linear_upscaling;
 			}
-			panel_text(*aa_button, main_font, "AA", .MIDDLE, .MIDDLE);
+			panel_text(*aa_button, icon_font, "A", .MIDDLE, .MIDDLE);
 
 			/* zoom setting button */
 			zoom_buttons_space.colors = button_palette;
@@ -554,8 +554,8 @@ main :: () {
 				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, zoom_tips[it_index]){
 					img_ctx.zoom_alignment = xx it_index;
 				}
-				zoom_button_text :: string.["+", "^"];
-				panel_text(*it, main_font, zoom_button_text[it_index], .MIDDLE, .MIDDLE);
+				zoom_button_text :: string.["M", "P"];
+				panel_text(*it, icon_font, zoom_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
 
 			/* filename display */
@@ -578,7 +578,7 @@ main :: () {
 			if first_layer_is_pressable && panel_button(*metadata_button, inp.ipointer, inp.left_button_switch, metadata_tip) {
 				display_metadata = !display_metadata;
 			}
-			panel_text(*metadata_button, main_font, "<../>", .MIDDLE, .MIDDLE);
+			panel_text(*metadata_button, icon_font, "m", .MIDDLE, .MIDDLE);
 
 			/* fps counter */
 			bottom_bar.colors.text = ifx frame_time < target_frame_time then u8.[100, 210, 25, 255] else .[220, 60, 25, 255];
@@ -631,8 +631,8 @@ main :: () {
 					fileq_setting_switch = true;
 					fileq_setting = xx it_index;
 				}
-				fileq_setting_text :: string.["hist", "dir"];
-				panel_text(*it, main_font, fileq_setting_text[it_index], .MIDDLE, .MIDDLE);
+				fileq_setting_text :: string.["C", "D"];
+				panel_text(*it, icon_font, fileq_setting_text[it_index], .MIDDLE, .MIDDLE);
 			}
 			if fileq_setting_switch if #complete fileq_setting == {
 			case .HISTORY;
@@ -727,7 +727,7 @@ get_pointer_position :: () -> Vector2 {
 FONT_PATH :: "./assets/LibertinusSerif-Regular.otf";
 FONT_DATA :: #run cast([]u8) read_entire_file(FONT_PATH);
 
-ICON_FONT_PATH :: "./assets/export.otf";
+ICON_FONT_PATH :: "./assets/IconsMIV2.otf";
 ICON_FONT_DATA :: #run cast([]u8) read_entire_file(ICON_FONT_PATH);
 
 #load "registration.jai";

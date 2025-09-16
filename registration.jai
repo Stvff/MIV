@@ -101,7 +101,6 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 	return success;
 }
 
-
 Settings_File_0 :: struct {
 	version: u8 = 0;
 	pers_between_files: Persistence_Setting;
