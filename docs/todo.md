@@ -59,10 +59,11 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 	- [ ] logs onscreen instead of in terminal
 - [ ] Custom icons
 	- [ ] Fit buttons
-	- [ ] Mode buttons
+	- [ ] Queueue mode buttons
 	- [ ] Next/prev
 	- [ ] Zoom buttons
 	- [ ] Settings
+	- [ ] AA button
 	- [ ] Metadata or plugin settings??
 - [ ] different types of filesorting
 - [ ] give functions the ability to respond responsibly based on user input option

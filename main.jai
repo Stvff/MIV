@@ -69,8 +69,8 @@ main :: () {
 
 	/* Font loading */
 	font_pixel_height := bar_height/2;
-	main_font: *Simp.Dynamic_Font;
-	main_font = Simp.get_font_at_size(FONT_DATA, font_pixel_height);
+	main_font := Simp.get_font_at_size(FONT_DATA, font_pixel_height);
+	icon_font := Simp.get_font_at_size(ICON_FONT_DATA, font_pixel_height);
 
 	/* tooltips */
 	/* Counting this manually is inconvenient; I'd like to write a metaprogram that counts the amount of tooltips here, but it's hard. */
@@ -598,8 +598,8 @@ main :: () {
 				bnf_buttons[1].colors.body = palette.body;
 				panel_draw(*bnf_buttons[1]);
 			}
-			panel_text(*bnf_buttons[0], main_font, "<", .MIDDLE, .MIDDLE);
-			panel_text(*bnf_buttons[1], main_font, ">", .MIDDLE, .MIDDLE);
+			panel_text(*bnf_buttons[0], icon_font, "<", .MIDDLE, .MIDDLE);
+			panel_text(*bnf_buttons[1], icon_font, ">", .MIDDLE, .MIDDLE);
 
 			/* history or directory selector */
 			bnf_selector_space := panel_split(*bnf_menu_space, .{bar_height*3, bnf_menu_space.size[0]}, .LEFT, false);
@@ -711,8 +711,11 @@ get_pointer_position :: () -> Vector2 {
 	return .{xx mouse_x, xx (window_size[1] - xx mouse_y)};
 }
 
-FONT_PATH :: "/usr/share/fonts/libertinus/LibertinusSerif-Regular.otf";
+FONT_PATH :: "./assets/LibertinusSerif-Regular.otf";
 FONT_DATA :: #run cast([]u8) read_entire_file(FONT_PATH);
+
+ICON_FONT_PATH :: "./assets/export.otf";
+ICON_FONT_DATA :: #run cast([]u8) read_entire_file(ICON_FONT_PATH);
 
 #load "registration.jai";
 #load "ui.jai";

@@ -42,7 +42,7 @@ qoi_pre_render :: (info: *Pre_Rendering_Info) -> string #c_call {
 	colorspace: u8 = ---;
 	posix.fread(*colorspace, 1, 1, info.fileptr);
 	info.metadata = NewArray(1, [2]string);
-	info.metadata[0][0] = "Colorspace";
+	info.metadata[0][0] = "colorspace";
 	if colorspace == {
 	case 0;
 		info.metadata[0][1] = "sRGB";
@@ -56,7 +56,22 @@ qoi_pre_render :: (info: *Pre_Rendering_Info) -> string #c_call {
 
 #program_export
 qoi_render :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> string #c_call {
+	push_context,defer_pop pre_info.user_ptr.(*#Context);
+
+	previous_pixel: [4]u8 = .[0, 0, 0, 255];
+	previous_array: [64][4]u8;
+	pixel_count := render_info.buffer.count;
+	i := 0;
+	while i < pixel_count {
+		render_info.buffer[i] = .[200, 100, 100, 255];
+		i += 1;
+	}
+
 	return "";
+}
+
+index_hash :: (pixel: [4]u8) -> u64 {
+	return (pixel[0].(u64)*3 + pixel[1].(u64)*5 + pixel[2].(u64)*7 + pixel[3].(u64)*11) % 64;
 }
 
 #program_export
