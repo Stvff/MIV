@@ -42,7 +42,7 @@
 - [x] Make modes a radio button selector thing
 	- [x] show index in file queue
 - [ ] Enter directory mode if `files_to_open` is only one file.
-- [ ] Begin custom icons
+- [x] Begin custom icons
 
 ## Bugs to fix
 - When another window is above MIV, MIV still reads the mouse position from that window.

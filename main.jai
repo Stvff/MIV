@@ -727,7 +727,7 @@ get_pointer_position :: () -> Vector2 {
 FONT_PATH :: "./assets/LibertinusSerif-Regular.otf";
 FONT_DATA :: #run cast([]u8) read_entire_file(FONT_PATH);
 
-ICON_FONT_PATH :: "./assets/IconsMIV2.otf";
+ICON_FONT_PATH :: "./assets/IconsMIV.otf";
 ICON_FONT_DATA :: #run cast([]u8) read_entire_file(ICON_FONT_PATH);
 
 #load "registration.jai";
