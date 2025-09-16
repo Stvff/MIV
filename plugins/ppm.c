@@ -34,22 +34,29 @@ void skip_comments(FILE *fileptr) {
 
 /* the actual plugin */
 static int called_n_times;
-const int TOTAL_IMAGE_FORMATS = 2;
+const int TOTAL_IMAGE_FORMATS = 3;
 
 int64_t registration_procedure(Provided_Registration_Entry *registration) {
 	switch (called_n_times) {
 	case 0:
-		registration->name_filetype = to_string("Netpbm Portable PixMap");
-		registration->procedure_prefix = to_string("ppm_");
-		registration->extension = to_string("PPM");
-		registration->magic_number = to_string("P");
+		registration->name_filetype = to_string("Netpbm Portable BitMap");
+		registration->procedure_prefix = to_string("pbm_");
+		registration->extension = to_string("PBM");
+		registration->magic_number = to_string("P"); /* P1 P4 */
 		registration->extension_is_case_sensitive = 0;
 		break;
 	case 1:
-		registration->name_filetype = to_string("Netpbm PFM");
-		registration->procedure_prefix = to_string("pfm_");
-		registration->extension = to_string("PFM");
-		registration->magic_number = to_string("PF");
+		registration->name_filetype = to_string("Netpbm Portable GrayMap");
+		registration->procedure_prefix = to_string("pgm_");
+		registration->extension = to_string("PGM");
+		registration->magic_number = to_string("P"); /* P2 P5 */
+		registration->extension_is_case_sensitive = 0;
+		break;
+	case 2:
+		registration->name_filetype = to_string("Netpbm Portable PixMap");
+		registration->procedure_prefix = to_string("ppm_");
+		registration->extension = to_string("PPM");
+		registration->magic_number = to_string("P"); /* P3 P6 */
 		registration->extension_is_case_sensitive = 0;
 		break;
 	}
@@ -200,16 +207,26 @@ string ppm_cleanup(Pre_Rendering_Info *pre_info) {
 	return (string){0};
 }
 
-string pfm_pre_render(Pre_Rendering_Info *pre_info) {
-	pre_info->width = 20;
-	pre_info->height = 22;
-	return (string){0};
+string pbm_pre_render(Pre_Rendering_Info *pre_info) {
+	return to_string("Pbm pre-render unimplemented.");
 }
 
-string pfm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
-	return (string){0};
+string pbm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
+	return to_string("Pbm render unimplemented.");
 }
 
-string pfm_cleanup(Pre_Rendering_Info *pre_info) {
-	return (string){0};
+string pbm_cleanup(Pre_Rendering_Info *pre_info) {
+	return to_string("Pbm cleanup unimplemented.");
+}
+
+string pgm_pre_render(Pre_Rendering_Info *pre_info) {
+	return to_string("Pgm pre-render unimplemented.");
+}
+
+string pgm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
+	return to_string("Pgm render unimplemented.");
+}
+
+string pgm_cleanup(Pre_Rendering_Info *pre_info) {
+	return to_string("Pgm cleanup unimplemented.");
 }
