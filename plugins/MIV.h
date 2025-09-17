@@ -50,13 +50,18 @@ typedef struct {
 /*** From here it is about the optional features (like plugin settings). ***/
 
 typedef struct {
+	uint8_t selected;
+	string item;
+} List_Option;
+
+typedef struct {
 	string name;
 	uint8_t type;
 	union {
 		uint8_t off_on;
 		struct {
 			int64_t count;
-			string *data;
+			List_Option *data;
 		} list;
 	};
 } Option;
@@ -67,6 +72,7 @@ typedef struct {
 typedef struct {
 	uint8_t response;
 	int32_t changed_index;
+	int32_t changed_secondary_index;
 	int64_t options_count;
 	Option *options_data;
 } Settings_Info;

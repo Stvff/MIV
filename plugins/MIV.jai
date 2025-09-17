@@ -33,12 +33,17 @@ Rendering_Info :: struct {
 
 /*** From here it is about the optional features (like plugin settings). ***/
 
+List_Option :: struct {
+	selected: bool;
+	item: string;
+}
+
 Option :: struct {
 	name: string;
 	type: Option_Type;
 	union {
 		off_on: bool;
-		list: []string;
+		list: []List_Option;
 	};
 }
 
@@ -49,6 +54,7 @@ Option_Type :: enum u8 {
 Settings_Info :: struct {
 	response: Settings_Response;
 	changed_index: s32;
+	changed_secondary_index: s32;
 	options: []Option;
 }
 

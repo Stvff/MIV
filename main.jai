@@ -492,6 +492,8 @@ main :: () {
 				/* plugin settings */
 				if img_ctx.plugin && img_ctx.plugin.has_settings {
 					if settings_menu_just_opened {
+						img_ctx.settings_info.changed_index = -1;
+						img_ctx.settings_info.changed_secondary_index = -1;
 						settings_info := img_ctx.settings_info;
 						error_str := img_ctx.plugin.settings(*img_ctx.pre_info, *img_ctx.render_info, *settings_info);
 						if error_str {
@@ -502,8 +504,9 @@ main :: () {
 					panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, false);
 					title_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, false);
 					panel_text(*title_panel, main_font, tprint("% settings:", img_ctx.plugin.name_filetype), .LEFT, .MIDDLE);
-//					panel_text_split(*settings_menu_panel, main_font, tprint("% settings:", img_ctx.plugin.name_filetype), .TOP, .NEAR);
+
 					for * option: img_ctx.settings_info.options {
+						changed := false;
 						if option.type == {
 						case .OFF_ON;
 							section := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
@@ -517,7 +520,11 @@ main :: () {
 								button_panel.colors = selected_button_palette;
 							}
 							panel_draw(*button_panel);
-							panel_button(*button_panel, inp.ipointer, inp.left_button_switch);
+							if panel_button(*button_panel, inp.ipointer, inp.left_button_switch) {
+								option.off_on = !option.off_on;
+								img_ctx.settings_info.changed_index = xx it_index;
+								changed = true;
+							}
 							panel_text(*button_panel, main_font, button_text, .MIDDLE, .MIDDLE);
 
 						case .LIST;
@@ -525,9 +532,30 @@ main :: () {
 							list_title_panel := panel_split(*list_panel, .{bar_height, list_panel.size[1]}, .TOP, true);
 							panel_text(*list_title_panel, main_font, tprint(" %:", option.name), .LEFT, .MIDDLE);
 							list_options := panel_subdivide(*list_panel, option.list.count, .VERTICAL, false);
-							for option.list {
-								panel_text(*list_options[it_index], main_font, it, .RIGHT, .MIDDLE);
+							current_option_index := it_index;
+							for * list_options {
+								it.colors = button_palette;
+								selected := "[_]";
+								if option.list[it_index].selected {
+									it.colors = selected_button_palette;
+									selected = "[X]";
+								}
+								panel_draw(it);
+								if panel_button(it, inp.ipointer, inp.left_button_switch) {
+									option.list[it_index].selected = !option.list[it_index].selected;
+									img_ctx.settings_info.changed_index = xx current_option_index;
+									img_ctx.settings_info.changed_secondary_index = xx it_index;
+									changed = true;
+								}
+								panel_text(it, main_font, tprint(" % %", selected, option.list[it_index].item), .LEFT, .MIDDLE);
 							}
+						}
+						if changed {
+							settings_info := img_ctx.settings_info;
+							error_str := img_ctx.plugin.settings(*img_ctx.pre_info, *img_ctx.render_info, *settings_info);
+							if error_str {
+								give_error(*errors, "Plugin for '%' settings retrieval error: %", img_ctx.plugin.name_filetype, error_str);
+							} else img_ctx.settings_info = settings_info;
 						}
 					}
 				}

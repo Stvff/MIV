@@ -30,11 +30,13 @@
 - [x] Option for metadata
 	- [x] Display metadata
 	- [x] Let plugins provide custom metadata
-- [ ] Option for plugin settings
-	- [ ] Implement some API for plugin settings
-		- [ ] Catagorize what sort of settings there should be
+- [x] Option for plugin settings
+	- [x] Implement some API for plugin settings
+		- [ ] Maybe implement floating point sliders
 		- [ ] Some sort of settings persistence?
-	- [ ] Draw it on the UI
+	- [x] Draw it on the UI
+	- [ ] Document the API
+	- [ ] Respond to settings functions demands
 - [x] Filewatching
 	- [x] Reload various file lists when something was detected
 	- [x] show count of errors in the errorbar

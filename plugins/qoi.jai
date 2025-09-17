@@ -86,10 +86,10 @@ qoi_settings :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, se
 			off_on = true
 		};
 
-		sec_list := NewArray(3, string);
-		sec_list[0] = "meow";
-		sec_list[1] = "wruff";
-		sec_list[2] = "nyaa";
+		sec_list := NewArray(3, List_Option);
+		sec_list[0] = .{true, "meow"};
+		sec_list[1] = .{false, "wruff"};
+		sec_list[2] = .{true, "nyaa"};
 		settings_info.options[1] = .{
 			name = "list of options",
 			type = .LIST,
