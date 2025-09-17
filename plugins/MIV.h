@@ -11,6 +11,8 @@ string to_string(char *str) {
 	return (string){strlen(str), str};
 }
 
+/*** The next three structs are used in the mandatory functions. ***/
+
 typedef struct {
 	string name_filetype;
 	string procedure_prefix;
@@ -45,7 +47,31 @@ typedef struct {
 	uint8_t (*buffer)[4];
 } Rendering_Info;
 
+/*** From here it is about the optional features (like plugin settings). ***/
+
 typedef struct {
+	string name;
+	uint8_t type;
+	union {
+		uint8_t on_off;
+		struct {
+			int64_t count;
+			string *data;
+		} list;
+	};
+} Option;
+
+#define OPTION_TYPE_ON_OFF 0;
+#define OPTION_LIST 1;
+
+typedef struct {
+	uint8_t response;
 	int64_t options_count;
-	uint8_t *options_data;
+	Option *options_data;
 } Settings_Info;
+
+/* this is a bit-set */
+#define RESPONSE_NOTHING 0;
+#define RESPONSE_RE_PRE_RENDER 1;
+#define RESPONSE_RE_RENDER 2;
+#define RESPONSE_CLEANUP 4;

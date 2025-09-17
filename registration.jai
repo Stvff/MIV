@@ -68,7 +68,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 		settings_handle: *void;
 		if p.has_settings {
 			settings_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "settings"));
-			settings_handle := posix.dlsym(handle, settings_cname);
+			settings_handle = posix.dlsym(handle, settings_cname);
 			if !settings_handle {
 				give_error(errors, "Dynamic function loading error: %", to_string(posix.dlerror()));
 				success = false;
@@ -263,7 +263,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 	pre_info_err := new_plugin.pre_render(*pre_info);
 	posix.fseek(file_handle, 0, posix.SEEK_SET);
 	if pre_info_err {
-		give_error(errors, "% file metadata reading error: %", new_plugin.name_filetype, pre_info_err);
+		give_error(errors, "File type '%' metadata reading error: %", new_plugin.name_filetype, pre_info_err);
 		ok = false;
 		return false;
 	}

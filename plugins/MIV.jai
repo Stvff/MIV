@@ -1,3 +1,5 @@
+/*** The next three structs are used in the mandatory functions. ***/
+
 Provided_Registration_Entry :: struct {
 	name_filetype: string;
 	procedure_prefix: string;
@@ -29,8 +31,28 @@ Rendering_Info :: struct {
 	buffer: [][4]u8;
 }
 
+/*** From here it is about the optional features (like plugin settings). ***/
+
+Option :: struct {
+	name: string;
+	type: Option_Type;
+	union {
+		on_off: bool;
+		list: []string;
+	};
+}
+
+Option_Type :: enum u8 {
+	ON_OFF; LIST;
+}
+
 Settings_Info :: struct {
-	options: []bool;
+	response: Settings_Response;
+	options: []Option;
+}
+
+Settings_Response :: enum_flags u8 {
+	NOTHING; RE_PRE_RENDER; RE_RENDER; CLEANUP;
 }
 
 posix :: #import "POSIX";

@@ -76,7 +76,15 @@ index_hash :: (pixel: [4]u8) -> u64 {
 
 #program_export
 qoi_settings :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings_info: *Settings_Info) -> string #c_call {
-	return "settings not implemented";
+	push_context,defer_pop pre_info.user_ptr.(*#Context);
+	if !settings_info.options {
+		settings_info.options = NewArray(3, Option);
+		for *settings_info.options {
+			it.name = "ab";
+		}
+	}
+	return "";
+//	return "Settings not implemented.";
 }
 
 #program_export

@@ -18,6 +18,7 @@ Image_Context :: struct {
 	plugin: *Registration_Entry;
 	pre_info: Pre_Rendering_Info;
 	render_info: Rendering_Info;
+	settings_info: Settings_Info;
 }
 
 Input_State :: struct {
@@ -133,6 +134,7 @@ main :: () {
 	/* program_settings */
 	display_metadata := false;
 	display_settings_menu := false;
+	settings_menu_just_opened := false;
 
 	first_image_open := true;
 	defer {
@@ -484,6 +486,21 @@ main :: () {
 					}
 					panel_text(*table[col][row], main_font, button_text, .MIDDLE, .MIDDLE);
 				}
+
+				/* plugin settings */
+				if img_ctx.plugin && img_ctx.plugin.has_settings {
+					if settings_menu_just_opened {
+						settings_info := img_ctx.settings_info;
+						error_str := img_ctx.plugin.settings(*img_ctx.pre_info, *img_ctx.render_info, *settings_info);
+						if error_str {
+							give_error(*errors, "Plugin for '%' settings retrieval error: %", img_ctx.plugin.name_filetype, error_str);
+						} else img_ctx.settings_info = settings_info;
+					}
+					for option: img_ctx.settings_info.options {
+						if settings_menu_just_opened print("name: %\n", option.name);
+					}
+				}
+				settings_menu_just_opened = false;
 			}
 
 			if display_metadata {
@@ -512,6 +529,7 @@ main :: () {
 			panel_draw(*settings_button);
 			if first_layer_is_pressable && panel_button(*settings_button, inp.ipointer, inp.left_button_switch, settings_tip){
 				display_settings_menu = !display_settings_menu;
+				if display_settings_menu then settings_menu_just_opened = true;
 			}
 			panel_text(*settings_button, icon_font, "S", .MIDDLE, .MIDDLE);
 
