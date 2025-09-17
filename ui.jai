@@ -176,7 +176,7 @@ panel_button :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool, tip: *To
 	return in_panel && pressed;
 }
 
-make_tooltip :: (tip: string, font: *Simp.Dynamic_Font, tooltips: *[13]Tool_Tip, used_tooltips: *int, colors := default_tool_tip_palette) -> *Tool_Tip {
+make_tooltip :: (tip: string, font: *Simp.Dynamic_Font, tooltips: *[14]Tool_Tip, used_tooltips: *int, colors := default_tool_tip_palette) -> *Tool_Tip {
 	text_width := Simp.prepare_text(font, tip);
 	padding := font.character_height;
 	tooltip: Tool_Tip;

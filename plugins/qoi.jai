@@ -79,9 +79,29 @@ qoi_settings :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, se
 	push_context,defer_pop pre_info.user_ptr.(*#Context);
 	if !settings_info.options {
 		settings_info.options = NewArray(3, Option);
-		for *settings_info.options {
-			it.name = "ab";
-		}
+
+		settings_info.options[0] = .{
+			name = "toggle setting",
+			type = .OFF_ON,
+			off_on = true
+		};
+
+		sec_list := NewArray(3, string);
+		sec_list[0] = "meow";
+		sec_list[1] = "wruff";
+		sec_list[2] = "nyaa";
+		settings_info.options[1] = .{
+			name = "list of options",
+			type = .LIST,
+			list = sec_list
+		};
+
+		settings_info.options[2] = .{
+			name = "toggle setting (sequel)",
+			type = .OFF_ON,
+			off_on = false
+		};
+		return "";
 	}
 	return "";
 //	return "Settings not implemented.";

@@ -77,7 +77,7 @@ main :: () {
 	/* tooltips */
 	/* Counting this manually is inconvenient; I'd like to write a metaprogram that counts the amount of tooltips here, but it's hard. */
 	/* The reason this isn't a dynamic array is because the pointer of that is unstable. Saving indices into a buffer is messy during usage. */
-	tooltips: [13]Tool_Tip;
+	tooltips: [14]Tool_Tip;
 	used_tooltips := 0;
 
 	metadata_tip := make_tooltip("Toggle image metadata view", main_font, *tooltips, *used_tooltips);
@@ -91,7 +91,8 @@ main :: () {
 	zoom_tips[0] = make_tooltip("Zoom on screen center", main_font, *tooltips, *used_tooltips);
 	zoom_tips[1] = make_tooltip("Zoom on pointer", main_font, *tooltips, *used_tooltips);
 
-	settings_tip := make_tooltip("Menu for persistence of settings between files or restarts", main_font, *tooltips, *used_tooltips);
+	settings_tip := make_tooltip("Toggle settings menu", main_font, *tooltips, *used_tooltips);
+	persistence_tip := make_tooltip("Menu for persistence of settings between files or restarts", main_font, *tooltips, *used_tooltips);
 	fileq_tips: [2]*Tool_Tip;
 	fileq_tips[0] = make_tooltip("Set file queue to dropped files", main_font, *tooltips, *used_tooltips);
 	fileq_tips[1] = make_tooltip("Set file queue to directory of the current file", main_font, *tooltips, *used_tooltips);
@@ -461,6 +462,7 @@ main :: () {
 					table[col][2] = remaining_rows[1];
 					table[col][3] = remaining_rows[2];
 				}
+				panel_button(*table[0][0], inp.ipointer, false, persistence_tip);
 				panel_text(*table[0][0], main_font, "Persistence", .MIDDLE, .MIDDLE);
 				panel_text(*table[1][0], main_font, "between", .MIDDLE, .TOP);
 				panel_text(*table[1][0], main_font, "files", .MIDDLE, .BOTTOM);
@@ -496,8 +498,37 @@ main :: () {
 							give_error(*errors, "Plugin for '%' settings retrieval error: %", img_ctx.plugin.name_filetype, error_str);
 						} else img_ctx.settings_info = settings_info;
 					}
-					for option: img_ctx.settings_info.options {
-						if settings_menu_just_opened print("name: %\n", option.name);
+
+					panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, false);
+					title_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, false);
+					panel_text(*title_panel, main_font, tprint("% settings:", img_ctx.plugin.name_filetype), .LEFT, .MIDDLE);
+//					panel_text_split(*settings_menu_panel, main_font, tprint("% settings:", img_ctx.plugin.name_filetype), .TOP, .NEAR);
+					for * option: img_ctx.settings_info.options {
+						if option.type == {
+						case .OFF_ON;
+							section := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
+							panel_text(*section, main_font, tprint(" %:", option.name), .LEFT, .MIDDLE);
+							button_panel := panel_split(*section, .{bar_height*3/2, section.size[0]}, .RIGHT, false);
+
+							button_text := "off";
+							button_panel.colors = button_palette;
+							if option.off_on {
+								button_text = "on";
+								button_panel.colors = selected_button_palette;
+							}
+							panel_draw(*button_panel);
+							panel_button(*button_panel, inp.ipointer, inp.left_button_switch);
+							panel_text(*button_panel, main_font, button_text, .MIDDLE, .MIDDLE);
+
+						case .LIST;
+							list_panel := panel_split(*settings_menu_panel, .{bar_height*(1 + option.list.count), settings_menu_panel.size[1]}, .TOP, true);
+							list_title_panel := panel_split(*list_panel, .{bar_height, list_panel.size[1]}, .TOP, true);
+							panel_text(*list_title_panel, main_font, tprint(" %:", option.name), .LEFT, .MIDDLE);
+							list_options := panel_subdivide(*list_panel, option.list.count, .VERTICAL, false);
+							for option.list {
+								panel_text(*list_options[it_index], main_font, it, .RIGHT, .MIDDLE);
+							}
+						}
 					}
 				}
 				settings_menu_just_opened = false;
@@ -524,7 +555,7 @@ main :: () {
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 			zoom_buttons_space := panel_split(*top_bar, .{bar_height*2, top_bar.size[0]}, .LEFT, false);
 
-			/* persistence button */
+			/* settings button */
 			settings_button.colors = ifx display_settings_menu then selected_button_palette else button_palette;
 			panel_draw(*settings_button);
 			if first_layer_is_pressable && panel_button(*settings_button, inp.ipointer, inp.left_button_switch, settings_tip){

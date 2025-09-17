@@ -37,17 +37,18 @@ Option :: struct {
 	name: string;
 	type: Option_Type;
 	union {
-		on_off: bool;
+		off_on: bool;
 		list: []string;
 	};
 }
 
 Option_Type :: enum u8 {
-	ON_OFF; LIST;
+	OFF_ON; LIST;
 }
 
 Settings_Info :: struct {
 	response: Settings_Response;
+	changed_index: s32;
 	options: []Option;
 }
 

@@ -53,7 +53,7 @@ typedef struct {
 	string name;
 	uint8_t type;
 	union {
-		uint8_t on_off;
+		uint8_t off_on;
 		struct {
 			int64_t count;
 			string *data;
@@ -61,11 +61,12 @@ typedef struct {
 	};
 } Option;
 
-#define OPTION_TYPE_ON_OFF 0;
+#define OPTION_TYPE_OFF_ON 0;
 #define OPTION_LIST 1;
 
 typedef struct {
 	uint8_t response;
+	int32_t changed_index;
 	int64_t options_count;
 	Option *options_data;
 } Settings_Info;
