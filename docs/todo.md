@@ -36,7 +36,7 @@
 		- [ ] Some sort of settings persistence?
 	- [x] Draw it on the UI
 	- [ ] Document the API
-	- [ ] Respond to settings functions demands
+	- [x] Respond to settings functions demands
 - [x] Filewatching
 	- [x] Reload various file lists when something was detected
 	- [x] show count of errors in the errorbar
@@ -68,7 +68,8 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 	- [ ] Zoom buttons
 	- [ ] Settings
 	- [ ] AA button
-	- [ ] Metadata or plugin settings??
+	- [ ] Metadata
+	- [x] Toggles
 - [ ] different types of filesorting
 - [ ] give functions the ability to respond responsibly based on user input option
 	- [ ] More advanced plugin interactions

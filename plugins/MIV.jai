@@ -58,8 +58,8 @@ Settings_Info :: struct {
 	options: []Option;
 }
 
-Settings_Response :: enum_flags u8 {
-	NOTHING; RE_PRE_RENDER; RE_RENDER; CLEANUP;
+Settings_Response :: enum u8 {
+	NOTHING; RE_RENDER;
 }
 
 posix :: #import "POSIX";

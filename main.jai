@@ -498,7 +498,7 @@ main :: () {
 
 					for * option: img_ctx.settings_info.options {
 						changed := false;
-						if option.type == {
+						if #complete option.type == {
 						case .OFF_ON;
 							section := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
 							panel_text(*section, main_font, tprint(" %:", option.name), .LEFT, .MIDDLE);
@@ -533,6 +533,10 @@ main :: () {
 							if error_str {
 								give_error(*errors, "Plugin for '%' settings retrieval error: %", img_ctx.plugin.name_filetype, error_str);
 							} else img_ctx.settings_info = settings_info;
+							if #complete img_ctx.settings_info.response == {
+							case .NOTHING;
+							case .RE_RENDER; img_ctx.render = true;
+							}
 						}
 					}
 				}
@@ -584,7 +588,7 @@ main :: () {
 					img_ctx.auto_fit = true;
 					img_ctx.offset = .{};
 				}
-				fit_button_text :: string.[ICON.FIT121, ICON.FIT_WIDTH, ICON.FIT_HEIGHT, ICON.FIT_BEST];
+				fit_button_text :: string.[ICON.FIT_121, ICON.FIT_WIDTH, ICON.FIT_HEIGHT, ICON.FIT_BEST];
 				panel_text(*it, icon_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
 
@@ -785,7 +789,7 @@ ICON_FONT_PATH :: "./assets/IconsMIV.otf";
 ICON_FONT_DATA :: #run cast([]u8) read_entire_file(ICON_FONT_PATH);
 ICON :: struct {
 	SETTINGS :: "S";
-	FIT_11 :: "1";
+	FIT_121 :: "1";
 	FIT_WIDTH :: "W";
 	FIT_HEIGHT :: "H";
 	FIT_BEST :: "B";

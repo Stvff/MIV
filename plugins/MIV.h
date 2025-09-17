@@ -77,8 +77,5 @@ typedef struct {
 	Option *options_data;
 } Settings_Info;
 
-/* this is a bit-set */
 #define RESPONSE_NOTHING 0;
-#define RESPONSE_RE_PRE_RENDER 1;
-#define RESPONSE_RE_RENDER 2;
-#define RESPONSE_CLEANUP 4;
+#define RESPONSE_RE_RENDER 1;

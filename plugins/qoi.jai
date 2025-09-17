@@ -103,6 +103,7 @@ qoi_settings :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, se
 		};
 		return "";
 	}
+	settings_info.response = .RE_RENDER;
 	return "";
 //	return "Settings not implemented.";
 }
