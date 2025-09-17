@@ -475,18 +475,9 @@ main :: () {
 
 				settings_table: *[2][3]bool = xx *settings.pers_between_files;
 				for col: 1..2 for row: 1..3 {
-					button_text := "off";
-					table[col][row].colors = button_palette;
-					if settings_table.*[col-1][row-1] {
-						button_text = "on";
-						table[col][row].colors = selected_button_palette;
-					}
-
-					panel_draw(*table[col][row]);
-					if first_layer_is_pressable && panel_button(*table[col][row], inp.ipointer, inp.left_button_switch) {
+					if panel_toggle_button(*table[col][row], icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, settings_table.*[col-1][row-1]) {
 						settings_table.*[col-1][row-1] = !settings_table.*[col-1][row-1];
 					}
-					panel_text(*table[col][row], main_font, button_text, .MIDDLE, .MIDDLE);
 				}
 
 				/* plugin settings */
@@ -513,41 +504,27 @@ main :: () {
 							panel_text(*section, main_font, tprint(" %:", option.name), .LEFT, .MIDDLE);
 							button_panel := panel_split(*section, .{bar_height*3/2, section.size[0]}, .RIGHT, false);
 
-							button_text := "off";
-							button_panel.colors = button_palette;
-							if option.off_on {
-								button_text = "on";
-								button_panel.colors = selected_button_palette;
-							}
-							panel_draw(*button_panel);
-							if panel_button(*button_panel, inp.ipointer, inp.left_button_switch) {
+							if panel_toggle_button(*button_panel, icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, option.off_on) {
 								option.off_on = !option.off_on;
 								img_ctx.settings_info.changed_index = xx it_index;
 								changed = true;
 							}
-							panel_text(*button_panel, main_font, button_text, .MIDDLE, .MIDDLE);
 
 						case .LIST;
 							list_panel := panel_split(*settings_menu_panel, .{bar_height*(1 + option.list.count), settings_menu_panel.size[1]}, .TOP, true);
 							list_title_panel := panel_split(*list_panel, .{bar_height, list_panel.size[1]}, .TOP, true);
 							panel_text(*list_title_panel, main_font, tprint(" %:", option.name), .LEFT, .MIDDLE);
-							list_options := panel_subdivide(*list_panel, option.list.count, .VERTICAL, false);
+							list_options_panels := panel_subdivide(*list_panel, option.list.count, .VERTICAL, false);
 							current_option_index := it_index;
-							for * list_options {
-								it.colors = button_palette;
-								selected := "[_]";
-								if option.list[it_index].selected {
-									it.colors = selected_button_palette;
-									selected = "[X]";
-								}
-								panel_draw(it);
-								if panel_button(it, inp.ipointer, inp.left_button_switch) {
+							for * list_options_panels {
+								if panel_toggle_button(it, icon_font, ICON.RADIO, inp.ipointer, inp.left_button_switch, option.list[it_index].selected, optional_align_hor = .LEFT) {
 									option.list[it_index].selected = !option.list[it_index].selected;
 									img_ctx.settings_info.changed_index = xx current_option_index;
 									img_ctx.settings_info.changed_secondary_index = xx it_index;
 									changed = true;
 								}
-								panel_text(it, main_font, tprint(" % %", selected, option.list[it_index].item), .LEFT, .MIDDLE);
+
+								panel_text(it, main_font, option.list[it_index].item, .RIGHT, .MIDDLE);
 							}
 						}
 						if changed {
@@ -590,7 +567,7 @@ main :: () {
 				display_settings_menu = !display_settings_menu;
 				if display_settings_menu then settings_menu_just_opened = true;
 			}
-			panel_text(*settings_button, icon_font, "S", .MIDDLE, .MIDDLE);
+			panel_text(*settings_button, icon_font, ICON.SETTINGS, .MIDDLE, .MIDDLE);
 
 			/* fit buttons */
 			fit_buttons_space.colors = button_palette;
@@ -607,7 +584,7 @@ main :: () {
 					img_ctx.auto_fit = true;
 					img_ctx.offset = .{};
 				}
-				fit_button_text :: string.["1", "W", "H", "B"];
+				fit_button_text :: string.[ICON.FIT121, ICON.FIT_WIDTH, ICON.FIT_HEIGHT, ICON.FIT_BEST];
 				panel_text(*it, icon_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
 
@@ -617,7 +594,7 @@ main :: () {
 			if first_layer_is_pressable && panel_button(*aa_button, inp.ipointer, inp.left_button_switch, aa_tip) {
 				img_ctx.linear_upscaling = !img_ctx.linear_upscaling;
 			}
-			panel_text(*aa_button, icon_font, "A", .MIDDLE, .MIDDLE);
+			panel_text(*aa_button, icon_font, ICON.ANTI_ALIAS, .MIDDLE, .MIDDLE);
 
 			/* zoom setting button */
 			zoom_buttons_space.colors = button_palette;
@@ -631,7 +608,7 @@ main :: () {
 				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, zoom_tips[it_index]){
 					img_ctx.zoom_alignment = xx it_index;
 				}
-				zoom_button_text :: string.["M", "P"];
+				zoom_button_text :: string.[ICON.ZOOM_CENTER, ICON.ZOOM_POINTER];
 				panel_text(*it, icon_font, zoom_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
 
@@ -655,7 +632,7 @@ main :: () {
 			if first_layer_is_pressable && panel_button(*metadata_button, inp.ipointer, inp.left_button_switch, metadata_tip) {
 				display_metadata = !display_metadata;
 			}
-			panel_text(*metadata_button, icon_font, "m", .MIDDLE, .MIDDLE);
+			panel_text(*metadata_button, icon_font, ICON.METADATA, .MIDDLE, .MIDDLE);
 
 			/* fps counter */
 			bottom_bar.colors.text = ifx frame_time < target_frame_time then u8.[100, 210, 25, 255] else .[220, 60, 25, 255];
@@ -688,8 +665,8 @@ main :: () {
 				bnf_buttons[1].colors.body = palette.body;
 				panel_draw(*bnf_buttons[1]);
 			}
-			panel_text(*bnf_buttons[0], icon_font, "<", .MIDDLE, .MIDDLE);
-			panel_text(*bnf_buttons[1], icon_font, ">", .MIDDLE, .MIDDLE);
+			panel_text(*bnf_buttons[0], icon_font, ICON.PREV, .MIDDLE, .MIDDLE);
+			panel_text(*bnf_buttons[1], icon_font, ICON.NEXT, .MIDDLE, .MIDDLE);
 
 			/* history or directory selector */
 			bnf_selector_space := panel_split(*bnf_menu_space, .{bar_height*3, bnf_menu_space.size[0]}, .LEFT, false);
@@ -708,7 +685,7 @@ main :: () {
 					fileq_setting_switch = true;
 					fileq_setting = xx it_index;
 				}
-				fileq_setting_text :: string.["C", "D"];
+				fileq_setting_text :: string.[ICON.HISTORY, ICON.DIRECTORY];
 				panel_text(*it, icon_font, fileq_setting_text[it_index], .MIDDLE, .MIDDLE);
 			}
 			if fileq_setting_switch if #complete fileq_setting == {
@@ -806,6 +783,30 @@ FONT_DATA :: #run cast([]u8) read_entire_file(FONT_PATH);
 
 ICON_FONT_PATH :: "./assets/IconsMIV.otf";
 ICON_FONT_DATA :: #run cast([]u8) read_entire_file(ICON_FONT_PATH);
+ICON :: struct {
+	SETTINGS :: "S";
+	FIT_11 :: "1";
+	FIT_WIDTH :: "W";
+	FIT_HEIGHT :: "H";
+	FIT_BEST :: "B";
+	ANTI_ALIAS :: "A";
+	ZOOM_CENTER :: "M";
+	ZOOM_POINTER :: "P";
+
+	METADATA :: "m";
+	HISTORY :: "C";
+	DIRECTORY :: "D";
+	PREV :: "<";
+	NEXT :: ">";
+
+	OFF :: "[)";
+	ON :: "(]";
+	RADIO_OFF :: "o";
+	RADIO_ON :: "O";
+
+	TOGGLE :: string.[ICON.OFF, ICON.ON];
+	RADIO :: string.[ICON.RADIO_OFF, ICON.RADIO_ON];
+}
 
 #load "registration.jai";
 #load "ui.jai";

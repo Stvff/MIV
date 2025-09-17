@@ -176,6 +176,20 @@ panel_button :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool, tip: *To
 	return in_panel && pressed;
 }
 
+panel_toggle_button :: (p: *UI_Panel, font: *Simp.Dynamic_Font, toggle_text: [2]string, pointer_position: [2]int, pressed: bool, current_state: bool, tip: *Tool_Tip = null, optional_align_hor: Text_Align_Hor = .MIDDLE) -> bool {
+	text := toggle_text[0];
+	p.colors = button_palette;
+	if current_state {
+		text = toggle_text[1];
+		p.colors = selected_button_palette;
+	}
+
+	panel_draw(p);
+	button_pressed := panel_button(p, pointer_position, pressed, tip);
+	panel_text(p, font, text, optional_align_hor, .MIDDLE);
+	return button_pressed;
+}
+
 make_tooltip :: (tip: string, font: *Simp.Dynamic_Font, tooltips: *[14]Tool_Tip, used_tooltips: *int, colors := default_tool_tip_palette) -> *Tool_Tip {
 	text_width := Simp.prepare_text(font, tip);
 	padding := font.character_height;
