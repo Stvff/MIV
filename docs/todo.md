@@ -32,8 +32,7 @@
 	- [x] Let plugins provide custom metadata
 - [x] Option for plugin settings
 	- [x] Implement some API for plugin settings
-		- [ ] Maybe implement floating point sliders
-		- [ ] Some sort of settings persistence?
+		- [ ] Some sort of plugin settings persistence?
 	- [x] Draw it on the UI
 	- [ ] Document the API
 	- [x] Respond to settings functions demands
@@ -78,3 +77,6 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 - [ ] Exif data
 - [ ] Follow files when they are moved, also in the history
 - [ ] Nicer looking upscaling
+- [ ] Fractional slider for Plugin settings
+	- [ ] Maybe with indents
+	- [ ] Choice between every change or after mouse release.
