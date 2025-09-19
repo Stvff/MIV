@@ -77,28 +77,7 @@ main :: () {
 	/* tooltips */
 	/* Counting this manually is inconvenient; I'd like to write a metaprogram that counts the amount of tooltips here, but it's hard. */
 	/* The reason this isn't a dynamic array is because the pointer of that is unstable. Saving indices into a buffer is messy during usage. */
-	tooltips: [14]Tool_Tip;
-	used_tooltips := 0;
-
-	metadata_tip := make_tooltip("Toggle image metadata view", main_font, *tooltips, *used_tooltips);
-	fit_tips: [4]*Tool_Tip;
-	fit_tips[0] = make_tooltip("Fit pixel to pixel", main_font, *tooltips, *used_tooltips);
-	fit_tips[1] = make_tooltip("Fit to screen width", main_font, *tooltips, *used_tooltips);
-	fit_tips[2] = make_tooltip("Fit to screen height", main_font, *tooltips, *used_tooltips);
-	fit_tips[3] = make_tooltip("Use best fit", main_font, *tooltips, *used_tooltips);
-	aa_tip := make_tooltip("Toggle anti-aliasing", main_font, *tooltips, *used_tooltips);
-	zoom_tips: [2]*Tool_Tip;
-	zoom_tips[0] = make_tooltip("Zoom on screen center", main_font, *tooltips, *used_tooltips);
-	zoom_tips[1] = make_tooltip("Zoom on pointer", main_font, *tooltips, *used_tooltips);
-
-	settings_tip := make_tooltip("Toggle settings menu", main_font, *tooltips, *used_tooltips);
-	persistence_tip := make_tooltip("Menu for persistence of settings between files or restarts", main_font, *tooltips, *used_tooltips);
-	fileq_tips: [2]*Tool_Tip;
-	fileq_tips[0] = make_tooltip("Set file queue to dropped files", main_font, *tooltips, *used_tooltips);
-	fileq_tips[1] = make_tooltip("Set file queue to directory of the current file", main_font, *tooltips, *used_tooltips);
-	bnf_tips: [2]*Tool_Tip;
-	bnf_tips[0] = make_tooltip("Next file in queue", main_font, *tooltips, *used_tooltips);
-	bnf_tips[1] = make_tooltip("Previous file in queue", main_font, *tooltips, *used_tooltips);
+	tip: Tool_Tip;
 
 	/* Image context etc */
 	img_ctx := Image_Context.{
@@ -462,7 +441,8 @@ main :: () {
 					table[col][2] = remaining_rows[1];
 					table[col][3] = remaining_rows[2];
 				}
-				panel_button(*table[0][0], inp.ipointer, false, persistence_tip);
+				tip.text = "Menu for persistence of settings between files or restarts";
+				panel_button(*table[0][0], inp.ipointer, false, *tip);
 				panel_text(*table[0][0], main_font, "Persistence", .MIDDLE, .MIDDLE);
 				panel_text(*table[1][0], main_font, "between", .MIDDLE, .TOP);
 				panel_text(*table[1][0], main_font, "files", .MIDDLE, .BOTTOM);
@@ -567,7 +547,8 @@ main :: () {
 			/* settings button */
 			settings_button.colors = ifx display_settings_menu then selected_button_palette else button_palette;
 			panel_draw(*settings_button);
-			if first_layer_is_pressable && panel_button(*settings_button, inp.ipointer, inp.left_button_switch, settings_tip){
+			tip.text = "Toggle settings menu";
+			if first_layer_is_pressable && panel_button(*settings_button, inp.ipointer, inp.left_button_switch, *tip){
 				display_settings_menu = !display_settings_menu;
 				if display_settings_menu then settings_menu_just_opened = true;
 			}
@@ -583,7 +564,9 @@ main :: () {
 			}
 
 			for fit_buttons {
-				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, fit_tips[it_index]) {
+				fit_tips :: string.["Fit pixel to pixel", "Fit to screen width", "Fit to screen height", "Use best fit"];
+				tip.text = fit_tips[it_index];
+				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *tip) {
 					img_ctx.fit = xx it_index;
 					img_ctx.auto_fit = true;
 					img_ctx.offset = .{};
@@ -595,7 +578,8 @@ main :: () {
 			/* AA button */
 			aa_button.colors = ifx img_ctx.linear_upscaling then selected_button_palette else button_palette;
 			panel_draw(*aa_button);
-			if first_layer_is_pressable && panel_button(*aa_button, inp.ipointer, inp.left_button_switch, aa_tip) {
+			tip.text = "Toggle anti-aliasing";
+			if first_layer_is_pressable && panel_button(*aa_button, inp.ipointer, inp.left_button_switch, *tip) {
 				img_ctx.linear_upscaling = !img_ctx.linear_upscaling;
 			}
 			panel_text(*aa_button, icon_font, ICON.ANTI_ALIAS, .MIDDLE, .MIDDLE);
@@ -609,7 +593,9 @@ main :: () {
 			panel_draw(*zoom_buttons[xx img_ctx.zoom_alignment]);
 
 			for zoom_buttons {
-				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, zoom_tips[it_index]){
+				zoom_tips :: string.["Zoom on screen center", "Zoom on pointer"];
+				tip.text = zoom_tips[it_index];
+				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *tip){
 					img_ctx.zoom_alignment = xx it_index;
 				}
 				zoom_button_text :: string.[ICON.ZOOM_CENTER, ICON.ZOOM_POINTER];
@@ -633,7 +619,8 @@ main :: () {
 			metadata_button := panel_split(*bottom_bar, .{bar_height*3/2, bottom_bar.size[0]}, .LEFT, false);
 			metadata_button.colors = ifx display_metadata then selected_button_palette else button_palette;
 			panel_draw(*metadata_button);
-			if first_layer_is_pressable && panel_button(*metadata_button, inp.ipointer, inp.left_button_switch, metadata_tip) {
+			tip.text = "Toggle image metadata view";
+			if first_layer_is_pressable && panel_button(*metadata_button, inp.ipointer, inp.left_button_switch, *tip) {
 				display_metadata = !display_metadata;
 			}
 			panel_text(*metadata_button, icon_font, ICON.METADATA, .MIDDLE, .MIDDLE);
@@ -652,7 +639,8 @@ main :: () {
 
 			bnf_buttons := panel_subdivide(*bnf_button_space, 2, .HORIZONTAL, true);
 			if first_layer_is_pressable && current_q_index.* > 0 && current_q.count != 0 {
-				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch, bnf_tips[0]) || inp.arrow_left {
+				tip.text = "Next file in queue";
+				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch, *tip) || inp.arrow_left {
 					current_q_index.* -= 1;
 					img_ctx.render = true;
 				}
@@ -661,7 +649,8 @@ main :: () {
 				panel_draw(*bnf_buttons[0]);
 			}
 			if first_layer_is_pressable && current_q_index.* < current_q.count-1 && current_q.count != 0 {
-				if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch, bnf_tips[1]) || inp.arrow_right {
+				tip.text = "Previous file in queue";
+				if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch, *tip) || inp.arrow_right {
 					current_q_index.* += 1;
 					img_ctx.render = true;
 				}
@@ -685,7 +674,9 @@ main :: () {
 
 			fileq_setting_switch := false;
 			for bnf_selector_buttons {
-				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, fileq_tips[it_index]) {
+				fileq_tips :: string.["Set file queue to dropped files", "Set file queue to directory of the current file"];
+				tip.text = fileq_tips[it_index];
+				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *tip) {
 					fileq_setting_switch = true;
 					fileq_setting = xx it_index;
 				}
@@ -755,16 +746,21 @@ main :: () {
 			/* I'm thinking to have the width be limited, and for the cut-off to initially not care about whitespace */
 		}
 		{/* tooltips */
-			for * tooltips {
-				if it.hovering == .Orange then it.hovering = .Red;
-				if it.hovering == .Green && to_float64_seconds(current_time_monotonic() - it.hover_started) > 0.5 {
-					if it.panel.pos[0] > window_size[0]/2 it.panel.pos[0] -= it.panel.size[0];
-					if it.panel.pos[1] > window_size[1]/2 it.panel.pos[1] -= it.panel.size[1]*7/4;
-					else it.panel.pos[1] += it.panel.size[1]/2;
-					panel_draw(*it.panel);
-					panel_text(*it.panel, main_font, it.tip, .MIDDLE, .MIDDLE);
-					it.hovering = .Orange;
-				}
+			if tip.state == .Decaying then tip.state = .Dormant;
+			if tip.state == .Active && to_float64_seconds(current_time_monotonic() - tip.hover_started) > 0.5 {
+				text_width := Simp.prepare_text(main_font, tip.text_to_be_displayed);
+				padding := main_font.character_height;
+				panel: UI_Panel;
+				panel.size = .[text_width + padding, padding*2];
+				panel.colors = default_tool_tip_palette;
+				panel.pos = tip.pointer_position;
+
+				if panel.pos[0] > window_size[0]/2 panel.pos[0] -= panel.size[0];
+				if panel.pos[1] > window_size[1]/2 panel.pos[1] -= panel.size[1]*7/4;
+				else panel.pos[1] += panel.size[1]/2;
+				panel_draw(*panel);
+				panel_text(*panel, main_font, tip.text_to_be_displayed, .MIDDLE, .MIDDLE);
+				tip.state = .Decaying;
 			}
 		}
 

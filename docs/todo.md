@@ -57,6 +57,7 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 ```
 
 ## Amersfoort
+- [ ] Help mode where the tooltips are wayyy larger
 - [ ] intelligent textflows (includes clipping)
 	- [ ] scrollbars I'm afraid
 	- [ ] logs onscreen instead of in terminal
