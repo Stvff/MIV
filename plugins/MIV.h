@@ -37,9 +37,6 @@ typedef struct {
 } Pre_Rendering_Info;
 
 typedef struct {
-	int64_t column_range[2];
-	int64_t row_range[2];
-
 	int64_t buffer_width;
 	int64_t buffer_height;
 
