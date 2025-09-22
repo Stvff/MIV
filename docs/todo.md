@@ -56,6 +56,7 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 ```
 
 ## Amersfoort
+- [ ] Another image type
 - [ ] Help mode where the tooltips are wayyy larger
 - [ ] intelligent textflows (includes clipping)
 	- [ ] scrollbars I'm afraid

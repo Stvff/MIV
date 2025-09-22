@@ -58,12 +58,27 @@ qoi_pre_render :: (info: *Pre_Rendering_Info) -> string #c_call {
 qoi_render :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> string #c_call {
 	push_context,defer_pop pre_info.user_ptr.(*#Context);
 
+	QOI_HEADER_SIZE :: 14;
+	/* reading the entire file first */
+	posix.fseek(pre_info.fileptr, 0, posix.SEEK_END);
+	file: []u8;
+	file.count = posix.ftell(pre_info.fileptr) - QOI_HEADER_SIZE;
+	file.data = alloc(file.count);
+	defer free(file.data);
+	posix.fseek(pre_info.fileptr, QOI_HEADER_SIZE, posix.SEEK_SET);
+	posix.fread(file.data, 1, xx file.count, pre_info.fileptr);
+
 	previous_pixel: [4]u8 = .[0, 0, 0, 255];
 	previous_array: [64][4]u8;
 	pixel_count := render_info.buffer.count;
 	i := 0;
 	while i < pixel_count {
-		render_info.buffer[i] = .[200, 100, 100, 255];
+		render_info.buffer[i][3] = 255;
+		if i*3 < file.count-3 {
+			render_info.buffer[i][0] = file[i*3+0];
+			render_info.buffer[i][1] = file[i*3+1];
+			render_info.buffer[i][2] = file[i*3+2];
+		} else render_info.buffer[i] = .[200, 100, 100, 255];
 		i += 1;
 	}
 
