@@ -30,22 +30,22 @@ Rendering_Info :: struct {
 
 /*** From here it is about the optional features (like plugin settings). ***/
 
-List_Option :: struct {
+List_Item :: struct {
 	selected: bool;
-	item: string;
+	name: string;
+}
+
+Option_Type :: enum u8 {
+	TOGGLE; LIST;
 }
 
 Option :: struct {
 	name: string;
 	type: Option_Type;
 	union {
-		off_on: bool;
-		list: []List_Option;
+		toggle: bool;
+		list: []List_Item;
 	};
-}
-
-Option_Type :: enum u8 {
-	OFF_ON; LIST;
 }
 
 Settings_Info :: struct {

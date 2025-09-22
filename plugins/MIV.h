@@ -48,23 +48,23 @@ typedef struct {
 
 typedef struct {
 	uint8_t selected;
-	string item;
-} List_Option;
+	string name;
+} List_Item;
+
+#define OPTION_TYPE_TOGGLE 0;
+#define OPTION_TYPE_LIST 1;
 
 typedef struct {
 	string name;
 	uint8_t type;
 	union {
-		uint8_t off_on;
+		uint8_t toggle;
 		struct {
 			int64_t count;
-			List_Option *data;
+			List_Item *data;
 		} list;
 	};
 } Option;
-
-#define OPTION_TYPE_OFF_ON 0;
-#define OPTION_LIST 1;
 
 typedef struct {
 	uint8_t response;

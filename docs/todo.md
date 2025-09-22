@@ -32,9 +32,8 @@
 	- [x] Let plugins provide custom metadata
 - [x] Option for plugin settings
 	- [x] Implement some API for plugin settings
-		- [ ] Some sort of plugin settings persistence between restarts?
 	- [x] Draw it on the UI
-	- [ ] Document the plugin settings API
+	- [x] Document the plugin settings API
 	- [x] Respond to settings functions demands
 - [x] Filewatching
 	- [x] Reload various file lists when something was detected
@@ -78,6 +77,7 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 - [ ] Exif data
 - [ ] Follow files when they are moved, also in the history
 - [ ] Nicer looking upscaling
+- [ ] Serialize the plugin settings for the settings file in some way
 - [ ] Fractional slider for Plugin settings
 	- [ ] Maybe with indents
 	- [ ] Choice between every change or after mouse release.

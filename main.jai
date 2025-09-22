@@ -487,13 +487,13 @@ main :: () {
 					for * option: img_ctx.settings_info.options {
 						changed := false;
 						if #complete option.type == {
-						case .OFF_ON;
+						case .TOGGLE;
 							section := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
 							panel_text(*section, main_font, tprint(" %:", option.name), .LEFT, .MIDDLE);
 							button_panel := panel_split(*section, .{bar_height*3/2, section.size[0]}, .RIGHT, false);
 
-							if panel_toggle_button(*button_panel, icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, option.off_on) {
-								option.off_on = !option.off_on;
+							if panel_toggle_button(*button_panel, icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, option.toggle) {
+								option.toggle = !option.toggle;
 								img_ctx.settings_info.changed_index = xx it_index;
 								changed = true;
 							}
@@ -512,7 +512,7 @@ main :: () {
 									changed = true;
 								}
 
-								panel_text(it, main_font, option.list[it_index].item, .RIGHT, .MIDDLE);
+								panel_text(it, main_font, option.list[it_index].name, .RIGHT, .MIDDLE);
 							}
 						}
 						if changed {

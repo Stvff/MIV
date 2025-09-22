@@ -82,11 +82,11 @@ qoi_settings :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, se
 
 		settings_info.options[0] = .{
 			name = "toggle setting",
-			type = .OFF_ON,
-			off_on = true
+			type = .TOGGLE,
+			toggle = true
 		};
 
-		sec_list := NewArray(3, List_Option);
+		sec_list := NewArray(3, List_Item);
 		sec_list[0] = .{true, "meow"};
 		sec_list[1] = .{false, "wruff"};
 		sec_list[2] = .{true, "nyaa"};
@@ -98,8 +98,8 @@ qoi_settings :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, se
 
 		settings_info.options[2] = .{
 			name = "toggle setting (sequel)",
-			type = .OFF_ON,
-			off_on = false
+			type = .TOGGLE,
+			toggle = false
 		};
 		return "";
 	}
