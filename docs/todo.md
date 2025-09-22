@@ -61,6 +61,20 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 - [ ] intelligent textflows (includes clipping)
 	- [ ] scrollbars I'm afraid
 	- [ ] logs onscreen instead of in terminal
+- [ ] different types of filesorting
+- [ ] give functions the ability to respond responsibly based on user input option
+	- [ ] More advanced plugin interactions
+- [ ] Being more elaborate about what failed during loading (which part of the directory, which type of error)
+- [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
+- [ ] Exif data
+- [ ] Follow files when they are moved, also in the history
+- [ ] Nicer looking upscaling
+	- [ ] up/downscaling settings in the settings menu
+- [ ] Serialize the plugin settings for the settings file in some way
+- [ ] Fractional slider for Plugin settings
+	- [ ] Maybe with indents
+	- [ ] Choice between every change or after mouse release.
+- [ ] Image rotation
 - [ ] Modernize Custom icons
 	- [ ] Fit buttons
 	- [ ] Queueue mode buttons
@@ -70,15 +84,3 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 	- [ ] AA button
 	- [ ] Metadata
 	- [x] Toggles
-- [ ] different types of filesorting
-- [ ] give functions the ability to respond responsibly based on user input option
-	- [ ] More advanced plugin interactions
-- [ ] Being more elaborate about what failed during loading (which part of the directory, which type of error)
-- [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
-- [ ] Exif data
-- [ ] Follow files when they are moved, also in the history
-- [ ] Nicer looking upscaling
-- [ ] Serialize the plugin settings for the settings file in some way
-- [ ] Fractional slider for Plugin settings
-	- [ ] Maybe with indents
-	- [ ] Choice between every change or after mouse release.

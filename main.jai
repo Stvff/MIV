@@ -159,6 +159,7 @@ main :: () {
 				glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(os_window).specific.glx_window, 0);
 				img_ctx.auto_fit = true;
 				img_ctx.offset = .{};
+				img_ctx.angle = 0;
 			}
 		}
 
@@ -371,6 +372,7 @@ main :: () {
 					if inp.middle_button {
 						img_ctx.auto_fit = true;
 						img_ctx.offset = .{};
+						img_ctx.angle = 0;
 					}
 
 					if inp.left_button {
@@ -378,6 +380,15 @@ main :: () {
 						img_ctx.offset = img_ctx.pre_pan_offset + (inp.fpointer - inp.pointer_when_pressed)/img_ctx.scale;
 					} else {
 						img_ctx.pre_pan_offset = img_ctx.offset;
+					}
+
+					if inp.shifted && inp.d {
+						img_ctx.auto_fit = false;
+						img_ctx.angle -= 5;
+					}
+					if inp.shifted && inp.a {
+						img_ctx.auto_fit = false;
+						img_ctx.angle += 5;
 					}
 				}
 				img_ctx.scale = clamp(img_ctx.scale, 1/cast(float, max(img_ctx.pre_info.width, img_ctx.pre_info.height)), cast(float, max(canvas.size[0], canvas.size[1])));
@@ -578,6 +589,7 @@ main :: () {
 					img_ctx.fit = xx it_index;
 					img_ctx.auto_fit = true;
 					img_ctx.offset = .{};
+					img_ctx.angle = 0;
 				}
 				fit_button_text :: string.[ICON.FIT_121, ICON.FIT_WIDTH, ICON.FIT_HEIGHT, ICON.FIT_BEST];
 				panel_text(*it, icon_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);
