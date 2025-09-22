@@ -23,9 +23,6 @@ Pre_Rendering_Info :: struct {
 }
 
 Rendering_Info :: struct {
-	column_range: [2]s64;
-	row_range: [2]s64;
-
 	buffer_width: s64;
 	buffer_height: s64;
 	buffer: [][4]u8;
