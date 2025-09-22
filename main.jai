@@ -231,6 +231,14 @@ main :: () {
 			temp_files_to_open.data += 1;
 			temp_files_to_open.count -= 1;
 		}
+		if files_to_open.count == 1 {
+			fileq_setting = .DIRECTORY;
+			/* I'm assuming there's always a valid file in this directory */
+			discover_directory(*directory, file_history[file_history_index], *errors);
+			sanitize_file_list(*directory, file_history[file_history_index], *directory_index, null);
+			current_q = *directory;
+			current_q_index = *directory_index;
+		}
 		array_reset(*files_to_open);
 
 		/* The watcher */
@@ -745,7 +753,7 @@ main :: () {
 			/* This latter one especially will need text flow functions (since it should be notifications in the bottomright). */
 			/* I'm thinking to have the width be limited, and for the cut-off to initially not care about whitespace */
 		}
-		{/* tooltips */
+		{/* tooltip */
 			if tip.state == .Decaying then tip.state = .Dormant;
 			if tip.state == .Active && to_float64_seconds(current_time_monotonic() - tip.hover_started) > 0.5 {
 				text_width := Simp.prepare_text(main_font, tip.text_to_be_displayed);

@@ -32,9 +32,9 @@
 	- [x] Let plugins provide custom metadata
 - [x] Option for plugin settings
 	- [x] Implement some API for plugin settings
-		- [ ] Some sort of plugin settings persistence?
+		- [ ] Some sort of plugin settings persistence between restarts?
 	- [x] Draw it on the UI
-	- [ ] Document the API
+	- [ ] Document the plugin settings API
 	- [x] Respond to settings functions demands
 - [x] Filewatching
 	- [x] Reload various file lists when something was detected
@@ -42,7 +42,7 @@
 - [x] Some pleasant and elaborate tooltips
 - [x] Make modes a radio button selector thing
 	- [x] show index in file queue
-- [ ] Enter directory mode if `files_to_open` is only one file.
+- [x] Enter directory mode if `files_to_open` is only one file.
 - [x] Begin custom icons
 
 ## Bugs to fix
