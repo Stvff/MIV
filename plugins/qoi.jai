@@ -71,19 +71,86 @@ qoi_render :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> s
 	previous_pixel: [4]u8 = .[0, 0, 0, 255];
 	previous_array: [64][4]u8;
 	pixel_count := render_info.buffer.count;
-	i := 0;
-	while i < pixel_count {
-		render_info.buffer[i][3] = 255;
-		if i*3 < file.count-3 {
-			render_info.buffer[i][0] = file[i*3+0];
-			render_info.buffer[i][1] = file[i*3+1];
-			render_info.buffer[i][2] = file[i*3+2];
-		} else render_info.buffer[i] = .[200, 100, 100, 255];
-		i += 1;
+	decoded := 0;
+	coded := 0;
+	while decoded < pixel_count {
+		/* add possible corruption errors to this */
+		if file[coded] == {
+		case QOI_OP_RGB;
+			previous_pixel[0] = file[coded+1];
+			previous_pixel[1] = file[coded+2];
+			previous_pixel[2] = file[coded+3];
+			previous_array[index_hash(previous_pixel)] = previous_pixel;
+			render_info.buffer[decoded] = previous_pixel;
+			decoded += 1;
+			coded += 4;
+		case QOI_OP_RGBA;
+			previous_pixel[0] = file[coded+1];
+			previous_pixel[1] = file[coded+2];
+			previous_pixel[2] = file[coded+3];
+			previous_pixel[3] = file[coded+4];
+			previous_array[index_hash(previous_pixel)] = previous_pixel;
+			render_info.buffer[decoded] = previous_pixel;
+			decoded += 1;
+			coded += 5;
+		case; op_value := file[coded] & QOI_6BIT_MASK;
+			// print("%\n", op_value);
+		if file[coded] & QOI_2BIT_MASK == {
+		case QOI_OP_INDEX;
+			previous_pixel = previous_array[op_value];
+			render_info.buffer[decoded] = previous_pixel;
+			decoded += 1;
+			coded += 1;
+
+		case QOI_OP_DIFF;
+			diff := op_value & QOI_OP_DIFF_MASK; op_value >>= 2;
+			previous_pixel[2] += diff - 2;
+			diff = op_value & QOI_OP_DIFF_MASK; op_value >>= 2;
+			previous_pixel[1] += diff - 2;
+			diff = op_value & QOI_OP_DIFF_MASK;
+			previous_pixel[0] += diff - 2;
+
+			previous_array[index_hash(previous_pixel)] = previous_pixel;
+			render_info.buffer[decoded] = previous_pixel;
+			decoded += 1;
+			coded += 1;
+
+		case QOI_OP_LUMA;
+			dg := op_value - 32;
+			db_dg := (file[coded+1] & QOI_OP_LUMA_MASK) - 8;
+			dr_dg := ((file[coded+1]>>4) & QOI_OP_LUMA_MASK) - 8;
+			db := db_dg + dg;
+			dr := dr_dg + dg;
+			previous_pixel[0] += dr;
+			previous_pixel[1] += dg;
+			previous_pixel[2] += db;
+
+			previous_array[index_hash(previous_pixel)] = previous_pixel;
+			render_info.buffer[decoded] = previous_pixel;
+			decoded += 1;
+			coded += 2;
+
+		case QOI_OP_RUN;
+			for 0..op_value {
+				render_info.buffer[decoded] = previous_pixel;
+				decoded += 1;
+			}
+			coded += 1;
+		}}
+		if coded >= file.count break;
 	}
 
 	return "";
 }
+
+QOI_OP_RGB    :u8: 0b1111_1110;
+QOI_OP_RGBA   :u8: 0b1111_1111;
+QOI_2BIT_MASK :u8: 0b11_000000;
+QOI_6BIT_MASK :u8: 0b00_111111;
+QOI_OP_INDEX  :u8: 0b00_000000;
+QOI_OP_DIFF   :u8: 0b01_000000; QOI_OP_DIFF_MASK :u8: 0b000000_11;
+QOI_OP_LUMA   :u8: 0b10_000000; QOI_OP_LUMA_MASK :u8: 0b0000_1111;
+QOI_OP_RUN    :u8: 0b11_000000;
 
 index_hash :: (pixel: [4]u8) -> u64 {
 	return (pixel[0].(u64)*3 + pixel[1].(u64)*5 + pixel[2].(u64)*7 + pixel[3].(u64)*11) % 64;
