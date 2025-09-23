@@ -56,7 +56,7 @@ Each item can be selected individually. They can be used either as checkboxes or
 
 But how does the plugin know what changed? It all lies in the `changed_index` and `changed_secondary_index` fields of `Settings_Info`.
 When a setting is changed in the UI, `settings()` is called, and `changed_index` is set to the index into `options_data` of the setting that was changed.
-If that setting was a list, then `changed_secondary_index` is set to the list item that was changed.\
+If that setting was a list, then `changed_secondary_index` is set to the list item that was changed.
 
 Finally, whenever the plugin is done changing what it needs to internally, it can give a `response` (a field of `Settings_Info` as well) to MIV.
 ```c

@@ -1,6 +1,6 @@
 #run build();
 
-release :: true;
+release :: false;
 
 exe_name :: "miv";
 compile_MIV :: true;

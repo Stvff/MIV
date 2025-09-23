@@ -650,7 +650,7 @@ main :: () {
 			text = tprint("fps: %", frame_count_over_1s);
 			panel_text(*bottom_bar, main_font, text, .LEFT, .MIDDLE);
 			bottom_bar.colors.text = palette.text;
-			show_fps := true;
+			show_fps := false;
 
 			/* Backwards and forwards buttons (bnf buttons) */
 			bnf_menu_space := panel_split(*bottom_bar, .{bar_height*6, bottom_bar.size[0]}, .RIGHT, !show_fps);
@@ -678,8 +678,6 @@ main :: () {
 				bnf_buttons[1].colors.body = palette.body;
 				panel_draw(*bnf_buttons[1]);
 			}
-					current_q_index.* += 1;
-					img_ctx.render = true;
 			panel_text(*bnf_buttons[0], icon_font, ICON.PREV, .MIDDLE, .MIDDLE);
 			panel_text(*bnf_buttons[1], icon_font, ICON.NEXT, .MIDDLE, .MIDDLE);
 

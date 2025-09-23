@@ -74,6 +74,8 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 - [ ] Fractional slider for Plugin settings
 	- [ ] Maybe with indents
 	- [ ] Choice between every change or after mouse release.
+- [ ] FPS slider for when holding down next or prev
+	- [ ] When holding down next or prev, go up to full fps, that or a slideshow
 - [ ] Image rotation
 - [ ] Modernize Custom icons
 	- [ ] Fit buttons
