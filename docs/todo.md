@@ -19,7 +19,7 @@
 - [x] remove registration file (since it is redundant)
 - [x] One more supported image type
 	- [x] qoi
-	- [ ] Finish the pnm plugin to really support all types
+	- [x] Finish the pnm plugin to really support all types
 - [x] Option to select between zoom on screen center and pointer
 	- [x] zoom on pointer
 - [x] Options for the different persistence settings (between files, restarts, etc)

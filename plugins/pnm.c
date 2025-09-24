@@ -90,6 +90,13 @@ string generic_pre_render(Pre_Rendering_Info *pre_info) {
 	if (c - '3' == specifics->which_type) specifics->is_binary = 1;
 	fseek(pre_info->fileptr, 3, SEEK_SET);
 
+	/*# adding if it is ascii_encoded to the metadata */
+	pre_info->metadata_count += 1;
+	pre_info->metadata = realloc(pre_info->metadata, pre_info->metadata_count*sizeof(string[2]));
+	pre_info->metadata[pre_info->metadata_count-1][0] = to_string("encoding");
+	if (specifics->is_binary) pre_info->metadata[pre_info->metadata_count-1][1] = to_string("binary");
+	else  pre_info->metadata[pre_info->metadata_count-1][1] = to_string("ASCII");
+
 	/*# read the width */
 	c = '0';
 	skip_white_space(pre_info->fileptr);
@@ -108,6 +115,10 @@ string generic_pre_render(Pre_Rendering_Info *pre_info) {
 		pre_info->height = pre_info->height*10 + (c - '0');
 		c = fgetc(pre_info->fileptr);
 	} while (is_digit(c));
+
+
+	if (specifics->which_type == TYPE_PPM) pre_info->channels = 3;
+	else pre_info->channels = 1;
 
 	if (specifics->which_type == TYPE_PBM) {
 		pre_info->bit_depth = 1;
@@ -131,7 +142,6 @@ string generic_pre_render(Pre_Rendering_Info *pre_info) {
 
 	if (specifics->max_pixel_value <= 255) pre_info->bit_depth = 8;
 	else if (specifics->max_pixel_value <= 65535) pre_info->bit_depth = 16;
-	pre_info->channels = 3;
 	if (pre_info->bit_depth > 8) {
 		return to_string("The PNM plugin currently does not support conversion of 16 bit to 8 bit.");
 	}
@@ -161,30 +171,24 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 
 string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 	Specifics *specifics = pre_info->user_ptr;
+
+	fseek(pre_info->fileptr, 0, SEEK_END);
+	string file;
+	file.count = ftell(pre_info->fileptr) - specifics->start_of_image;
+	file.data = malloc(file.count);
+
+	fseek(pre_info->fileptr, specifics->start_of_image, SEEK_SET);
+	fread(file.data, 1, file.count, pre_info->fileptr);
+
 	if (specifics->is_binary) {
 		int64_t distance = pre_info->channels*pre_info->bit_depth/8;
-		uint8_t *file_data = malloc(render_info->buffer_count*distance);
-
-		fseek(pre_info->fileptr, specifics->start_of_image, SEEK_SET);
-		fread(file_data, 1, render_info->buffer_count*distance, pre_info->fileptr);
-
 		for (int64_t i = 0; i < render_info->buffer_count; i += 1) {
-			render_info->buffer[i][0] = ((int)file_data[i*distance + 0])*255/specifics->max_pixel_value;
-			render_info->buffer[i][1] = ((int)file_data[i*distance + 1])*255/specifics->max_pixel_value;
-			render_info->buffer[i][2] = ((int)file_data[i*distance + 2])*255/specifics->max_pixel_value;
+			render_info->buffer[i][0] = ((int)file.data[i*distance + 0])*255/specifics->max_pixel_value;
+			render_info->buffer[i][1] = ((int)file.data[i*distance + 1])*255/specifics->max_pixel_value;
+			render_info->buffer[i][2] = ((int)file.data[i*distance + 2])*255/specifics->max_pixel_value;
 			render_info->buffer[i][3] = 255;
 		}
-
-		free(file_data);
 	} else {
-		fseek(pre_info->fileptr, 0, SEEK_END);
-		string file;
-		file.count = ftell(pre_info->fileptr) - specifics->start_of_image;
-		file.data = malloc(file.count);
-
-		fseek(pre_info->fileptr, specifics->start_of_image, SEEK_SET);
-		fread(file.data, 1, file.count, pre_info->fileptr);
-
 		int64_t file_i = 0;
 		for (int64_t i = 0; i < render_info->buffer_count; i += 1) {
 			uint8_t pixel[3] = {0};
@@ -208,9 +212,8 @@ string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 			render_info->buffer[i][3] = 255;
 			if (file_i >= file.count) break;
 		}
-
-		free(file.data);
 	}
+	free(file.data);
 	return (string){0};
 }
 
@@ -248,12 +251,12 @@ string pbm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 		while (i < render_info->buffer_count && file_i < file.count) {
 			uint8_t byte = file.data[file_i];
 			uint8_t mask = 1 >> (i % 8);
-			uint8_t p = 0;
-			if (byte & mask) p = 255;
+			uint8_t pixel = 0;
+			if (byte & mask) pixel = 255;
 
-			render_info->buffer[i][0] = p;
-			render_info->buffer[i][1] = p;
-			render_info->buffer[i][2] = p;
+			render_info->buffer[i][0] = pixel;
+			render_info->buffer[i][1] = pixel;
+			render_info->buffer[i][2] = pixel;
 			render_info->buffer[i][3] = 255;
 
 			if (i % 8 == 7) file_i += 1;
@@ -265,17 +268,16 @@ string pbm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 			while (is_white_space(file.data[file_i])) file_i += 1;
 
 			char c = file.data[file_i];
-			uint8_t p = 0;
-			if (c == '1') p = 255;
+			uint8_t pixel = 0;
+			if (c == '1') pixel = 255;
 			file_i += 1;
 
-			render_info->buffer[i][0] = p;
-			render_info->buffer[i][1] = p;
-			render_info->buffer[i][2] = p;
+			render_info->buffer[i][0] = pixel;
+			render_info->buffer[i][1] = pixel;
+			render_info->buffer[i][2] = pixel;
 			render_info->buffer[i][3] = 255;
 			if (file_i >= file.count) break;
 		}
-
 	}
 	free(file.data);
 	return (string){0};
@@ -299,7 +301,51 @@ string pgm_pre_render(Pre_Rendering_Info *pre_info) {
 }
 
 string pgm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
-	return to_string("PGM render unimplemented.");
+	Specifics *specifics = pre_info->user_ptr;
+
+	fseek(pre_info->fileptr, 0, SEEK_END);
+	string file;
+	file.count = ftell(pre_info->fileptr) - specifics->start_of_image;
+	file.data = malloc(file.count);
+
+	fseek(pre_info->fileptr, specifics->start_of_image, SEEK_SET);
+	fread(file.data, 1, file.count, pre_info->fileptr);
+
+	if (specifics->is_binary) {
+		int64_t distance;
+		for (int64_t i = 0; i < render_info->buffer_count; i += 1) {
+			uint8_t pixel = ((int)file.data[i])*255/specifics->max_pixel_value;
+			render_info->buffer[i][0] = pixel;
+			render_info->buffer[i][1] = pixel;
+			render_info->buffer[i][2] = pixel;
+			render_info->buffer[i][3] = 255;
+		}
+	} else {
+		int64_t file_i = 0;
+		for (int64_t i = 0; i < render_info->buffer_count; i += 1) {
+			uint8_t pixel = 0;
+			if (file_i >= file.count) break;
+			while (is_white_space(file.data[file_i])) file_i += 1;
+			char c = file.data[file_i];
+			while (!is_white_space(c)) {
+				c = file.data[file_i];
+				pixel *= 10;
+				pixel += c - '0';
+				file_i += 1;
+				if (file_i >= file.count) break;
+				c = file.data[file_i];
+			}
+
+			pixel = ((int)pixel)*255/specifics->max_pixel_value;
+			render_info->buffer[i][0] = pixel;
+			render_info->buffer[i][1] = pixel;
+			render_info->buffer[i][2] = pixel;
+			render_info->buffer[i][3] = 255;
+			if (file_i >= file.count) break;
+		}
+	}
+	free(file.data);
+	return (string){0};
 }
 
 string pgm_cleanup(Pre_Rendering_Info *pre_info) {
