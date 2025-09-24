@@ -1,6 +1,6 @@
 # MIV
-This project is somewhat of an experiment. As with most projects, I am not confident it will yield something generally useful, but it is definitely made to be eventually useful.
-![Screenshot of the image viewer, showing the first level of sokoworm.](/docs/screenshot.png "Screenshot of the image viewer, showing the first level of sokoworm.")
+![Screenshot of the image viewer, showing a frame from the Bad Apple music video.](/docs/apeldoorn_screenshot_1.png "Screenshot of the image viewer, showing a frame from the Bad Apple music video.")
+![Screenshot of the image viewer, showing the settings menu and metadata bar, together with a tooltip.](/docs/apeldoorn_screenshot_2.png "Screenshot of the image viewer, showing the settings menu and metadata bar, together with a tooltip.")
 
 ## How to use
 ### Installing
@@ -13,15 +13,14 @@ Put the executable in a folder with write access (somewhere underneath home), th
 To add plugins, simply drag them onto the window from your file explorer (or by doing running it in the terminal: `$> miv your-plugin-name.so`). You can add multiple plugins at once.
 
 ### Viewing files
-To view files, you can drag them onto the window, or add them from the terminal. Files that are added in this way can be viewed in 'hist' mode.
-Pressing the 'hist' button will switch to 'dir' mode. In 'dir' mode, you can navigate the directory that the current file is in.
+To view files, you can drag them onto the window, or add them from the terminal.
 
 ### Building
 If you don't want to download the files from the release, you can also clone this repo from github, then run `jai first.jai` in the directory.
 Of course, you will need jai beta access for this.
 
 ### Making plugins
-To make a plugin, jai beta access is not required, and can be done in any compiled language.
+To make a plugin, jai beta access is not required. It can be done in any compiled language.
 A valid MIV plugin must be a `.so` dynamic library, and define at least 4 functions:
 ```
 int64_t registration_procedure(Provided_Registration_Entry *registration)
@@ -31,7 +30,7 @@ string render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info)
 string cleanup(Pre_Rendering_Info *pre_info)
 ```
 The `string`, `Provided_Registration_Entry`, `Pre_Rendering_Info` and `Rendering_Info` types are defined in [plugins/MIV.h](./plugins/MIV.h).
-See [plugins/ppm.c](./plugins/ppm.c) for a comprehensive example on how to use them.
+See [plugins/ppm.c](./plugins/pnm.c) for a comprehensive example on how to use them.
 
 The `registration_procedure()` provides information about what the plugin can read. The integer that the function returns is how many more times it should be called by MIV.
 If the plugin provides 3 file formats, it returns 2 after the first time it has been called, then 1 after the second, and 0 after the third.
@@ -55,13 +54,10 @@ Generally, actual viewing settings are very limited.
 Instead of these things, image viewers seemingly focus development effort on image editing features, which, while nice, are not as important to me as all the other things mentioned.
 
 It is good practice to attempt to solve a problem like this yourself when you encounter it; maybe there's a reason these more popular programs haven't done it.
+So far, I have implemented most of my desired features, and have still not found out why all of these are not commonplace.
 
 ## Outline/Mission Statement
-So, my idea is as follows:\
-MIV is a modular image viewer, where file formats are supported through plugins (as `.so` files). These plugins must have a simple API, so that supporting a new image format is a simple task based on the reference implementation for that format.
-MIV arranges the windowing, the UI, file collection and preloading, and the plugins decode the images.
-
 The current roadmap can be found in [docs/todo.md](./docs/todo.md).\
-As for now, I'm trying to get a passable image viewer with automatic file reloading for PPM and QOI files. This way, I'm creating a 'reference plugin' in C (see `MIV.h` and `ppm.c`) that other people can then reference, should they choose to participate.
+The naming of releases is based on all the major train stations between Twente and Amsterdam. The hope is that it will be out of pre-release when I get to Amsterdam.
 
-To be more specific about features, I am aiming for feature parity with the [Linux Mint xviewer](https://github.com/linuxmint/xviewer?tab=readme-ov-file) in terms of the image viewing experience.
+To be more specific about features, I am aiming for feature parity (or more) with the [Linux Mint xviewer](https://github.com/linuxmint/xviewer?tab=readme-ov-file) in terms of the image viewing experience.

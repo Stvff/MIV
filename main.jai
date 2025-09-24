@@ -659,7 +659,7 @@ main :: () {
 
 			bnf_buttons := panel_subdivide(*bnf_button_space, 2, .HORIZONTAL, true);
 			if first_layer_is_pressable && current_q_index.* > 0 && current_q.count != 0 {
-				tip.text = "Next file in queue";
+				tip.text = "Previous file in queue";
 				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch, *tip) || inp.arrow_left {
 					current_q_index.* -= 1;
 					img_ctx.render = true;
@@ -669,7 +669,7 @@ main :: () {
 				panel_draw(*bnf_buttons[0]);
 			}
 			if first_layer_is_pressable && current_q_index.* < current_q.count-1 && current_q.count != 0 {
-				tip.text = "Previous file in queue";
+				tip.text = "Next file in queue";
 				if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch, *tip) || inp.arrow_right {
 					current_q_index.* += 1;
 					img_ctx.render = true;
