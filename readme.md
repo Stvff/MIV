@@ -4,17 +4,39 @@
 
 ## How to use
 ### Installing
+You can download the latest release here:
+[Download executable and official plugins](https://github.com/Stvff/MIV/releases/latest)
+
 Put the executable in a folder with write access (somewhere underneath home), then make a symbolic link in a bin folder of choice:
 ```
 /bin/ $> sudo ln -s ~/your/preferred/path/miv miv
 ```
 
 ### Adding plugins
-To add plugins, simply drag them onto the window from your file explorer (or by doing running it in the terminal: `$> miv your-plugin-name.so`). You can add multiple plugins at once.
+To add plugins, simply drag them onto the window from your file explorer (or by running it in the terminal: `$> miv your-plugin-name.so`). You can add multiple plugins at once.
 
 ### Viewing files
 To view files, you can drag them onto the window, or add them from the terminal.
 
+## Context
+Recently, while making [Sokoworm](https://stvff.github.io/sokoworm.html#top), which uses [PPM image files](https://en.wikipedia.org/wiki/Netpbm#File_formats)
+as graphics outputs, I noticed that the feature-set of the average image viewer is quite limited. Many image viewers only support a relatively small set of image types,
+and it is rare for one to support automatic file reloading. On top of this, things like zoomlevel or offset (while viewing an image in detail) are not persistent between files, window resizing, or program restart.
+As with most things, performance stays a concern. Long loading times (and no feedback during), or no options for pre-loading.\
+Generally, actual viewing settings are very limited.
+
+Instead of these things, image viewers seemingly focus development effort on image editing features, which, while nice, are not as important to me as all the other things mentioned.
+
+It is good practice to attempt to solve a problem like this yourself when you encounter it; maybe there's a reason these more popular programs haven't done it.
+So far, I have implemented most of my desired features, and have still not found out why all of these are not commonplace.
+
+## Outline/Mission Statement
+The current roadmap can be found in [docs/todo.md](./docs/todo.md).\
+The naming of releases is based on all the major train stations between Twente and Amsterdam. The hope is that it will be out of pre-release when I get to Amsterdam.
+
+To be more specific about features, I am aiming for feature parity (or more) with the [Linux Mint xviewer](https://github.com/linuxmint/xviewer?tab=readme-ov-file) in terms of the image viewing experience.
+
+## Development
 ### Building
 If you don't want to download the files from the release, you can also clone this repo from github, then run `jai first.jai` in the directory.
 Of course, you will need jai beta access for this.
@@ -43,21 +65,3 @@ Note that MIV opens the file, and that the plugin is presented with a file point
 Finally, `cleanup()` can be used to clean up internal resources.
 
 This API is expected to expand to allow for more advanced features.
-
-## Context
-Recently, while making [Sokoworm](https://stvff.github.io/sokoworm.html#top), which uses [PPM image files](https://en.wikipedia.org/wiki/Netpbm#File_formats)
-as graphics outputs, I noticed that the feature-set of the average image viewer is quite limited. Many image viewers only support a relatively small set of image types,
-and it is rare for one to support automatic file reloading. On top of this, things like zoomlevel or offset (while viewing an image in detail) are not persistent between files, window resizing, or program restart.
-As with most things, performance stays a concern. Long loading times (and no feedback during), or no options for pre-loading.\
-Generally, actual viewing settings are very limited.
-
-Instead of these things, image viewers seemingly focus development effort on image editing features, which, while nice, are not as important to me as all the other things mentioned.
-
-It is good practice to attempt to solve a problem like this yourself when you encounter it; maybe there's a reason these more popular programs haven't done it.
-So far, I have implemented most of my desired features, and have still not found out why all of these are not commonplace.
-
-## Outline/Mission Statement
-The current roadmap can be found in [docs/todo.md](./docs/todo.md).\
-The naming of releases is based on all the major train stations between Twente and Amsterdam. The hope is that it will be out of pre-release when I get to Amsterdam.
-
-To be more specific about features, I am aiming for feature parity (or more) with the [Linux Mint xviewer](https://github.com/linuxmint/xviewer?tab=readme-ov-file) in terms of the image viewing experience.
