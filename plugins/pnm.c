@@ -65,7 +65,7 @@ int64_t registration_procedure(Provided_Registration_Entry *registration) {
 }
 
 typedef struct {
-	int max_ppm_value;
+	int max_pixel_value;
 	int64_t start_of_image;
 	bool is_binary;
 	char pixel_value_string_buffer[16];
@@ -123,19 +123,19 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	fseek(pre_info->fileptr, -1, SEEK_CUR);
 
 	/* reading the max value */
-	specifics->max_ppm_value = 0;
+	specifics->max_pixel_value = 0;
 	c = '0';
 	skip_white_space(pre_info->fileptr);
 	skip_comments(pre_info->fileptr); /* these comments could be added to the metadata section imo */
 	do {
-		specifics->max_ppm_value = specifics->max_ppm_value*10 + (c - '0');
+		specifics->max_pixel_value = specifics->max_pixel_value*10 + (c - '0');
 		c = fgetc(pre_info->fileptr);
 	} while (is_digit(c));
 	/* not fseeking back, because that last newline was in fact the final newline */
 	specifics->start_of_image = ftell(pre_info->fileptr);
 
-	if (specifics->max_ppm_value <= 255) pre_info->bit_depth = 8;
-	else if (specifics->max_ppm_value <= 65535) pre_info->bit_depth = 16;
+	if (specifics->max_pixel_value <= 255) pre_info->bit_depth = 8;
+	else if (specifics->max_pixel_value <= 65535) pre_info->bit_depth = 16;
 	pre_info->channels = 3;
 	if (pre_info->bit_depth > 8) {
 		return to_string("The PPM plugin currently does not support conversion of 16 bit to 8 bit.");
@@ -145,7 +145,7 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	pre_info->metadata_count += 1;
 	pre_info->metadata = realloc(pre_info->metadata, pre_info->metadata_count*sizeof(string[2]));
 	pre_info->metadata[pre_info->metadata_count-1][0] = to_string("max pixel value");
-	sprintf((char*) &specifics->pixel_value_string_buffer, "%d", specifics->max_ppm_value);
+	sprintf((char*) &specifics->pixel_value_string_buffer, "%d", specifics->max_pixel_value);
 	pre_info->metadata[pre_info->metadata_count-1][1] = to_string((char*) &specifics->pixel_value_string_buffer);
 
 	return (string){0};
@@ -161,9 +161,9 @@ string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 		fread(file_data, 1, render_info->buffer_count*distance, pre_info->fileptr);
 
 		for (int64_t i = 0; i < render_info->buffer_count; i += 1) {
-			render_info->buffer[i][0] = file_data[i*distance + 0];
-			render_info->buffer[i][1] = file_data[i*distance + 1];
-			render_info->buffer[i][2] = file_data[i*distance + 2];
+			render_info->buffer[i][0] = ((int)file_data[i*distance + 0])*255/specifics->max_pixel_value;
+			render_info->buffer[i][1] = ((int)file_data[i*distance + 1])*255/specifics->max_pixel_value;
+			render_info->buffer[i][2] = ((int)file_data[i*distance + 2])*255/specifics->max_pixel_value;
 			render_info->buffer[i][3] = 255;
 		}
 
@@ -183,18 +183,21 @@ string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 			uint8_t pixel[3] = {0};
 			for (int ii = 0; ii < 3; ii += 1) {
 				while (is_white_space(file.data[file_i])) file_i += 1;
-				for (int iii = 0; iii < 3; iii += 1) {
-					char c = file.data[file_i];
-					if (is_white_space(c)) break;
+				if (file_i >= file.count) break;
+				char c = file.data[file_i];
+				while (!is_white_space(c)) {
+					c = file.data[file_i];
 					pixel[ii] *= 10;
 					pixel[ii] += c - '0';
 					file_i += 1;
+					if (file_i >= file.count) break;
+					c = file.data[file_i];
 				}
 			}
 
-			render_info->buffer[i][0] = pixel[0];
-			render_info->buffer[i][1] = pixel[1];
-			render_info->buffer[i][2] = pixel[2];
+			render_info->buffer[i][0] = ((int)pixel[0])*255/specifics->max_pixel_value;
+			render_info->buffer[i][1] = ((int)pixel[1])*255/specifics->max_pixel_value;
+			render_info->buffer[i][2] = ((int)pixel[2])*255/specifics->max_pixel_value;
 			render_info->buffer[i][3] = 255;
 		}
 
