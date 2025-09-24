@@ -1,7 +1,7 @@
 #include "MIV.h"
 #include <stdlib.h>
 
-/* helper functions */
+/*# helper functions */
 uint8_t is_white_space(char c) {
 	return c=='\n' || c=='\r' || c=='\t' || c==' ';
 }
@@ -32,14 +32,7 @@ void skip_comments(FILE *fileptr) {
 	fseek(fileptr, -1, SEEK_CUR);
 }
 
-string make_warning(string warning) {
-	char *bare_warning = warning.data;
-	warning.data = malloc(warning.count);
-	memcpy(warning.data, bare_warning, warning.count);
-	return warning;
-}
-
-/* the actual plugin */
+/*# the actual plugin */
 static int called_n_times;
 const int TOTAL_IMAGE_FORMATS = 3;
 
@@ -83,7 +76,7 @@ enum {TYPE_PBM = 1, TYPE_PGM = 2, TYPE_PPM = 3};
 string generic_pre_render(Pre_Rendering_Info *pre_info) {
 	Specifics *specifics = pre_info->user_ptr;
 
-	/* Checking the header */
+	/*# Checking the header */
 	fseek(pre_info->fileptr, 1, SEEK_SET);
 	char c = fgetc(pre_info->fileptr);
 	if (c - '0' != specifics->which_type && c - '3' != specifics->which_type) {
@@ -97,7 +90,7 @@ string generic_pre_render(Pre_Rendering_Info *pre_info) {
 	if (c - '3' == specifics->which_type) specifics->is_binary = 1;
 	fseek(pre_info->fileptr, 3, SEEK_SET);
 
-	/* read the width */
+	/*# read the width */
 	c = '0';
 	skip_white_space(pre_info->fileptr);
 	skip_comments(pre_info->fileptr); /* these comments could be added to the metadata section imo */
@@ -107,7 +100,7 @@ string generic_pre_render(Pre_Rendering_Info *pre_info) {
 	} while (is_digit(c));
 	fseek(pre_info->fileptr, -1, SEEK_CUR);
 
-	/* read the height */
+	/*# read the height */
 	c = '0';
 	skip_white_space(pre_info->fileptr);
 	skip_comments(pre_info->fileptr); /* these comments could be added to the metadata section imo */
@@ -115,11 +108,16 @@ string generic_pre_render(Pre_Rendering_Info *pre_info) {
 		pre_info->height = pre_info->height*10 + (c - '0');
 		c = fgetc(pre_info->fileptr);
 	} while (is_digit(c));
+
+	if (specifics->which_type == TYPE_PBM) {
+		pre_info->bit_depth = 1;
+		/* not fseeking back, because that last newline was in fact the final newline */
+		specifics->start_of_image = ftell(pre_info->fileptr);
+		return (string){0};
+	}
 	fseek(pre_info->fileptr, -1, SEEK_CUR);
 
-	if (specifics->which_type == TYPE_PBM) return (string){0};
-
-	/* reading the max value */
+	/*# reading the max value */
 	specifics->max_pixel_value = 0;
 	c = '0';
 	skip_white_space(pre_info->fileptr);
@@ -138,7 +136,7 @@ string generic_pre_render(Pre_Rendering_Info *pre_info) {
 		return to_string("The PNM plugin currently does not support conversion of 16 bit to 8 bit.");
 	}
 
-	/* adding the max pixel value to the metadata */
+	/*# adding the max pixel value to the metadata */
 	pre_info->metadata_count += 1;
 	pre_info->metadata = realloc(pre_info->metadata, pre_info->metadata_count*sizeof(string[2]));
 	pre_info->metadata[pre_info->metadata_count-1][0] = to_string("max pixel value");
@@ -178,7 +176,6 @@ string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 		}
 
 		free(file_data);
-		return (string){0};
 	} else {
 		fseek(pre_info->fileptr, 0, SEEK_END);
 		string file;
@@ -192,8 +189,8 @@ string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 		for (int64_t i = 0; i < render_info->buffer_count; i += 1) {
 			uint8_t pixel[3] = {0};
 			for (int ii = 0; ii < 3; ii += 1) {
-				while (is_white_space(file.data[file_i])) file_i += 1;
 				if (file_i >= file.count) break;
+				while (is_white_space(file.data[file_i])) file_i += 1;
 				char c = file.data[file_i];
 				while (!is_white_space(c)) {
 					c = file.data[file_i];
@@ -209,11 +206,12 @@ string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 			render_info->buffer[i][1] = ((int)pixel[1])*255/specifics->max_pixel_value;
 			render_info->buffer[i][2] = ((int)pixel[2])*255/specifics->max_pixel_value;
 			render_info->buffer[i][3] = 255;
+			if (file_i >= file.count) break;
 		}
 
 		free(file.data);
-		return (string){0};
 	}
+	return (string){0};
 }
 
 string ppm_cleanup(Pre_Rendering_Info *pre_info) {
@@ -234,11 +232,57 @@ string pbm_pre_render(Pre_Rendering_Info *pre_info) {
 }
 
 string pbm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
-	return to_string("PBM render unimplemented.");
+	Specifics *specifics = pre_info->user_ptr;
+
+	fseek(pre_info->fileptr, 0, SEEK_END);
+	string file;
+	file.count = ftell(pre_info->fileptr) - specifics->start_of_image;
+	file.data = malloc(file.count);
+
+	fseek(pre_info->fileptr, specifics->start_of_image, SEEK_SET);
+	fread(file.data, 1, file.count, pre_info->fileptr);
+
+	if (specifics->is_binary) {
+		int64_t i = 0;
+		int64_t file_i = 0;
+		while (i < render_info->buffer_count && file_i < file.count) {
+			uint8_t byte = file.data[file_i];
+			uint8_t mask = 1 >> (i % 8);
+			uint8_t p = 0;
+			if (byte & mask) p = 255;
+
+			render_info->buffer[i][0] = p;
+			render_info->buffer[i][1] = p;
+			render_info->buffer[i][2] = p;
+			render_info->buffer[i][3] = 255;
+
+			if (i % 8 == 7) file_i += 1;
+			i += 1;
+		}
+	} else {
+		int64_t file_i = 0;
+		for (int64_t i = 0; i < render_info->buffer_count; i += 1) {
+			while (is_white_space(file.data[file_i])) file_i += 1;
+
+			char c = file.data[file_i];
+			uint8_t p = 0;
+			if (c == '1') p = 255;
+			file_i += 1;
+
+			render_info->buffer[i][0] = p;
+			render_info->buffer[i][1] = p;
+			render_info->buffer[i][2] = p;
+			render_info->buffer[i][3] = 255;
+			if (file_i >= file.count) break;
+		}
+
+	}
+	free(file.data);
+	return (string){0};
 }
 
 string pbm_cleanup(Pre_Rendering_Info *pre_info) {
-	return to_string("PBM cleanup unimplemented.");
+	return (string){0};
 }
 
 string pgm_pre_render(Pre_Rendering_Info *pre_info) {
@@ -259,5 +303,5 @@ string pgm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 }
 
 string pgm_cleanup(Pre_Rendering_Info *pre_info) {
-	return to_string("PGM cleanup unimplemented.");
+	return (string){0};
 }

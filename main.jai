@@ -53,7 +53,7 @@ main :: () {
 	settings: Settings_File_1 = load_registrations(*errors);
 	defer cleanup_registrations(settings);
 
-	/* UI definitions */
+	/*# UI definitions */
 	fontsize := 20;
 	{
 		window_width := 1400;
@@ -69,17 +69,17 @@ main :: () {
 
 	inp: Input_State;
 
-	/* Font loading */
+	/*# Font loading */
 	font_pixel_height := bar_height/2;
 	main_font := Simp.get_font_at_size(FONT_DATA, font_pixel_height);
 	icon_font := Simp.get_font_at_size(ICON_FONT_DATA, font_pixel_height);
 
-	/* tooltips */
+	/*# Tooltip init */
 	/* Counting this manually is inconvenient; I'd like to write a metaprogram that counts the amount of tooltips here, but it's hard. */
 	/* The reason this isn't a dynamic array is because the pointer of that is unstable. Saving indices into a buffer is messy during usage. */
 	tip: Tool_Tip;
 
-	/* Image context etc */
+	/*# Image context etc */
 	img_ctx := Image_Context.{
 		fit = .FIT_BEST,
 		scale = 1.0,
@@ -93,7 +93,7 @@ main :: () {
 	}
 	defer if img_ctx.watcher.callback deinit(img_ctx.watcher);
 
-	/* window specific image context */
+	/*# window specific image context */
 	fileq_setting: enum {HISTORY; DIRECTORY;} = .HISTORY;
 	file_history: [..]string;
 	file_history_index: int;
@@ -111,7 +111,7 @@ main :: () {
 	}
 	gpu_texture: Simp.Texture;
 
-	/* program_settings */
+	/*# UI state */
 	display_metadata := false;
 	display_settings_menu := false;
 	settings_menu_just_opened := false;
@@ -126,7 +126,7 @@ main :: () {
 		settings.zoom_alignment_on_previous_close = img_ctx.zoom_alignment;
 	}
 
-	/* Timing */
+	/*# Timing */
 	target_frame_time: float64 = TARGET_FRAME_TIME;
 	last_1s_time := current_time_monotonic();
 	prev_time := last_1s_time;
@@ -135,7 +135,7 @@ main :: () {
 	frame_count_over_1s := 60;
 	running := true;
 	while running {
-		/* Timings etc */
+		/*# Timings etc */
 		frame_1s_counter += 1;
 		now := current_time_monotonic();
 		if to_float64_seconds(now - last_1s_time) > 0.2 {
@@ -149,7 +149,7 @@ main :: () {
 		}
 		prev_time = current_time_monotonic();
 
-		/* Window resize */
+		/*# Window resize */
 		Input.update_window_events();
 		for Input.get_window_resizes() {
 			Simp.update_window(it.window);
@@ -163,7 +163,7 @@ main :: () {
 			}
 		}
 
-		/* Inputs */
+		/*# Inputs */
 		{ /* Reset */
 			p := inp.persistent;
 			inp = .{};
@@ -211,7 +211,7 @@ main :: () {
 		inp.fpointer = get_pointer_position();
 		inp.ipointer = .[xx inp.fpointer.x, xx inp.fpointer.y];
 
-		/* Files added via command line or drop-in */
+		/*# Files added via command line or drop-in */
 		loading_time := current_time_monotonic();
 		position_adjusted := false;
 		temp_files_to_open := files_to_open;
@@ -242,7 +242,7 @@ main :: () {
 		}
 		array_reset(*files_to_open);
 
-		/* The watcher */
+		/*# The watcher */
 		process_changes(*img_ctx.watcher);
 		if img_ctx.watcher_says_something_moved_somewhere {
 			img_ctx.watcher_says_something_moved_somewhere = false;
@@ -253,7 +253,7 @@ main :: () {
 			img_ctx.render = true;
 		}
 
-		/* Choosing the file to render */
+		/*# Choosing the file to render */
 		if position_adjusted {
 			/* if position_adjusted? */
 			sanitize_file_list(*file_history, file_history[file_history_index], *file_history_index, *errors);
@@ -265,7 +265,7 @@ main :: () {
 		}
 		if current_q.count == 0 img_ctx.render = false;
 
-		/* image pre-render */
+		/*# image pre-render */
 		if img_ctx.render {
 			old_pre_info := img_ctx.pre_info;
 			new_name := current_q.*[current_q_index.*];
@@ -297,7 +297,7 @@ main :: () {
 		}
 		img_ctx.draw = true;
 
-		/* Image rendering (aka resolving the actual data) */
+		/*# Image rendering (aka resolving the actual data) */
 		if !img_ctx.plugin { img_ctx.render = false; img_ctx.draw = false; }
 		if img_ctx.render {
 			using img_ctx.render_info;
@@ -324,7 +324,7 @@ main :: () {
 			give_log(*errors, "Loading time: %, associated fps if we did nothing but this: %", to_float64_seconds(loading_time), 1/to_float64_seconds(loading_time));
 		}
 
-		{/* Drawing time */
+		{/*# Drawing time */
 			/* First we define the broad outline of panels that we'll see (the ones that make the canvas smaller) */
 			canvas := UI_Panel.{
 				size = window_size,
@@ -343,7 +343,7 @@ main :: () {
 
 			first_layer_is_pressable := img_ctx.draw && errors.count == 0;
 
-			/* Image drawing */
+			/*# Image drawing */
 			canvas.colors = bg_palette;
 			panel_draw(*canvas);
 			if img_ctx.draw {
@@ -442,7 +442,7 @@ main :: () {
 			panel_draw(*top_bar);
 			panel_draw(*bottom_bar);
 
-			/* settings menu */
+			/*# settings menu */
 			if display_settings_menu {
 				panel_draw(*settings_menu_panel);
 				table_space := panel_split(*settings_menu_panel, .{bar_height*9/2, settings_menu_panel.size[1]}, .TOP, false);
@@ -479,7 +479,7 @@ main :: () {
 					}
 				}
 
-				/* plugin settings */
+				/*# plugin settings */
 				if img_ctx.plugin && img_ctx.plugin.has_settings {
 					if settings_menu_just_opened || img_ctx.settings_info.options.data == null {
 						img_ctx.settings_info.changed_index = -1;
@@ -553,8 +553,8 @@ main :: () {
 				}
 			}
 
-			/** UI **/
-			/* top bar */
+			/*# UI */
+			/*# top bar */
 			settings_button := panel_split(*top_bar, .{bar_height*6/5, top_bar.size[0]}, .LEFT, false);
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 			fit_buttons_space := panel_split(*top_bar, .{bar_height*4, top_bar.size[0]}, .LEFT, false);
@@ -563,7 +563,7 @@ main :: () {
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 			zoom_buttons_space := panel_split(*top_bar, .{bar_height*2, top_bar.size[0]}, .LEFT, false);
 
-			/* settings button */
+			/*# settings button */
 			settings_button.colors = ifx display_settings_menu then selected_button_palette else button_palette;
 			panel_draw(*settings_button);
 			tip.text = "Toggle settings menu";
@@ -573,7 +573,7 @@ main :: () {
 			}
 			panel_text(*settings_button, icon_font, ICON.SETTINGS, .MIDDLE, .MIDDLE);
 
-			/* fit buttons */
+			/*# fit buttons */
 			fit_buttons_space.colors = button_palette;
 			panel_draw(*fit_buttons_space);
 			fit_buttons := panel_subdivide(*fit_buttons_space, 4, .HORIZONTAL, false);
@@ -595,7 +595,7 @@ main :: () {
 				panel_text(*it, icon_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
 
-			/* AA button */
+			/*# AA button */
 			aa_button.colors = ifx img_ctx.linear_upscaling then selected_button_palette else button_palette;
 			panel_draw(*aa_button);
 			tip.text = "Toggle anti-aliasing";
@@ -604,7 +604,7 @@ main :: () {
 			}
 			panel_text(*aa_button, icon_font, ICON.ANTI_ALIAS, .MIDDLE, .MIDDLE);
 
-			/* zoom setting button */
+			/*# zoom setting button */
 			zoom_buttons_space.colors = button_palette;
 			panel_draw(*zoom_buttons_space);
 			zoom_buttons := panel_subdivide(*zoom_buttons_space, 2, .HORIZONTAL, false);
@@ -622,12 +622,12 @@ main :: () {
 				panel_text(*it, icon_font, zoom_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
 
-			/* filename display */
+			/*# filename display */
 			text := isolate_name(img_ctx.pre_info.name);
 			if !img_ctx.draw text = "Drag an image or plugin into the window to start.";
 			panel_text_split(*top_bar, main_font, text, .RIGHT);
 
-			/* bottom bar */
+			/*# bottom bar */
 			if img_ctx.draw {
 				text = tprint("%\%", formatFloat(img_ctx.scale*100, trailing_width = 2, zero_removal = .NO));
 			} else {
@@ -635,7 +635,7 @@ main :: () {
 			}
 			panel_text_split(*bottom_bar, main_font, text, .LEFT);
 
-			/* metadata button */
+			/*# metadata button */
 			metadata_button := panel_split(*bottom_bar, .{bar_height*3/2, bottom_bar.size[0]}, .LEFT, false);
 			metadata_button.colors = ifx display_metadata then selected_button_palette else button_palette;
 			panel_draw(*metadata_button);
@@ -645,14 +645,14 @@ main :: () {
 			}
 			panel_text(*metadata_button, icon_font, ICON.METADATA, .MIDDLE, .MIDDLE);
 
-			/* fps counter */
+			/*# fps counter */
 			bottom_bar.colors.text = ifx frame_time < target_frame_time then u8.[100, 210, 25, 255] else .[220, 60, 25, 255];
 			text = tprint("fps: %", frame_count_over_1s);
 			panel_text(*bottom_bar, main_font, text, .LEFT, .MIDDLE);
 			bottom_bar.colors.text = palette.text;
 			show_fps := false;
 
-			/* Backwards and forwards buttons (bnf buttons) */
+			/*# Backwards and forwards buttons (bnf buttons) */
 			bnf_menu_space := panel_split(*bottom_bar, .{bar_height*6, bottom_bar.size[0]}, .RIGHT, !show_fps);
 			bnf_menu_space.colors = button_palette;
 			bnf_button_space := panel_split(*bnf_menu_space, .{bar_height*2, bnf_menu_space.size[0]}, .RIGHT, true);
@@ -681,7 +681,7 @@ main :: () {
 			panel_text(*bnf_buttons[0], icon_font, ICON.PREV, .MIDDLE, .MIDDLE);
 			panel_text(*bnf_buttons[1], icon_font, ICON.NEXT, .MIDDLE, .MIDDLE);
 
-			/* history or directory selector */
+			/*# history or directory selector */
 			bnf_selector_space := panel_split(*bnf_menu_space, .{bar_height*3, bnf_menu_space.size[0]}, .LEFT, false);
 			bnf_menu_space.colors = palette;
 			panel_draw(*bnf_menu_space);
@@ -716,12 +716,12 @@ main :: () {
 				current_q_index = *directory_index;
 			}
 
-			/* queue position */
+			/*# queue position */
 			if img_ctx.draw {
 				panel_text(*bottom_bar, main_font, tprint("%/%", current_q_index.*+1, current_q.count), .RIGHT, .MIDDLE);
 			}
 		}
-		{/* Popups */
+		{/*# Popups */
 			pressed_option := -2;
 			for error: errors {
 				if error.kind == .LOG {
@@ -765,7 +765,7 @@ main :: () {
 			/* This latter one especially will need text flow functions (since it should be notifications in the bottomright). */
 			/* I'm thinking to have the width be limited, and for the cut-off to initially not care about whitespace */
 		}
-		{/* tooltip */
+		{/*# tooltip */
 			if tip.state == .Decaying then tip.state = .Dormant;
 			if tip.state == .Active && to_float64_seconds(current_time_monotonic() - tip.hover_started) > 0.5 {
 				text_width := Simp.prepare_text(main_font, tip.text_to_be_displayed);
