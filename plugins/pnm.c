@@ -32,6 +32,13 @@ void skip_comments(FILE *fileptr) {
 	fseek(fileptr, -1, SEEK_CUR);
 }
 
+string make_warning(string warning) {
+	char *bare_warning = warning.data;
+	warning.data = malloc(warning.count);
+	memcpy(warning.data, bare_warning, warning.count);
+	return warning;
+}
+
 /* the actual plugin */
 static int called_n_times;
 const int TOTAL_IMAGE_FORMATS = 3;
@@ -46,10 +53,10 @@ int64_t registration_procedure(Provided_Registration_Entry *registration) {
 		registration->extension_is_case_sensitive = 0;
 		break;
 	case 1:
-		registration->name_filetype = to_string("VAnadis IMage");
-		registration->procedure_prefix = to_string("vaim_");
-		registration->extension = to_string("VAIM");
-		registration->magic_number = to_string("vaim"); /* P2 P5 */
+		registration->name_filetype = to_string("Netpbm Portable GrayMap");
+		registration->procedure_prefix = to_string("pgm_");
+		registration->extension = to_string("PGM");
+		registration->magic_number = to_string("P"); /* P2 P5 */
 		registration->extension_is_case_sensitive = 0;
 		break;
 	case 2:
@@ -68,38 +75,26 @@ typedef struct {
 	int max_pixel_value;
 	int64_t start_of_image;
 	bool is_binary;
+	uint8_t which_type;
 	char pixel_value_string_buffer[16];
 } Specifics;
+enum {TYPE_PBM = 1, TYPE_PGM = 2, TYPE_PPM = 3};
 
-string ppm_pre_render(Pre_Rendering_Info *pre_info) {
-	Specifics *specifics;
-	if (!pre_info->user_ptr) {
-		specifics = malloc(sizeof(Specifics));
-		*specifics = (Specifics){0};
-		pre_info->user_ptr = specifics;
-	} else specifics = pre_info->user_ptr;
+string generic_pre_render(Pre_Rendering_Info *pre_info) {
+	Specifics *specifics = pre_info->user_ptr;
 
 	/* Checking the header */
-	fseek(pre_info->fileptr, 0, SEEK_SET);
+	fseek(pre_info->fileptr, 1, SEEK_SET);
 	char c = fgetc(pre_info->fileptr);
-	if (c != 'P') {
-		string warning = to_string("PPM files must start with either 'P3' or 'P6', but the first character was ' '.");
-		char *bare_warning = warning.data;
-		warning.data = malloc(warning.count + 1);
-		memcpy(warning.data, bare_warning, warning.count+1);
-		warning.data[warning.count - 2] = c;
-		return warning;
+	if (c - '0' != specifics->which_type && c - '3' != specifics->which_type) {
+		string header_warning = to_string("PBM files must start with either 'P0' or 'P3', but the second character was ' '.");;
+		header_warning.data[35] += specifics->which_type;
+		header_warning.data[43] += specifics->which_type;
+		if (specifics->which_type == TYPE_PGM) header_warning.data[1] = 'G';
+		else if (specifics->which_type == TYPE_PPM) header_warning.data[1] = 'P';
+		header_warning.data[header_warning.count-3] = c;
 	}
-	c = fgetc(pre_info->fileptr);
-	if (c != '3' && c != '6') {
-		string warning = to_string("PPM files must start with either 'P3' or 'P6', but the second character was ' '.");
-		char *bare_warning = warning.data;
-		warning.data = malloc(warning.count + 1);
-		memcpy(warning.data, bare_warning, warning.count+1);
-		warning.data[warning.count - 2] = c;
-		return warning;
-	}
-	if (c == '6') specifics->is_binary = 1;
+	if (c - '3' == specifics->which_type) specifics->is_binary = 1;
 	fseek(pre_info->fileptr, 3, SEEK_SET);
 
 	/* read the width */
@@ -122,6 +117,8 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	} while (is_digit(c));
 	fseek(pre_info->fileptr, -1, SEEK_CUR);
 
+	if (specifics->which_type == TYPE_PBM) return (string){0};
+
 	/* reading the max value */
 	specifics->max_pixel_value = 0;
 	c = '0';
@@ -138,7 +135,7 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	else if (specifics->max_pixel_value <= 65535) pre_info->bit_depth = 16;
 	pre_info->channels = 3;
 	if (pre_info->bit_depth > 8) {
-		return to_string("The PPM plugin currently does not support conversion of 16 bit to 8 bit.");
+		return to_string("The PNM plugin currently does not support conversion of 16 bit to 8 bit.");
 	}
 
 	/* adding the max pixel value to the metadata */
@@ -148,6 +145,19 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	sprintf((char*) &specifics->pixel_value_string_buffer, "%d", specifics->max_pixel_value);
 	pre_info->metadata[pre_info->metadata_count-1][1] = to_string((char*) &specifics->pixel_value_string_buffer);
 
+	return (string){0};
+}
+
+string ppm_pre_render(Pre_Rendering_Info *pre_info) {
+	Specifics *specifics;
+	if (!pre_info->user_ptr) {
+		specifics = malloc(sizeof(Specifics));
+		*specifics = (Specifics){0};
+		pre_info->user_ptr = specifics;
+	} else specifics = pre_info->user_ptr;
+
+	specifics->which_type = TYPE_PPM;
+	generic_pre_render(pre_info);
 	return (string){0};
 }
 
@@ -211,48 +221,43 @@ string ppm_cleanup(Pre_Rendering_Info *pre_info) {
 }
 
 string pbm_pre_render(Pre_Rendering_Info *pre_info) {
-	return to_string("Pbm pre-render unimplemented.");
+	Specifics *specifics;
+	if (!pre_info->user_ptr) {
+		specifics = malloc(sizeof(Specifics));
+		*specifics = (Specifics){0};
+		pre_info->user_ptr = specifics;
+	} else specifics = pre_info->user_ptr;
+
+	specifics->which_type = TYPE_PBM;
+	generic_pre_render(pre_info);
+	return (string){0};
 }
 
 string pbm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
-	return to_string("Pbm render unimplemented.");
+	return to_string("PBM render unimplemented.");
 }
 
 string pbm_cleanup(Pre_Rendering_Info *pre_info) {
-	return to_string("Pbm cleanup unimplemented.");
+	return to_string("PBM cleanup unimplemented.");
 }
 
-static uint16_t bytes_per_pixel = 0;
-string vaim_pre_render(Pre_Rendering_Info *pre_info) {
-	fseek(pre_info->fileptr, 6, SEEK_SET);
-	fread(&(pre_info->channels), 1, 2, pre_info->fileptr);
-	bytes_per_pixel = pre_info->channels;
-	pre_info->bit_depth = 8;
-	fseek(pre_info->fileptr, 8, SEEK_CUR);
-	fread(&(pre_info->width), 1, 8, pre_info->fileptr);
-	fread(&(pre_info->height), 1, 8, pre_info->fileptr);
+string pgm_pre_render(Pre_Rendering_Info *pre_info) {
+	Specifics *specifics;
+	if (!pre_info->user_ptr) {
+		specifics = malloc(sizeof(Specifics));
+		*specifics = (Specifics){0};
+		pre_info->user_ptr = specifics;
+	} else specifics = pre_info->user_ptr;
 
+	specifics->which_type = TYPE_PGM;
+	generic_pre_render(pre_info);
 	return (string){0};
 }
 
-string vaim_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
-	fseek(pre_info->fileptr, 32, SEEK_SET);
-	uint64_t data_count = pre_info->width*pre_info->height*bytes_per_pixel;
-	uint8_t *data = malloc(data_count);
-	fread(data, 1, data_count, pre_info->fileptr);
-
-	uint64_t pixel_count = data_count/bytes_per_pixel;
-	for (int i = 0; i < pixel_count; i += 1) {
-		render_info->buffer[i][3] = 255;
-		for (int ii = 0; ii < bytes_per_pixel && ii < 4; ii += 1) {
-			render_info->buffer[i][ii] = data[(pixel_count - i - 1)*bytes_per_pixel + ii];
-		}
-	}
-
-	free(data);
-	return (string){0};
+string pgm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
+	return to_string("PGM render unimplemented.");
 }
 
-string vaim_cleanup(Pre_Rendering_Info *pre_info) {
-	return (string){0};
+string pgm_cleanup(Pre_Rendering_Info *pre_info) {
+	return to_string("PGM cleanup unimplemented.");
 }
