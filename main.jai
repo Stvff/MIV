@@ -232,7 +232,7 @@ main :: () {
 			temp_files_to_open.data += 1;
 			temp_files_to_open.count -= 1;
 		}
-		if files_to_open.count == 1 {
+		if temp_files_to_open.count == 1 {
 			fileq_setting = .DIRECTORY;
 			/* I'm assuming there's always a valid file in this directory */
 			discover_directory(*directory, file_history[file_history_index], *errors);

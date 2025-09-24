@@ -10,7 +10,7 @@ registration_procedure :: (registration: *Provided_Registration_Entry) -> s64 #c
 		magic_number = "qoif",
 		bytes_before_magic_number = 0,
 		extension_is_case_sensitive = false,
-		has_settings = true,
+		has_settings = false,
 	};
 	return 0;
 }
@@ -156,6 +156,7 @@ index_hash :: (pixel: [4]u8) -> u64 {
 	return (pixel[0].(u64)*3 + pixel[1].(u64)*5 + pixel[2].(u64)*7 + pixel[3].(u64)*11) % 64;
 }
 
+/* This is here for experimentation */
 #program_export
 qoi_settings :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings_info: *Settings_Info) -> string #c_call {
 	push_context,defer_pop pre_info.user_ptr.(*#Context);
