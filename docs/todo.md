@@ -45,6 +45,8 @@
 - [x] Begin custom icons
 
 ## Bugs to fix
+- Sometimes it doesn't open in directory mode
+- Edgecase qoi file
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
 - When adding a plugin after removing the currently open file, there is a crash.
 - When another window is above MIV, MIV still reads the mouse position from that window.
@@ -79,6 +81,8 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 - [ ] FPS slider for when holding down next or prev
 	- [ ] When holding down next or prev, go up to full fps, that or a slideshow
 - [ ] Image rotation
+- [ ] Save settings in case of crash by saving the settings file right after settings changed
+- [ ] Maybe tooltip of full path on filename
 - [ ] Modernize Custom icons
 	- [ ] Fit buttons
 	- [ ] Queueue mode buttons
