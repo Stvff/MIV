@@ -70,6 +70,7 @@ qoi_render :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> s
 
 	previous_pixel: [4]u8 = .[0, 0, 0, 255];
 	previous_array: [64][4]u8;
+	previous_array[index_hash(previous_pixel)] = previous_pixel;
 	pixel_count := render_info.buffer.count;
 	decoded := 0;
 	coded := 0;

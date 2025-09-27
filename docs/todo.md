@@ -45,8 +45,7 @@
 - [x] Begin custom icons
 
 ## Bugs to fix
-- Sometimes it doesn't open in directory mode
-- Edgecase qoi file
+- Sometimes it doesn't open in directory mode, this maybe happens because there are files it cannot read in the directory?
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
 - When adding a plugin after removing the currently open file, there is a crash.
 - When another window is above MIV, MIV still reads the mouse position from that window.
