@@ -82,6 +82,16 @@ isLegalUTF8 :: (source: *u8, length: s64) -> bool {
 }
 
 
+Text_Clipping_Details :: struct {
+    clip: bool;
+
+    legal_x_origin: s64;
+    legal_y_origin: s64;
+
+    legal_x_span: s64;
+    legal_y_span: s64;
+}
+
 Font_Effects :: enum_flags u32 {
     SMALLCAPS      :: 0x1;
     LINING_FIGURES :: 0x2;
@@ -651,7 +661,7 @@ prepare_text :: (font: *Dynamic_Font, text: string, effect_flags: Font_Effects =
 
 generate_quads_for_prepared_text :: (font: *Dynamic_Font,
                                      x: s64, y: s64,
-                                     effect_flags: Font_Effects) {
+                                     effect_flags: Font_Effects, clipping: Text_Clipping_Details) {
     assert(font != null);
 
     array_reset_keeping_memory(*font.current_quads);
@@ -678,7 +688,7 @@ generate_quads_for_prepared_text :: (font: *Dynamic_Font,
             sy2 = sy  + cast(float) info.ascent;
             sy1 = sy2 - cast(float) info.height;
         }
-        
+
         if maybe_offset && is_latin(info.utf32) {
             // e.g. our Chinese font did not seem to make characters
             // line up properly.

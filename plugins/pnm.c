@@ -1,3 +1,4 @@
+/*   https://en.wikipedia.org/wiki/Netpbm   */
 #include "MIV.h"
 #include <stdlib.h>
 

@@ -179,16 +179,18 @@ update_window :: (window: Window_Type) {
 }
 
 draw_text :: (font: *Dynamic_Font, x: s64, y: s64,
-              text: string, color := Vector4.{1,1,1,1}, effects: Font_Effects = 0) -> width: s64 {
+              text: string, color := Vector4.{1,1,1,1},
+              effects: Font_Effects = 0, clipping: Text_Clipping_Details = .{}) -> width: s64 {
     // @Cleanup: generate_quads should return quads in a threadsafe way?
     width := prepare_text(font, text, effects);
-    generate_quads_for_prepared_text(font, x, y, effects);
+    generate_quads_for_prepared_text(font, x, y, effects, clipping);
     draw_generated_quads(font, color);
     return width;
 }
 
-draw_prepared_text :: (font: *Dynamic_Font, x: s64, y: s64, color := Vector4.{1, 1, 1, 1}, effects: Font_Effects = 0) {
-    generate_quads_for_prepared_text(font, x, y, effects);
+draw_prepared_text :: (font: *Dynamic_Font, x: s64, y: s64, color := Vector4.{1, 1, 1, 1},
+                       effects: Font_Effects = 0, clipping: Text_Clipping_Details = .{}) {
+    generate_quads_for_prepared_text(font, x, y, effects, clipping);
     draw_generated_quads(font, color);
 }
 
@@ -214,7 +216,7 @@ set_scissor :: (x0: s32, y0: s32, x1: s32, y1: s32) {
     } else {
         context.simp.current_window_info.window_height;
     }
-    
+
     dx := cast(u32)max(x1-x0, 0);  // If you invert the input rectangle, just give a 0 width.
     dy := cast(u32)max(y1-y0, 0);
     if context.simp.coordinate_system == .LEFT_HANDED {
