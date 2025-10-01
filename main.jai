@@ -442,13 +442,6 @@ main :: () {
 			panel_draw(*top_bar);
 			panel_draw(*bottom_bar);
 
-			clipping: Simp.Text_Clipping_Details = .{
-				do_clip = true,
-				legal_x_start = 205, legal_y_start = 502,
-				legal_x_end = 380, legal_y_end = 512
-			};
-			Simp.draw_text(main_font, 200, 500, "ABCDEFGHIJKLMNOPQRSTUVW", clipping = clipping);
-
 			/*# settings menu */
 			if display_settings_menu {
 				panel_draw(*settings_menu_panel);

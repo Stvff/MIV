@@ -180,7 +180,7 @@ update_window :: (window: Window_Type) {
 
 draw_text :: (font: *Dynamic_Font, x: s64, y: s64,
               text: string, color := Vector4.{1,1,1,1},
-              effects: Font_Effects = 0, clipping: Text_Clipping_Details = .{}) -> width: s64 {
+              effects: Font_Effects = 0, clipping: Text_Clipping_Info = .{}) -> width: s64 {
     // @Cleanup: generate_quads should return quads in a threadsafe way?
     width := prepare_text(font, text, effects);
     generate_quads_for_prepared_text(font, x, y, effects, clipping);
@@ -189,7 +189,7 @@ draw_text :: (font: *Dynamic_Font, x: s64, y: s64,
 }
 
 draw_prepared_text :: (font: *Dynamic_Font, x: s64, y: s64, color := Vector4.{1, 1, 1, 1},
-                       effects: Font_Effects = 0, clipping: Text_Clipping_Details = .{}) {
+                       effects: Font_Effects = 0, clipping: Text_Clipping_Info = .{}) {
     generate_quads_for_prepared_text(font, x, y, effects, clipping);
     draw_generated_quads(font, color);
 }

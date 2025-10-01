@@ -235,20 +235,14 @@ panel_text :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, align_
 		y_pos = padding*3/4;
 	}
 
-	/* All this commented out text _does_ work, but the texture looks all wrong, and also it's pretty slow again */
-	/* theoretically text could be clipped with two textures, and that needs minimal resizes and similar */
-	// Simp.texture_destroy(*clipping_texture);
-	// clipping_texture = Simp.texture_create_render_target(xx mother.size[0], xx mother.size[1], .RGBA8);
-	// Simp.set_render_target(*clipping_texture);
+	clip := Simp.Text_Clipping_Info.{
+		do_clip = true,
+		x_start = mother.pos[0], y_start = mother.pos[1],
+		x_end = mother.pos[0] + mother.size[0], y_end = mother.pos[1] + mother.size[1]
+	};
+
 	Simp.set_shader_for_text();
-	Simp.draw_prepared_text(font, x_pos + xx mother.pos[0], y_pos + xx mother.pos[1], float_rgb(text_panel.colors.text));
-	// Simp.immediate_flush();
-	// Simp.set_render_target(os_window);
-	// Simp.set_shader_for_images(*clipping_texture);
-	// bl := Vector2.{xx mother.pos[0], xx mother.pos[1]};
-	// tr := bl + Vector2.{xx mother.size[0], xx mother.size[1]};
-	// Simp.immediate_quad(bl.x, bl.y, tr.x, tr.y, .{1, 1, 1, 1});
-	// Simp.immediate_flush();
+	Simp.draw_prepared_text(font, x_pos + xx mother.pos[0], y_pos + xx mother.pos[1], float_rgb(text_panel.colors.text), clipping = clip);
 }
 
 panel_draw :: (p: *UI_Panel) {

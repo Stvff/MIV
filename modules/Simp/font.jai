@@ -82,14 +82,14 @@ isLegalUTF8 :: (source: *u8, length: s64) -> bool {
 }
 
 
-Text_Clipping_Details :: struct {
+Text_Clipping_Info :: struct {
     do_clip: bool;
 
-    legal_x_start: s64;
-    legal_y_start: s64;
+    x_start: s64;
+    y_start: s64;
 
-    legal_x_end: s64;
-    legal_y_end: s64;
+    x_end: s64;
+    y_end: s64;
 }
 
 Font_Effects :: enum_flags u32 {
@@ -661,7 +661,7 @@ prepare_text :: (font: *Dynamic_Font, text: string, effect_flags: Font_Effects =
 
 generate_quads_for_prepared_text :: (font: *Dynamic_Font,
                                      x: s64, y: s64,
-                                     effect_flags: Font_Effects, clipping: Text_Clipping_Details) {
+                                     effect_flags: Font_Effects, clipping: Text_Clipping_Info) {
     assert(font != null);
 
     array_reset_keeping_memory(*font.current_quads);
@@ -696,16 +696,16 @@ generate_quads_for_prepared_text :: (font: *Dynamic_Font,
             sy2 += font.y_offset_for_my_latin_characters;
         }
 
-        legal_u_start, legal_u_crop, legal_v_start, legal_v_crop: float = 0;
+        u_start, u_crop, v_start, v_crop: float = 0;
         if clipping.do_clip {
-            legal_u_start = clamp(clipping.legal_x_start - sx1, 0, cast(float) info.width);
-            legal_u_crop  = clamp(sx2 - clipping.legal_x_end, 0, cast(float) info.width);
-            legal_v_start = clamp(clipping.legal_y_start - sy1, 0, cast(float) info.height);
-            legal_v_crop  = clamp(sy2 - clipping.legal_y_end, 0, cast(float) info.height);
-            sx1 += legal_u_start;
-            sx2 -= legal_u_crop;
-            sy1 += legal_v_start;
-            sy2 -= legal_v_crop;
+            u_start = clamp(clipping.x_start - sx1, 0, cast(float) info.width);
+            u_crop  = clamp(sx2 - clipping.x_end, 0, cast(float) info.width);
+            v_start = clamp(clipping.y_start - sy1, 0, cast(float) info.height);
+            v_crop  = clamp(sy2 - clipping.y_end, 0, cast(float) info.height);
+            sx1 += u_start;
+            sx2 -= u_crop;
+            sy1 += v_start;
+            sy2 -= v_crop;
         }
 
         quad: Font_Quad = ---;
@@ -718,20 +718,20 @@ generate_quads_for_prepared_text :: (font: *Dynamic_Font,
         width  := info.page.bitmap_data.width;  // *Not* map.width, as map may be dirty.
         height := info.page.bitmap_data.height; // Ibid.
 
-        quad.u0 = (info.x0 + legal_u_start) / cast(float) width;
-        quad.u1 = (cast(float) info.x0 + info.width - legal_u_crop) / width;
+        quad.u0 = (info.x0 + u_start) / cast(float) width;
+        quad.u1 = (cast(float) info.x0 + info.width - u_crop) / width;
 
         if context.simp.coordinate_system == .LEFT_HANDED {
-            quad.v1 = (info.y0 + legal_v_start) / cast(float) height;
-            quad.v0 = (cast(float) info.y0 + info.height - legal_v_crop) / height;
+            quad.v1 = (info.y0 + v_start) / cast(float) height;
+            quad.v0 = (cast(float) info.y0 + info.height - v_crop) / height;
         } else {
-            quad.v0 = (info.y0 + legal_v_start) / cast(float) height;
-            quad.v1 = (cast(float) info.y0 + info.height - legal_v_crop) / height;
+            quad.v0 = (info.y0 + v_start) / cast(float) height;
+            quad.v1 = (cast(float) info.y0 + info.height - v_crop) / height;
         }
 
         array_add(*font.current_quads, quad);
 		sx += cast(float) info.advance;
-        if clipping.do_clip && sx > cast(float) clipping.legal_x_end then break;
+        if clipping.do_clip && sx > cast(float) clipping.x_end then break;
     }
 }
 
