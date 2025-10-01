@@ -443,9 +443,9 @@ main :: () {
 			panel_draw(*bottom_bar);
 
 			clipping: Simp.Text_Clipping_Details = .{
-				clip = true,
-				legal_x_origin = 200, legal_y_origin = 200,
-				legal_x_span = 5, legal_y_span = 30
+				do_clip = true,
+				legal_x_start = 205, legal_y_start = 502,
+				legal_x_end = 380, legal_y_end = 512
 			};
 			Simp.draw_text(main_font, 200, 500, "ABCDEFGHIJKLMNOPQRSTUVW", clipping = clipping);
 

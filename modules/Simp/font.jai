@@ -83,13 +83,13 @@ isLegalUTF8 :: (source: *u8, length: s64) -> bool {
 
 
 Text_Clipping_Details :: struct {
-    clip: bool;
+    do_clip: bool;
 
-    legal_x_origin: s64;
-    legal_y_origin: s64;
+    legal_x_start: s64;
+    legal_y_start: s64;
 
-    legal_x_span: s64;
-    legal_y_span: s64;
+    legal_x_end: s64;
+    legal_y_end: s64;
 }
 
 Font_Effects :: enum_flags u32 {
@@ -696,6 +696,18 @@ generate_quads_for_prepared_text :: (font: *Dynamic_Font,
             sy2 += font.y_offset_for_my_latin_characters;
         }
 
+        legal_u_start, legal_u_crop, legal_v_start, legal_v_crop: float = 0;
+        if clipping.do_clip {
+            legal_u_start = clamp(clipping.legal_x_start - sx1, 0, cast(float) info.width);
+            legal_u_crop  = clamp(sx2 - clipping.legal_x_end, 0, cast(float) info.width);
+            legal_v_start = clamp(clipping.legal_y_start - sy1, 0, cast(float) info.height);
+            legal_v_crop  = clamp(sy2 - clipping.legal_y_end, 0, cast(float) info.height);
+            sx1 += legal_u_start;
+            sx2 -= legal_u_crop;
+            sy1 += legal_v_start;
+            sy2 -= legal_v_crop;
+        }
+
         quad: Font_Quad = ---;
         quad.glyph = info;
         quad.p0 = .{sx1, sy1};
@@ -706,20 +718,20 @@ generate_quads_for_prepared_text :: (font: *Dynamic_Font,
         width  := info.page.bitmap_data.width;  // *Not* map.width, as map may be dirty.
         height := info.page.bitmap_data.height; // Ibid.
 
-        quad.u0 = info.x0 / cast(float) width;
-        quad.u1 = (cast(float) info.x0 + info.width) / width;
+        quad.u0 = (info.x0 + legal_u_start) / cast(float) width;
+        quad.u1 = (cast(float) info.x0 + info.width - legal_u_crop) / width;
 
         if context.simp.coordinate_system == .LEFT_HANDED {
-            quad.v1 = info.y0 / cast(float) height;
-            quad.v0 = (cast(float) info.y0 + info.height) / height;
+            quad.v1 = (info.y0 + legal_v_start) / cast(float) height;
+            quad.v0 = (cast(float) info.y0 + info.height - legal_v_crop) / height;
         } else {
-            quad.v0 = info.y0 / cast(float) height;
-            quad.v1 = (cast(float) info.y0 + info.height) / height;
+            quad.v0 = (info.y0 + legal_v_start) / cast(float) height;
+            quad.v1 = (cast(float) info.y0 + info.height - legal_v_crop) / height;
         }
 
         array_add(*font.current_quads, quad);
 		sx += cast(float) info.advance;
-
+        if clipping.do_clip && sx > cast(float) clipping.legal_x_end then break;
     }
 }
 
