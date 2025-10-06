@@ -81,11 +81,11 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 	- [ ] Choice between every change or after mouse release.
 - [ ] FPS slider for when holding down next or prev
 	- [ ] When holding down next or prev, go up to full fps, that or a slideshow
-- [ ] Image rotation
+- [ ] Image rotation controls and logic
 - [ ] Save settings in case of crash by saving the settings file right after settings changed
 - [x] Maybe tooltip of full path on filename
 - [ ] Clipboard
-	- [ ] copy filename to clipboard
+	- [x] copy filename to clipboard
 	- [ ] get filename from clipboard?
 	- [ ] copy image to clipboard?
 	- [ ] get image from clipboard??

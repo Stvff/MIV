@@ -630,7 +630,9 @@ main :: () {
 				file_display := panel_text_split(*top_bar, main_font, text, .RIGHT);
 
 				tip.text = img_ctx.pre_info.name;
-				panel_button(*file_display, inp.ipointer, inp.left_button_switch, *tip);
+				if panel_button(*file_display, inp.ipointer, inp.left_button_switch, *tip) {
+					os_clipboard_set_text(img_ctx.pre_info.name);
+				}
 				panel_text(*file_display, main_font, text, .MIDDLE, .MIDDLE);
 			}
 
@@ -838,6 +840,7 @@ ICON :: struct {
 #load "registration.jai";
 #load "ui.jai";
 
+#import "Clipboard";
 Winc :: #import "Window_Creation";
 Input :: #import "Input";
 Simp :: #import "Simp";
