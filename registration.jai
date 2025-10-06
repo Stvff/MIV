@@ -204,6 +204,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 			}
 		}
 	}
+
 	file_handle: *posix.FILE;
 	file_handle = posix.fopen(temp_c_string(filepath), "r");
 	if !file_handle {

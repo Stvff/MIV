@@ -64,6 +64,7 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 - [ ] intelligent textflows
 	- [x] Clipping
 	- [ ] scrollbars I'm afraid
+		- [ ] Also adjustable windows
 	- [ ] logs onscreen instead of in terminal
 - [ ] different types of filesorting
 - [ ] give functions the ability to respond responsibly based on user input option
@@ -82,7 +83,12 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 	- [ ] When holding down next or prev, go up to full fps, that or a slideshow
 - [ ] Image rotation
 - [ ] Save settings in case of crash by saving the settings file right after settings changed
-- [ ] Maybe tooltip of full path on filename
+- [x] Maybe tooltip of full path on filename
+- [ ] Clipboard
+	- [ ] copy filename to clipboard
+	- [ ] get filename from clipboard?
+	- [ ] copy image to clipboard?
+	- [ ] get image from clipboard??
 - [ ] Modernize Custom icons
 	- [ ] Fit buttons
 	- [ ] Queueue mode buttons

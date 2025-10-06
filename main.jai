@@ -623,17 +623,25 @@ main :: () {
 			}
 
 			/*# filename display */
-			text := isolate_name(img_ctx.pre_info.name);
-			if !img_ctx.draw text = "Drag an image or plugin into the window to start.";
-			panel_text_split(*top_bar, main_font, text, .RIGHT);
+			if !img_ctx.draw {
+				panel_text_split(*top_bar, main_font, "Drag an image or plugin into the window to start.", .RIGHT);
+			} else {
+				text := isolate_name(img_ctx.pre_info.name);
+				file_display := panel_text_split(*top_bar, main_font, text, .RIGHT);
+
+				tip.text = img_ctx.pre_info.name;
+				panel_button(*file_display, inp.ipointer, inp.left_button_switch, *tip);
+				panel_text(*file_display, main_font, text, .MIDDLE, .MIDDLE);
+			}
 
 			/*# bottom bar */
+			scale_text: string;
 			if img_ctx.draw {
-				text = tprint("%\%", formatFloat(img_ctx.scale*100, trailing_width = 2, zero_removal = .NO));
+				scale_text = tprint("%\%", formatFloat(img_ctx.scale*100, trailing_width = 2, zero_removal = .NO));
 			} else {
-				text = "----.--%";
+				scale_text = "----.--%";
 			}
-			panel_text_split(*bottom_bar, main_font, text, .LEFT);
+			panel_text_split(*bottom_bar, main_font, scale_text, .LEFT);
 
 			/*# metadata button */
 			metadata_button := panel_split(*bottom_bar, .{bar_height*3/2, bottom_bar.size[0]}, .LEFT, false);
@@ -647,8 +655,7 @@ main :: () {
 
 			/*# fps counter */
 			bottom_bar.colors.text = ifx frame_time < target_frame_time then u8.[100, 210, 25, 255] else .[220, 60, 25, 255];
-			text = tprint("fps: %", frame_count_over_1s);
-			panel_text(*bottom_bar, main_font, text, .LEFT, .MIDDLE);
+			panel_text(*bottom_bar, main_font, tprint("fps: %", frame_count_over_1s), .LEFT, .MIDDLE);
 			bottom_bar.colors.text = palette.text;
 			show_fps := false;
 

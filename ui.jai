@@ -2,7 +2,7 @@
 	Do not draw to panels before using them as a mother in a split call, because it will clear their content.
 
 	If a function starts with `panel_`, then that function draws to panels.
-	If a function ends with `panel_`, it does something with or to the panel, but does not draw on it
+	If a function ends with `panel`, it does something with or to the panel, but does not draw on it
 */
 
 UI_Panel :: struct {
