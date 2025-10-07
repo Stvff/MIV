@@ -49,6 +49,10 @@ os_window: X11.Window;
 TARGET_FRAME_TIME :: 1.0/120.0;
 
 main :: () {
+	log_entries: [..]Log_Entry;
+	context.logger_data = *log_entries;
+	context.logger = logger;
+
 	errors: [..]Error;
 	settings: Settings_File_1 = load_registrations(*errors);
 	defer cleanup_registrations(settings);
@@ -328,7 +332,7 @@ main :: () {
 			/* First we define the broad outline of panels that we'll see (the ones that make the canvas smaller) */
 			canvas := UI_Panel.{
 				size = window_size,
-				colors = palette,
+				colors = default_palette,
 				border_size = 1,
 			};
 
@@ -658,7 +662,7 @@ main :: () {
 			/*# fps counter */
 			bottom_bar.colors.text = ifx frame_time < target_frame_time then u8.[100, 210, 25, 255] else .[220, 60, 25, 255];
 			panel_text(*bottom_bar, main_font, tprint("fps: %", frame_count_over_1s), .LEFT, .MIDDLE);
-			bottom_bar.colors.text = palette.text;
+			bottom_bar.colors.text = default_palette.text;
 			show_fps := false;
 
 			/*# Backwards and forwards buttons (bnf buttons) */
@@ -674,7 +678,7 @@ main :: () {
 					img_ctx.render = true;
 				}
 			} else {
-				bnf_buttons[0].colors.body = palette.body;
+				bnf_buttons[0].colors.body = default_palette.body;
 				panel_draw(*bnf_buttons[0]);
 			}
 			if first_layer_is_pressable && current_q_index.* < current_q.count-1 && current_q.count != 0 {
@@ -684,7 +688,7 @@ main :: () {
 					img_ctx.render = true;
 				}
 			} else {
-				bnf_buttons[1].colors.body = palette.body;
+				bnf_buttons[1].colors.body = default_palette.body;
 				panel_draw(*bnf_buttons[1]);
 			}
 			panel_text(*bnf_buttons[0], icon_font, ICON.PREV, .MIDDLE, .MIDDLE);
@@ -692,7 +696,7 @@ main :: () {
 
 			/*# history or directory selector */
 			bnf_selector_space := panel_split(*bnf_menu_space, .{bar_height*3, bnf_menu_space.size[0]}, .LEFT, false);
-			bnf_menu_space.colors = palette;
+			bnf_menu_space.colors = default_palette;
 			panel_draw(*bnf_menu_space);
 			bnf_selector_buttons := panel_subdivide(*bnf_selector_space, 2, .HORIZONTAL, false);
 			{ /* the selected button */
@@ -773,22 +777,36 @@ main :: () {
 			/* Next to that, I want to write little popup windows about non-critical logs. They should be on a timer. */
 			/* This latter one especially will need text flow functions (since it should be notifications in the bottomright). */
 			/* I'm thinking to have the width be limited, and for the cut-off to initially not care about whitespace */
+			log_decay_time :: 0.5;
+			for entry: log_entries {
+				// print("%\n", entry);
+
+				// choice_panel := UI_Panel.{
+				// 	size = .[window_size[0], bar_height*2],
+				// 	pos = .[0, window_size[1]/2 - bar_height],
+				// 	colors = error_message_palette,
+				// };
+				// popup_panel := panel_from_text(main_font, entry.message, .{bar_height, window_size[1] - bar_height));
+
+				if to_float64_seconds(current_time_monotonic() - entry.wakeup_time) > log_decay_time {
+					array_ordered_remove_by_index(*log_entries, it_index);
+				}
+			}
 		}
 		{/*# tooltip */
 			if tip.state == .Decaying then tip.state = .Dormant;
 			if tip.state == .Active && to_float64_seconds(current_time_monotonic() - tip.hover_started) > 0.5 {
-				text_width := Simp.prepare_text(main_font, tip.text_to_be_displayed);
-				padding := main_font.character_height;
-				panel: UI_Panel;
-				panel.size = .[text_width + padding, padding*2];
-				panel.colors = default_tool_tip_palette;
-				panel.pos = tip.pointer_position;
-
-				if panel.pos[0] > window_size[0]/2 panel.pos[0] -= panel.size[0];
-				if panel.pos[1] > window_size[1]/2 panel.pos[1] -= panel.size[1]*7/4;
-				else panel.pos[1] += panel.size[1]/2;
-				panel_draw(*panel);
-				panel_text(*panel, main_font, tip.text_to_be_displayed, .MIDDLE, .MIDDLE);
+				pos := tip.pointer_position;
+				align_h := Text_Align_Hor.LEFT;
+				align_v := Text_Align_Ver.BOTTOM;
+				if pos[0] > window_size[0]/2 then align_h = .RIGHT;
+				if pos[1] > window_size[1]/2 {
+					align_v = .TOP;
+					pos[1] -= bar_height*3/4;
+				} else {
+					pos[1] += bar_height/2;
+				}
+				panel_from_text(main_font, tip.text_to_be_displayed, pos, align_h, align_v, tool_tip_palette);
 				tip.state = .Decaying;
 			}
 		}
@@ -805,6 +823,27 @@ main :: () {
 get_pointer_position :: () -> Vector2 {
 	mouse_x, mouse_y := Winc.get_mouse_pointer_position();
 	return .{xx mouse_x, xx (window_size[1] - xx mouse_y)};
+}
+
+Log_Entry :: struct {
+	text: string;
+	path: string;
+	options: [2]string;
+	wakeup_time: Apollo_Time;
+	info: Log_Info;
+}
+
+logger :: (message: string, data: *void, info: Log_Info) {
+	entries := data.(*[..]Log_Entry);
+	entry := Log_Entry.{
+		text = message,
+		wakeup_time = current_time_monotonic(),
+		info = info
+	};
+	if info.common_flags == .ERROR {
+		entry.options[0] = "dismiss";
+	}
+	array_add(entries, entry);
 }
 
 FONT_PATH :: "./assets/LibertinusSerif-Regular.otf";

@@ -32,7 +32,7 @@ Text_Align_Hor :: enum {LEFT; MIDDLE; RIGHT;}
 
 clipping_texture: Simp.Texture;
 
-palette :: Palette.{
+default_palette :: Palette.{
 	body = .[65, 65, 65, 255],
 	border = .[75, 75, 75, 255],
 	text = .[255, 255, 255, 255],
@@ -67,7 +67,7 @@ error_message_palette :: Palette.{
 	hover = .[160, 40, 40, 120],
 };
 
-default_tool_tip_palette :: Palette.{
+tool_tip_palette :: Palette.{
 	body = .[100, 100, 230, 255],
 	border = .[30, 30, 200, 255],
 	text = .[255, 255, 255, 255],
@@ -243,6 +243,34 @@ panel_text :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, align_
 
 	Simp.set_shader_for_text();
 	Simp.draw_prepared_text(font, x_pos + xx mother.pos[0], y_pos + xx mother.pos[1], float_rgb(text_panel.colors.text), clipping = clip);
+}
+
+panel_from_text :: (font: *Simp.Dynamic_Font, text: string, pos: [2]int, align_h: Text_Align_Hor, align_v: Text_Align_Ver, palette := default_palette) -> UI_Panel {
+	text_width := Simp.prepare_text(font, text);
+	padding := font.character_height;
+	panel: UI_Panel;
+	panel.size = .[text_width + padding, padding*2];
+	panel.colors = palette;
+	panel.pos = pos;
+
+	if #complete align_h == {
+	case .LEFT;
+	case .MIDDLE;
+		panel.pos[0] -= panel.size[0]/2;
+	case .RIGHT;
+		panel.pos[0] -= panel.size[0];
+	}
+	if #complete align_v == {
+	case .TOP;
+		panel.pos[1] -= panel.size[1];
+	case .MIDDLE;
+		panel.pos[1] -= panel.size[1]/2;
+	case .BOTTOM;
+	}
+
+	panel_draw(*panel);
+	panel_text(*panel, font, text, .MIDDLE, .MIDDLE);
+	return panel;
 }
 
 panel_draw :: (p: *UI_Panel) {
