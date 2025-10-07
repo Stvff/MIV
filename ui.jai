@@ -68,17 +68,17 @@ error_message_palette :: Palette.{
 };
 
 warning_message_palette :: Palette.{
-	// body = .[20, 160, 20, 255],
-	// border = .[160, 30, 30, 255],
-	// text = .[255, 235, 235, 255],
-	// hover = .[160, 40, 40, 255],
+	body = .[180, 140, 40, 255],
+	border = .[230, 170, 20, 255],
+	text = .[255, 255, 255, 255],
+	hover = .[255, 180, 30, 255],
 };
 
 good_message_palette :: Palette.{
 	body = .[20, 160, 20, 255],
-	border = .[30, 160, 30, 255],
+	border = .[30, 170, 30, 255],
 	text = .[235, 255, 235, 255],
-	hover = .[40, 160, 40, 255],
+	hover = .[40, 170, 40, 255],
 };
 
 tool_tip_palette :: Palette.{

@@ -20,7 +20,7 @@ Rendering_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rende
 Settings_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings_info: *Settings_Info) -> string #c_call;
 Cleanup_Procedure :: #type (pre_info: *Pre_Rendering_Info) -> string #c_call;
 
-register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Error) -> bool {
+register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Error, content_log_plugins: bool) -> bool {
 	exe_path := path_strip_filename(system.get_path_of_running_executable());
 	new_dynlib_path := tprint("%plugins/%", exe_path, isolate_name(dynlib_name));
 	if newly_imported {
@@ -94,7 +94,8 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 			cleanup = cleanup_handle,
 		};
 		array_add(*all_registrations, registration);
-		log("Plugin for '%' succesfully loaded.", p.name_filetype, flags = .VERBOSE_ONLY);
+
+		log("Plugin for '%' succesfully loaded.", p.name_filetype, flags = ifx content_log_plugins then .CONTENT else .VERBOSE_ONLY);
 
 		if amount <= 0 break;
 	}
@@ -135,7 +136,7 @@ load_registrations :: (errors: *[..]Error) -> Settings_File_1 {
 	make_directory_if_it_does_not_exist(path);
 	plugin_filenames: [..]string;
 	discover_directory(*plugin_filenames, path, errors);
-	for plugin_filenames if it.count != 0 && get_extension(it) == "so" then register_dynlib(it, false, errors);
+	for plugin_filenames if it.count != 0 && get_extension(it) == "so" then register_dynlib(it, false, errors, false);
 
 	settings_filename := tprint("%0%0", path, "settings.miv");
 	settings_file_string, exists := read_entire_file(settings_filename, log_errors = false);

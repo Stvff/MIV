@@ -224,7 +224,7 @@ main :: () {
 			log("%", file_to_open, flags = .VERBOSE_ONLY);
 			ext := get_extension(file_to_open);
 			if ext == "so" {
-				register_dynlib(file_to_open, true, *errors);
+				register_dynlib(file_to_open, true, *errors, true);
 			} else {
 				array_add(*file_history, file_to_open);
 				img_ctx.render = true;
@@ -481,6 +481,16 @@ main :: () {
 					if panel_toggle_button(*table[col][row], icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, settings_table.*[col-1][row-1]) {
 						settings_table.*[col-1][row-1] = !settings_table.*[col-1][row-1];
 					}
+				}
+				panel_split(*settings_menu_panel, .{bar_height/2, settings_menu_panel.size[1]}, .TOP, false);
+
+				/* verbose logging toggle */
+				verbose_logging_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
+				panel_text(*verbose_logging_panel, main_font, "verbose logging:", .LEFT, .MIDDLE);
+				verbose_button_panel := panel_split(*verbose_logging_panel, .{bar_height*3/2, verbose_logging_panel.size[0]}, .RIGHT, false);
+				if panel_toggle_button(*verbose_button_panel, icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, context.log_level == .VERBOSE) {
+					if context.log_level == .VERBOSE context.log_level = .NORMAL;
+					else context.log_level = .VERBOSE;
 				}
 
 				/*# plugin settings */
@@ -774,12 +784,9 @@ main :: () {
 			/* Errors only have an 'ok' button */
 			/* Choices can have two buttons with custom names */
 			/* Functions that can log choices always carry the 'choice context', which contains info on what was chosen */
-
-			/* Next to that, I want to write little popup windows about non-critical logs. They should be on a timer. */
-			/* This latter one especially will need text flow functions (since it should be notifications in the bottomright). */
-			/* I'm thinking to have the width be limited, and for the cut-off to initially not care about whitespace */
 			log_decay_time :: 5;
 			y_travel := bar_height*6/5;
+			keepalive := false;
 			for < entry: log_entries {
 				palette := default_palette;
 				if entry.info.common_flags == {
@@ -791,9 +798,25 @@ main :: () {
 				popup_panel := panel_from_text(main_font, entry.text, .[window_size[0] - bar_height/10, y_travel], .RIGHT, .BOTTOM, palette);
 				y_travel += popup_panel.size[1] + bar_height*1/5;
 
-				if to_float64_seconds(current_time_monotonic() - entry.wakeup_time) > log_decay_time {
+				if pointer_is_in_panel(*popup_panel, inp.ipointer) {
+					keepalive = true;
+				}
+
+				if panel_button(*popup_panel, inp.ipointer, inp.left_button_switch) {
 					free(entry.text);
 					array_ordered_remove_by_index(*log_entries, it_index);
+				} else {
+					panel_text(*popup_panel, main_font, entry.text, .MIDDLE, .MIDDLE);
+				}
+			}
+			for < * entry: log_entries {
+				if to_float64_seconds(current_time_monotonic() - entry.wakeup_time) > log_decay_time {
+					if keepalive {
+						entry.wakeup_time += to_apollo(log_decay_time);
+					} else {
+						free(entry.text);
+						array_ordered_remove_by_index(*log_entries, it_index);
+					}
 				}
 			}
 		}
@@ -820,7 +843,7 @@ main :: () {
 		reset_temporary_storage();
 	}
 	for log_entries {
-		print("%", it);
+		print("leftover log (level: %): \"%\"\n", it.info.common_flags, it.text);
 	}
 }
 
@@ -838,7 +861,8 @@ Log_Entry :: struct {
 }
 
 logger :: (message: string, data: *void, info: Log_Info) {
-	context.allocator;
+	if info.common_flags == .VERBOSE_ONLY && context.log_level != .VERBOSE then return;
+
 	entries := data.(*[..]Log_Entry);
 	entry := Log_Entry.{
 		text = copy_string(message),

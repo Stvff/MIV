@@ -65,7 +65,7 @@ X Error of failed request:  BadWindow (invalid Window parameter)
 	- [x] Clipping
 	- [ ] scrollbars I'm afraid
 		- [ ] Also adjustable windows
-	- [ ] logs onscreen instead of in terminal
+- [x] logs onscreen instead of in terminal
 - [ ] different types of filesorting
 - [ ] give functions the ability to respond responsibly based on user input option
 	- [ ] More advanced plugin interactions
