@@ -25,7 +25,7 @@ Pre_Rendering_Info :: struct {
 Rendering_Info :: struct {
 	buffer_width: s64;
 	buffer_height: s64;
-	buffer: [][4]u8;
+	buffer: [][4]u8; @---
 }
 
 /*** From here it is about the optional features (like plugin settings). ***/

@@ -50,11 +50,12 @@ TARGET_FRAME_TIME :: 1.0/120.0;
 
 main :: () {
 	log_entries: [..]Log_Entry;
+	option_entries := 0;
 	context.logger_data = *log_entries;
 	context.logger = logger;
 
-	errors: [..]Error;
-	settings: Settings_File_1 = load_registrations(*errors);
+	//errors: [..]Error;
+	settings: Settings_File_1 = load_registrations();
 	defer cleanup_registrations(settings);
 
 	/*# UI definitions */
@@ -92,7 +93,7 @@ main :: () {
 	};
 
 	if !init(*img_ctx.watcher, file_change_callback, *img_ctx, events_to_watch = .ALL_EVENTS, merge_window_seconds = 2*TARGET_FRAME_TIME, verbose = false, watch_recursively = false) {
-		give_error(*errors, "Could not initialize watcher");
+		log_error("Could not initialize watcher");
 		return;
 	}
 	defer if img_ctx.watcher.callback deinit(img_ctx.watcher);
@@ -224,7 +225,7 @@ main :: () {
 			log("%", file_to_open, flags = .VERBOSE_ONLY);
 			ext := get_extension(file_to_open);
 			if ext == "so" {
-				register_dynlib(file_to_open, true, *errors, true);
+				register_dynlib(file_to_open, true, true);
 			} else {
 				array_add(*file_history, file_to_open);
 				img_ctx.render = true;
@@ -239,8 +240,8 @@ main :: () {
 		if temp_files_to_open.count == 1 {
 			fileq_setting = .DIRECTORY;
 			/* I'm assuming there's always a valid file in this directory */
-			discover_directory(*directory, file_history[file_history_index], *errors);
-			sanitize_file_list(*directory, file_history[file_history_index], *directory_index, null);
+			discover_directory(*directory, file_history[file_history_index]);
+			sanitize_file_list(*directory, file_history[file_history_index], *directory_index, false);
 			current_q = *directory;
 			current_q_index = *directory_index;
 		}
@@ -260,11 +261,11 @@ main :: () {
 		/*# Choosing the file to render */
 		if position_adjusted {
 			/* if position_adjusted? */
-			sanitize_file_list(*file_history, file_history[file_history_index], *file_history_index, *errors);
+			sanitize_file_list(*file_history, file_history[file_history_index], *file_history_index, true);
 			if fileq_setting == .DIRECTORY {
 				/* I'm assuming there's always a valid file in this directory */
-				discover_directory(*directory, file_history[file_history_index], *errors);
-				sanitize_file_list(*directory, file_history[file_history_index], *directory_index, null);
+				discover_directory(*directory, file_history[file_history_index]);
+				sanitize_file_list(*directory, file_history[file_history_index], *directory_index, false);
 			}
 		}
 		if current_q.count == 0 img_ctx.render = false;
@@ -273,7 +274,7 @@ main :: () {
 		if img_ctx.render {
 			old_pre_info := img_ctx.pre_info;
 			new_name := current_q.*[current_q_index.*];
-			img_ctx.render = get_loading(new_name, get_extension(new_name), *img_ctx, *errors);
+			img_ctx.render = get_loading(new_name, get_extension(new_name), *img_ctx, true);
 			if img_ctx.render {
 				if old_pre_info.fileptr posix.fclose(old_pre_info.fileptr);
 				/* retrieve previous offsets etc from some per-file history */
@@ -310,7 +311,7 @@ main :: () {
 			array_resize(*(buffer), buffer_width*buffer_height);
 			render_error := img_ctx.plugin.render(*img_ctx.pre_info, *img_ctx.render_info);
 			if render_error {
-				give_error(*errors, "File image data retrieval error: %", render_error);
+				log_error("File image data retrieval error: %", render_error);
 				img_ctx.draw = false;
 			} else {
 				bitmap: Simp.Bitmap;
@@ -345,7 +346,7 @@ main :: () {
 			if display_metadata
 				metadata_panel = panel_split(*canvas, .{bar_height*5, canvas.size[0]}, .LEFT, false);
 
-			first_layer_is_pressable := img_ctx.draw && errors.count == 0;
+			first_layer_is_pressable := img_ctx.draw && option_entries == 0;
 
 			/*# Image drawing */
 			canvas.colors = bg_palette;
@@ -501,7 +502,7 @@ main :: () {
 						settings_info := img_ctx.settings_info;
 						error_str := img_ctx.plugin.settings(*img_ctx.pre_info, *img_ctx.render_info, *settings_info);
 						if error_str {
-							give_error(*errors, "Plugin for '%' settings retrieval error: %", img_ctx.plugin.name_filetype, error_str);
+							log_error("Plugin for '%' settings retrieval error: %", img_ctx.plugin.name_filetype, error_str);
 						} else img_ctx.settings_info = settings_info;
 					}
 
@@ -544,7 +545,7 @@ main :: () {
 							settings_info := img_ctx.settings_info;
 							error_str := img_ctx.plugin.settings(*img_ctx.pre_info, *img_ctx.render_info, *settings_info);
 							if error_str {
-								give_error(*errors, "Plugin for '%' settings retrieval error: %", img_ctx.plugin.name_filetype, error_str);
+								log_error("Plugin for '%' settings retrieval error: %", img_ctx.plugin.name_filetype, error_str);
 							} else img_ctx.settings_info = settings_info;
 							if #complete img_ctx.settings_info.response == {
 							case .NOTHING;
@@ -644,7 +645,7 @@ main :: () {
 				file_display := panel_text_split(*top_bar, main_font, text, .RIGHT);
 
 				tip.text = img_ctx.pre_info.name;
-				if panel_button(*file_display, inp.ipointer, inp.left_button_switch, *tip) {
+				if first_layer_is_pressable && panel_button(*file_display, inp.ipointer, inp.left_button_switch, *tip) {
 					os_clipboard_set_text(img_ctx.pre_info.name);
 					log("Filepath copied to clipboard.", flags = .CONTENT);
 				}
@@ -734,8 +735,8 @@ main :: () {
 				current_q_index = *file_history_index;
 			case .DIRECTORY;
 				/* I'm assuming there's always a valid file in this directory */
-				discover_directory(*directory, file_history[file_history_index], *errors);
-				sanitize_file_list(*directory, file_history[file_history_index], *directory_index, null);
+				discover_directory(*directory, file_history[file_history_index]);
+				sanitize_file_list(*directory, file_history[file_history_index], *directory_index, false);
 				current_q = *directory;
 				current_q_index = *directory_index;
 			}
@@ -746,48 +747,18 @@ main :: () {
 			}
 		}
 		{/*# Popups */
-			pressed_option := -2;
-			for error: errors {
-				if error.kind == .LOG {
-					// log("%", error);
-					array_ordered_remove_by_index(*errors, it_index);
-					continue;
-				}
-				if pressed_option > -2 continue;
-
-				error_screen := UI_Panel.{
-					size = .[window_size[0], bar_height*2],
-					pos = .[0, window_size[1]/2 - bar_height],
-					colors = error_message_palette,
-				};
-				options_bar := panel_split(*error_screen, .{1, 2}, .BOTTOM, true);
-				panel_text(*error_screen, main_font, error.message, .MIDDLE, .MIDDLE);
-
-				divisions := panel_subdivide(*options_bar, 3, .HORIZONTAL, true);
-				if errors.count > 1 then panel_text(*divisions[2], main_font, tprint("% other error%", errors.count - 1, ifx errors.count-1 == 1 then "" else "s"), .RIGHT, .MIDDLE);
-
-				buttons := panel_subdivide(*divisions[1], ifx error.options[1].count then 2 else 1, .HORIZONTAL, true);
-				pressed_option = -1;
-				for buttons {
-					if panel_button(*it, inp.ipointer, inp.left_button_switch) {
-						log("%", error);
-						pressed_option = it_index;
-					}
-					panel_text(*it, main_font, error.options[it_index], .MIDDLE, .MIDDLE);
-				}
-				if pressed_option > -1 {
-					array_ordered_remove_by_index(*errors, it_index);
-				}
-			}
-			/* About errors, etc */
+			/* What I'd like to do with errors/options */
 			/* A function can log an error, and can log a choice */
 			/* Errors only have an 'ok' button */
 			/* Choices can have two buttons with custom names */
 			/* Functions that can log choices always carry the 'choice context', which contains info on what was chosen */
+			option_entries = 0;
+			for < entry: log_entries if entry.options[0] != "" option_entries += 1;
+
 			log_decay_time :: 5;
 			y_travel := bar_height*6/5;
 			keepalive := false;
-			for < entry: log_entries {
+			for < * entry: log_entries {
 				palette := default_palette;
 				if entry.info.common_flags == {
 					case .ERROR; palette = error_message_palette;
@@ -795,18 +766,49 @@ main :: () {
 					case .CONTENT; palette = good_message_palette;
 				}
 
-				popup_panel := panel_from_text(main_font, entry.text, .[window_size[0] - bar_height/10, y_travel], .RIGHT, .BOTTOM, palette);
-				y_travel += popup_panel.size[1] + bar_height*1/5;
+				if entry.options[0] != "" { /* This is in case the log_entry has an option setting (like errors) */
+					error_screen := UI_Panel.{
+						size = .[window_size[0], bar_height*2],
+						pos = .[0, window_size[1]/2 - bar_height],
+						colors = palette,
+					};
+					options_bar := panel_split(*error_screen, .{1, 2}, .BOTTOM, true);
+					panel_text(*error_screen, main_font, entry.text, .MIDDLE, .MIDDLE);
 
-				if pointer_is_in_panel(*popup_panel, inp.ipointer) {
+					divisions := panel_subdivide(*options_bar, 3, .HORIZONTAL, true);
+					if option_entries > 1 then panel_text(*divisions[2], main_font, tprint("% other message%", option_entries - 1, ifx option_entries-1 == 1 then "" else "s"), .RIGHT, .MIDDLE);
+
+					buttons := panel_subdivide(*divisions[1], ifx entry.options[1].count then 2 else 1, .HORIZONTAL, true);
+					pressed_option := -1;
+					for buttons {
+						if panel_button(*it, inp.ipointer, inp.left_button_switch) {
+							inp.left_button_switch = false;
+							pressed_option = it_index;
+						}
+						panel_text(*it, main_font, entry.options[it_index], .MIDDLE, .MIDDLE);
+					}
+					if pressed_option > -1 {
+						free(entry.text);
+						array_ordered_remove_by_index(*log_entries, it_index);
+						option_entries -= 1;
+					}
 					keepalive = true;
-				}
+					entry.wakeup_time = current_time_monotonic();
 
-				if panel_button(*popup_panel, inp.ipointer, inp.left_button_switch) {
-					free(entry.text);
-					array_ordered_remove_by_index(*log_entries, it_index);
-				} else {
-					panel_text(*popup_panel, main_font, entry.text, .MIDDLE, .MIDDLE);
+				} else if !option_entries { /* This is just the normal notifs */
+					popup_panel := panel_from_text(main_font, entry.text, .[window_size[0] - bar_height/10, y_travel], .RIGHT, .BOTTOM, palette);
+					y_travel += popup_panel.size[1] + bar_height*1/5;
+
+					if pointer_is_in_panel(*popup_panel, inp.ipointer) {
+						keepalive = true;
+					}
+
+					if panel_button(*popup_panel, inp.ipointer, inp.left_button_switch) {
+						free(entry.text);
+						array_ordered_remove_by_index(*log_entries, it_index);
+					} else {
+						panel_text(*popup_panel, main_font, entry.text, .MIDDLE, .MIDDLE);
+					}
 				}
 			}
 			for < * entry: log_entries {

@@ -20,7 +20,7 @@ Rendering_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rende
 Settings_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings_info: *Settings_Info) -> string #c_call;
 Cleanup_Procedure :: #type (pre_info: *Pre_Rendering_Info) -> string #c_call;
 
-register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Error, content_log_plugins: bool) -> bool {
+register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugins: bool) -> bool {
 	exe_path := path_strip_filename(system.get_path_of_running_executable());
 	new_dynlib_path := tprint("%plugins/%", exe_path, isolate_name(dynlib_name));
 	if newly_imported {
@@ -31,7 +31,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 
 	handle := posix.dlopen(dynlib_cname, posix.RTLD_NOW);
 	if !handle {
-		give_error(errors, "Dynamic library loading error: %", to_string(posix.dlerror()));
+		log_error("Dynamic library loading error: %", to_string(posix.dlerror()));
 		return false;
 	}
 	posix.dlerror();
@@ -39,7 +39,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 	reg_proc: Registration_Procedure = posix.dlsym(handle, "registration_procedure");
 	loading_error := to_string(posix.dlerror());
 	if loading_error {
-		give_error(errors, "Dynamic function loading error: %", loading_error);
+		log_error("Dynamic function loading error: %", loading_error);
 		return false;
 	}
 
@@ -52,7 +52,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 		pre_render_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "pre_render"));
 		pre_render_handle := posix.dlsym(handle, pre_render_cname);
 		if !pre_render_handle {
-			give_error(errors, "Dynamic function loading error: %", to_string(posix.dlerror()));
+			log_error("Dynamic function loading error: %", to_string(posix.dlerror()));
 			success = false;
 		}
 		posix.dlerror();
@@ -60,7 +60,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 		render_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "render"));
 		render_handle := posix.dlsym(handle, render_cname);
 		if !render_handle {
-			give_error(errors, "Dynamic function loading error: %", to_string(posix.dlerror()));
+			log_error("Dynamic function loading error: %", to_string(posix.dlerror()));
 			success = false;
 		}
 		posix.dlerror();
@@ -70,7 +70,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 			settings_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "settings"));
 			settings_handle = posix.dlsym(handle, settings_cname);
 			if !settings_handle {
-				give_error(errors, "Dynamic function loading error: %", to_string(posix.dlerror()));
+				log_error("Dynamic function loading error: %", to_string(posix.dlerror()));
 				success = false;
 			}
 			posix.dlerror();
@@ -79,7 +79,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 		cleanup_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "cleanup"));
 		cleanup_handle := posix.dlsym(handle, cleanup_cname);
 		if !cleanup_handle {
-			give_error(errors, "Dynamic function loading error: %", to_string(posix.dlerror()));
+			log_error("Dynamic function loading error: %", to_string(posix.dlerror()));
 			success = false;
 		}
 		posix.dlerror();
@@ -130,13 +130,13 @@ Persistence_Setting :: struct {
 
 Default_Settings :: Settings_File_1.{};
 
-load_registrations :: (errors: *[..]Error) -> Settings_File_1 {
+load_registrations :: () -> Settings_File_1 {
 	path := path_strip_filename(system.get_path_of_running_executable());
 	path = tprint("%plugins/", path);
 	make_directory_if_it_does_not_exist(path);
 	plugin_filenames: [..]string;
-	discover_directory(*plugin_filenames, path, errors);
-	for plugin_filenames if it.count != 0 && get_extension(it) == "so" then register_dynlib(it, false, errors, false);
+	discover_directory(*plugin_filenames, path);
+	for plugin_filenames if it.count != 0 && get_extension(it) == "so" then register_dynlib(it, false, false);
 
 	settings_filename := tprint("%0%0", path, "settings.miv");
 	settings_file_string, exists := read_entire_file(settings_filename, log_errors = false);
@@ -187,7 +187,7 @@ cleanup_registrations :: (settings_file: Settings_File_1) {
 	write_settings_file(settings_file);
 }
 
-get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, errors: *[..]Error) -> bool {
+get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do_logging: bool) -> bool {
 	new_plugin: *Registration_Entry = null;
 	ok := true;
 	if extension {
@@ -209,7 +209,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 	file_handle: *posix.FILE;
 	file_handle = posix.fopen(temp_c_string(filepath), "r");
 	if !file_handle {
-		give_error(errors, "File does not exist or could not be opened: %", filepath);
+		if do_logging log_error("File does not exist or could not be opened: %", filepath);
 		ok = false;
 		return false;
 	}
@@ -219,7 +219,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 	};
 
 	defer if !ok {
-		log("'%' closed because there was an error.", filepath, flags = .VERBOSE_ONLY);
+		if do_logging log("'%' closed because there was an error.", filepath, flags = .VERBOSE_ONLY);
 		posix.fclose(file_handle);
 	}
 
@@ -237,7 +237,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 	}
 
 	if !new_plugin {
-		give_error(errors, "Could not load file '%' with any available plugin.", filepath);
+		if do_logging log_error("Could not load file '%' with any available plugin.", filepath);
 		ok = false;
 		return false;
 	}
@@ -255,7 +255,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 			if valid_ascii(found_mn) foun = found_mn;
 			else foun = tprint("%", cast([]u8, found_mn));
 
-			give_error(errors, "Mismatched magic number. The file type '%' expected the magic number '%', but got '%'.", new_plugin.name_filetype, expe, foun);
+			if do_logging log_error("Mismatched magic number. The file type '%' expected the magic number '%', but got '%'.", new_plugin.name_filetype, expe, foun);
 			// Also do the whole magic number checking here so that the user can choose
 			ok = false;
 			return false;
@@ -265,7 +265,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 	pre_info_err := new_plugin.pre_render(*pre_info);
 	posix.fseek(file_handle, 0, posix.SEEK_SET);
 	if pre_info_err {
-		give_error(errors, "File type '%' metadata reading error: %", new_plugin.name_filetype, pre_info_err);
+		if do_logging log_error("File type '%' metadata reading error: %", new_plugin.name_filetype, pre_info_err);
 		ok = false;
 		return false;
 	}
@@ -273,7 +273,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 	if img_ctx.watcher.callback {
 		deinit(img_ctx.watcher);
 		if !init(*img_ctx.watcher, file_change_callback, img_ctx, events_to_watch = .ALL_EVENTS, merge_window_seconds = 2*TARGET_FRAME_TIME, verbose = false, watch_recursively = false) {
-			give_error(errors, "Could not initialize watcher");
+			if do_logging log_error("Could not initialize watcher");
 			ok = false;
 			return false;
 		}
@@ -281,7 +281,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 		dir := path_strip_filename(filepath);
 		if !dir then dir = "./";
 		if !add_directories(*img_ctx.watcher, dir) {
-			give_error(errors, "The directory of '%' could not be opened for tracking file changes", filepath);
+			if do_logging log_error("The directory of '%' could not be opened for tracking file changes", filepath);
 			ok = false;
 			return false;
 		}
@@ -347,7 +347,7 @@ isolate_name :: (path: string) -> string {
 	return path;
 }
 
-discover_directory :: (directory: *[..]string, file: string, errors: *[..]Error) -> bool {
+discover_directory :: (directory: *[..]string, file: string) -> bool {
 	dir_name := path_strip_filename(file);
 	if !dir_name.count dir_name = "./";
 	c_dir_name := temp_c_string(dir_name);
@@ -356,7 +356,7 @@ discover_directory :: (directory: *[..]string, file: string, errors: *[..]Error)
 
 	namelist_count := posix.scandir(c_dir_name, *namelist, filter, posix.alphasort);
 	if namelist_count == -1 {
-		give_error(errors, "Could not scan directory '%'.", dir_name);
+		log_error("Could not scan directory '%'.", dir_name);
 		return false;
 	}
 	array_reset(directory);
@@ -377,14 +377,11 @@ discover_directory :: (directory: *[..]string, file: string, errors: *[..]Error)
 	return true;
 }
 
-sanitize_file_list :: (list: *[..]string, file: string, index: *int, errors: *[..]Error) {
+sanitize_file_list :: (list: *[..]string, file: string, index: *int, do_logging: bool) {
 	new_list: [..]string;
 	dummy_img_ctx: Image_Context;
-	dummy_errors: [..]Error;
-	dummy_errors.allocator = temp;
-	if !errors errors = *dummy_errors;
 	for list.* {
-		if !get_loading(it, get_extension(it), *dummy_img_ctx, errors) continue;
+		if !get_loading(it, get_extension(it), *dummy_img_ctx, do_logging) continue;
 		posix.fclose(dummy_img_ctx.pre_info.fileptr);
 		array_add(*new_list, it);
 	}
@@ -396,20 +393,6 @@ sanitize_file_list :: (list: *[..]string, file: string, index: *int, errors: *[.
 	if !found {
 		index.* = list.count - 1;
 	}
-}
-
-Error :: struct {
-	kind: enum{ERROR; LOG;};
-	message: string;
-	options: [2]string;
-}
-
-// give_log :: (errors: *[..]Error, message: string, args: ..Any) {
-// 	array_add(errors, .{.LOG, sprint(message, ..args), .[]});
-// }
-
-give_error :: (errors: *[..]Error, message: string, args: ..Any) {
-	array_add(errors, .{.ERROR, sprint(message, ..args), .["dismiss"]});
 }
 
 system :: #import "System";
