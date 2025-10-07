@@ -67,6 +67,20 @@ error_message_palette :: Palette.{
 	hover = .[160, 40, 40, 120],
 };
 
+warning_message_palette :: Palette.{
+	// body = .[20, 160, 20, 255],
+	// border = .[160, 30, 30, 255],
+	// text = .[255, 235, 235, 255],
+	// hover = .[160, 40, 40, 255],
+};
+
+good_message_palette :: Palette.{
+	body = .[20, 160, 20, 255],
+	border = .[30, 160, 30, 255],
+	text = .[235, 255, 235, 255],
+	hover = .[40, 160, 40, 255],
+};
+
 tool_tip_palette :: Palette.{
 	body = .[100, 100, 230, 255],
 	border = .[30, 30, 200, 255],

@@ -94,7 +94,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, errors: *[..]Erro
 			cleanup = cleanup_handle,
 		};
 		array_add(*all_registrations, registration);
-		give_log(errors, "%", registration);
+		log("Plugin for '%' succesfully loaded.", p.name_filetype, flags = .VERBOSE_ONLY);
 
 		if amount <= 0 break;
 	}
@@ -156,7 +156,7 @@ load_registrations :: (errors: *[..]Error) -> Settings_File_1 {
 		if settings_file_buffer.count != size_of(Settings_File_1) return Default_Settings;
 		settings_file = cast(*Settings_File_1, settings_file_buffer.data).*;
 	case;
-		log("Unsupported settings file version '%'.", settings_file_buffer[0]);
+		log("Unsupported settings file version '%'.", settings_file_buffer[0], flags = .WARNING);
 		return Default_Settings;
 	}
 
@@ -218,7 +218,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, er
 	};
 
 	defer if !ok {
-		give_log(errors, "'%' closed because there was an error.", filepath);
+		log("'%' closed because there was an error.", filepath, flags = .VERBOSE_ONLY);
 		posix.fclose(file_handle);
 	}
 
@@ -403,9 +403,9 @@ Error :: struct {
 	options: [2]string;
 }
 
-give_log :: (errors: *[..]Error, message: string, args: ..Any) {
-	array_add(errors, .{.LOG, sprint(message, ..args), .[]});
-}
+// give_log :: (errors: *[..]Error, message: string, args: ..Any) {
+// 	array_add(errors, .{.LOG, sprint(message, ..args), .[]});
+// }
 
 give_error :: (errors: *[..]Error, message: string, args: ..Any) {
 	array_add(errors, .{.ERROR, sprint(message, ..args), .["dismiss"]});

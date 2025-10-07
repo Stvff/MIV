@@ -221,7 +221,7 @@ main :: () {
 		temp_files_to_open := files_to_open;
 		while temp_files_to_open.count {
 			file_to_open := temp_files_to_open[0];
-			give_log(*errors, "%", file_to_open);
+			log("%", file_to_open, flags = .VERBOSE_ONLY);
 			ext := get_extension(file_to_open);
 			if ext == "so" {
 				register_dynlib(file_to_open, true, *errors);
@@ -297,7 +297,7 @@ main :: () {
 				if f array_ordered_remove_by_index(*file_history, index);
 				file_history_index = clamp(file_history_index, 0, file_history.count-1);
 			}
-			give_log(*errors, "%", img_ctx);
+			log("%", img_ctx, flags = .VERBOSE_ONLY);
 		}
 		img_ctx.draw = true;
 
@@ -325,7 +325,7 @@ main :: () {
 			img_ctx.render = false;
 
 			loading_time = current_time_monotonic() - loading_time;
-			give_log(*errors, "Loading time: %, associated fps if we did nothing but this: %", to_float64_seconds(loading_time), 1/to_float64_seconds(loading_time));
+			log("Loading time: %, associated fps if we did nothing but this: %", to_float64_seconds(loading_time), 1/to_float64_seconds(loading_time), flags = .VERBOSE_ONLY);
 		}
 
 		{/*# Drawing time */
@@ -636,6 +636,7 @@ main :: () {
 				tip.text = img_ctx.pre_info.name;
 				if panel_button(*file_display, inp.ipointer, inp.left_button_switch, *tip) {
 					os_clipboard_set_text(img_ctx.pre_info.name);
+					log("Filepath copied to clipboard.", flags = .CONTENT);
 				}
 				panel_text(*file_display, main_font, text, .MIDDLE, .MIDDLE);
 			}
@@ -777,18 +778,21 @@ main :: () {
 			/* Next to that, I want to write little popup windows about non-critical logs. They should be on a timer. */
 			/* This latter one especially will need text flow functions (since it should be notifications in the bottomright). */
 			/* I'm thinking to have the width be limited, and for the cut-off to initially not care about whitespace */
-			log_decay_time :: 0.5;
-			for entry: log_entries {
-				// print("%\n", entry);
+			log_decay_time :: 5;
+			y_travel := bar_height*6/5;
+			for < entry: log_entries {
+				palette := default_palette;
+				if entry.info.common_flags == {
+					case .ERROR; palette = error_message_palette;
+					case .WARNING; palette = warning_message_palette;
+					case .CONTENT; palette = good_message_palette;
+				}
 
-				// choice_panel := UI_Panel.{
-				// 	size = .[window_size[0], bar_height*2],
-				// 	pos = .[0, window_size[1]/2 - bar_height],
-				// 	colors = error_message_palette,
-				// };
-				// popup_panel := panel_from_text(main_font, entry.message, .{bar_height, window_size[1] - bar_height));
+				popup_panel := panel_from_text(main_font, entry.text, .[window_size[0] - bar_height/10, y_travel], .RIGHT, .BOTTOM, palette);
+				y_travel += popup_panel.size[1] + bar_height*1/5;
 
 				if to_float64_seconds(current_time_monotonic() - entry.wakeup_time) > log_decay_time {
+					free(entry.text);
 					array_ordered_remove_by_index(*log_entries, it_index);
 				}
 			}
@@ -815,8 +819,8 @@ main :: () {
 		Simp.swap_buffers(os_window);
 		reset_temporary_storage();
 	}
-	for errors {
-		log("%", it);
+	for log_entries {
+		print("%", it);
 	}
 }
 
@@ -834,9 +838,10 @@ Log_Entry :: struct {
 }
 
 logger :: (message: string, data: *void, info: Log_Info) {
+	context.allocator;
 	entries := data.(*[..]Log_Entry);
 	entry := Log_Entry.{
-		text = message,
+		text = copy_string(message),
 		wakeup_time = current_time_monotonic(),
 		info = info
 	};
