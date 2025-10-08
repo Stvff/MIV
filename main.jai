@@ -298,7 +298,10 @@ main :: () {
 				if f array_ordered_remove_by_index(*file_history, index);
 				file_history_index = clamp(file_history_index, 0, file_history.count-1);
 			}
-			log("%", formatStruct(img_ctx, use_newlines_if_long_form = false), flags = .VERBOSE_ONLY);
+			new_print_style := context.print_style;
+			new_print_style.default_format_struct.use_newlines_if_long_form = true;
+			new_print_style.default_format_array.stop_printing_after_this_many_elements = 4;
+			log("img_ctx = .%", img_ctx, flags = .VERBOSE_ONLY,, print_style = new_print_style);
 		}
 		img_ctx.draw = true;
 
@@ -647,7 +650,7 @@ main :: () {
 				tip.text = img_ctx.pre_info.name;
 				if first_layer_is_pressable && panel_button(*file_display, inp.ipointer, inp.left_button_switch, *tip) {
 					os_clipboard_set_text(img_ctx.pre_info.name);
-					log("Filepath copied to clipboard.", flags = .CONTENT);
+					log("Filepath copied to clipboard.\nNewsflash bucko\nfjakdlfjlaskdfjlaksdjflkasjl", flags = .CONTENT);
 				}
 				panel_text(*file_display, main_font, text, .MIDDLE, .MIDDLE);
 			}
@@ -766,7 +769,7 @@ main :: () {
 					case .CONTENT; palette = good_message_palette;
 				}
 
-				if entry.options[0] != "" { /* This is in case the log_entry has an option setting (like errors) */
+			if entry.options[0] != "" { /* This is in case the log_entry has an option setting (like errors) */
 					error_screen := UI_Panel.{
 						size = .[window_size[0], bar_height*2],
 						pos = .[0, window_size[1]/2 - bar_height],
@@ -807,7 +810,7 @@ main :: () {
 						free(entry.text);
 						array_ordered_remove_by_index(*log_entries, it_index);
 					} else {
-						panel_text(*popup_panel, main_font, entry.text, .MIDDLE, .MIDDLE);
+						//panel_text(*popup_panel, main_font, entry.text, .MIDDLE, .MIDDLE);
 					}
 				}
 			}

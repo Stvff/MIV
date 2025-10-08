@@ -260,10 +260,13 @@ panel_text :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, align_
 }
 
 panel_from_text :: (font: *Simp.Dynamic_Font, text: string, pos: [2]int, align_h: Text_Align_Hor, align_v: Text_Align_Ver, palette := default_palette) -> UI_Panel {
-	text_width := Simp.prepare_text(font, text);
+	text_size, lines := flow_text(font, text);
+
+	// text_width := Simp.prepare_text(font, text);
 	padding := font.character_height;
 	panel: UI_Panel;
-	panel.size = .[text_width + padding, padding*2];
+	panel.size = text_size;
+	// panel.size = .[text_width + padding, padding*2];
 	panel.colors = palette;
 	panel.pos = pos;
 
@@ -283,7 +286,8 @@ panel_from_text :: (font: *Simp.Dynamic_Font, text: string, pos: [2]int, align_h
 	}
 
 	panel_draw(*panel);
-	panel_text(*panel, font, text, .MIDDLE, .MIDDLE);
+	// panel_text(*panel, font, text, .MIDDLE, .MIDDLE);
+	draw_flow_text(font, lines, panel.pos, panel.size);
 	return panel;
 }
 
@@ -310,4 +314,27 @@ panel_draw :: (p: *UI_Panel) {
 
 float_rgb :: (rgb: [4]u8) -> Vector4 {
 	return .{cast(float, rgb[0])/255, cast(float, rgb[1])/255, cast(float, rgb[2])/255, cast(float, rgb[3])/255};
+}
+
+flow_text :: (font: *Simp.Dynamic_Font, text: string) -> [2]int, []string {
+	lines := split(text, "\n",, allocator = temp);
+	padding := font.character_height;
+	size := int.[0, padding];
+	for line: lines {
+		width := Simp.prepare_text(font, line) + padding;
+		if width > size[0] size[0] = width;
+		size[1] += font.character_height;
+	}
+	return size, lines;
+}
+
+draw_flow_text :: (font: *Simp.Dynamic_Font, lines: []string, pos: [2]int, size: [2]int) {
+	// lines := split(text, "\n",, allocator = temp);
+	padding := font.character_height;
+	// tpos := int.[pos[0] + padding/2 + padding, pos[1] + padding/2];
+	tpos := int.[pos[0] + padding/2, pos[1] + size[1] - padding - padding/4];
+	for line: lines {
+		Simp.draw_text(font, tpos[0], tpos[1], line);
+		tpos[1] -= padding;
+	}
 }
