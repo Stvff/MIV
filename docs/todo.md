@@ -49,14 +49,6 @@
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
 - When adding a plugin after removing the currently open file, there is a crash.
 - When another window is above MIV, MIV still reads the mouse position from that window.
-- When an older window is closed above MIV, MIV crashes?? Even subwindows of other programs (see OBS) have this effect.
-```
-X Error of failed request:  BadWindow (invalid Window parameter)
-  Major opcode of failed request:  38 (X_QueryPointer)
-  Resource id in failed request:  0x1
-  Serial number of failed request:  41677
-  Current serial number in output stream:  41677
-```
 
 ## Amersfoort
 - [ ] Another image type

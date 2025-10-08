@@ -45,7 +45,7 @@ Input_State :: struct {
 }
 
 window_size: [2]int;
-os_window: X11.Window;
+os_window: Winc.Window_Type;
 TARGET_FRAME_TIME :: 1.0/120.0;
 
 main :: () {
@@ -298,7 +298,7 @@ main :: () {
 				if f array_ordered_remove_by_index(*file_history, index);
 				file_history_index = clamp(file_history_index, 0, file_history.count-1);
 			}
-			log("%", img_ctx, flags = .VERBOSE_ONLY);
+			log("%", formatStruct(img_ctx, use_newlines_if_long_form = false), flags = .VERBOSE_ONLY);
 		}
 		img_ctx.draw = true;
 
@@ -850,8 +850,9 @@ main :: () {
 }
 
 get_pointer_position :: () -> Vector2 {
-	mouse_x, mouse_y := Winc.get_mouse_pointer_position();
-	return .{xx mouse_x, xx (window_size[1] - xx mouse_y)};
+	mouse_x, mouse_y, success := Winc.get_mouse_pointer_position(os_window, true);
+	if !success return .{-10, -10};
+	return .{xx mouse_x, xx mouse_y};
 }
 
 Log_Entry :: struct {

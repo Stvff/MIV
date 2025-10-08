@@ -219,7 +219,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do
 	};
 
 	defer if !ok {
-		if do_logging log("'%' closed because there was an error.", filepath, flags = .VERBOSE_ONLY);
+		log("'%' closed because there was an error.", filepath, flags = .VERBOSE_ONLY);
 		posix.fclose(file_handle);
 	}
 
