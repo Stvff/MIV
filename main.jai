@@ -498,20 +498,20 @@ main :: () {
 				}
 
 				/*# plugin settings */
-				if img_ctx.plugin && img_ctx.plugin.has_settings {
+				if img_ctx.plugin && img_ctx.plugin.plugin_provided.has_settings {
 					if settings_menu_just_opened || img_ctx.settings_info.options.data == null {
 						img_ctx.settings_info.changed_index = -1;
 						img_ctx.settings_info.changed_secondary_index = -1;
 						settings_info := img_ctx.settings_info;
 						error_str := img_ctx.plugin.settings(*img_ctx.pre_info, *img_ctx.render_info, *settings_info);
 						if error_str {
-							log_error("Plugin for '%' settings retrieval error: %", img_ctx.plugin.name_filetype, error_str);
+							log_error("Plugin for '%' settings retrieval error: %", img_ctx.plugin.plugin_provided.name_of_filetype, error_str);
 						} else img_ctx.settings_info = settings_info;
 					}
 
 					panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, false);
 					title_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, false);
-					panel_text(*title_panel, main_font, tprint("% settings:", img_ctx.plugin.name_filetype), .LEFT, .MIDDLE);
+					panel_text(*title_panel, main_font, tprint("% settings:", img_ctx.plugin.plugin_provided.name_of_filetype), .LEFT, .MIDDLE);
 
 					for * option: img_ctx.settings_info.options {
 						changed := false;
@@ -548,7 +548,7 @@ main :: () {
 							settings_info := img_ctx.settings_info;
 							error_str := img_ctx.plugin.settings(*img_ctx.pre_info, *img_ctx.render_info, *settings_info);
 							if error_str {
-								log_error("Plugin for '%' settings retrieval error: %", img_ctx.plugin.name_filetype, error_str);
+								log_error("Plugin for '%' settings retrieval error: %", img_ctx.plugin.plugin_provided.name_of_filetype, error_str);
 							} else img_ctx.settings_info = settings_info;
 							if #complete img_ctx.settings_info.response == {
 							case .NOTHING;
@@ -868,6 +868,7 @@ Log_Entry :: struct {
 
 logger :: (message: string, data: *void, info: Log_Info) {
 	if info.common_flags == .VERBOSE_ONLY && context.log_level != .VERBOSE then return;
+	if !message then return;
 
 	entries := data.(*[..]Log_Entry);
 	entry := Log_Entry.{

@@ -6,8 +6,8 @@ all_registrations: [..]Registration_Entry;
 
 Registration_Entry :: struct {
 	plugin_filename: string;
-	handle: *void;
-	using plugin_provided: Plugin_Registration_Entry;
+	dynlib_handle: *void;
+	plugin_provided: Plugin_Registration_Entry;
 	pre_render: Pre_Rendering_Procedure;
 	render: Rendering_Procedure;
 	settings: Settings_Procedure;
@@ -29,14 +29,14 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugi
 
 	dynlib_cname := temp_c_string(new_dynlib_path);
 
-	handle := posix.dlopen(dynlib_cname, posix.RTLD_NOW);
-	if !handle {
+	dynlib_handle := posix.dlopen(dynlib_cname, posix.RTLD_NOW);
+	if !dynlib_handle {
 		log_error("Dynamic library loading error: %", to_string(posix.dlerror()));
 		return false;
 	}
 	posix.dlerror();
 
-	reg_proc: Registration_Procedure = posix.dlsym(handle, "registration_procedure");
+	reg_proc: Registration_Procedure = posix.dlsym(dynlib_handle, "registration_procedure");
 	loading_error := to_string(posix.dlerror());
 	if loading_error {
 		log_error("Dynamic function loading error: %", loading_error);
@@ -50,7 +50,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugi
 		if amount < 0 break;
 
 		pre_render_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "pre_render"));
-		pre_render_handle := posix.dlsym(handle, pre_render_cname);
+		pre_render_handle := posix.dlsym(dynlib_handle, pre_render_cname);
 		if !pre_render_handle {
 			log_error("Dynamic function loading error: %", to_string(posix.dlerror()));
 			success = false;
@@ -58,7 +58,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugi
 		posix.dlerror();
 
 		render_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "render"));
-		render_handle := posix.dlsym(handle, render_cname);
+		render_handle := posix.dlsym(dynlib_handle, render_cname);
 		if !render_handle {
 			log_error("Dynamic function loading error: %", to_string(posix.dlerror()));
 			success = false;
@@ -68,7 +68,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugi
 		settings_handle: *void;
 		if p.has_settings {
 			settings_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "settings"));
-			settings_handle = posix.dlsym(handle, settings_cname);
+			settings_handle = posix.dlsym(dynlib_handle, settings_cname);
 			if !settings_handle {
 				log_error("Dynamic function loading error: %", to_string(posix.dlerror()));
 				success = false;
@@ -77,7 +77,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugi
 		}
 
 		cleanup_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "cleanup"));
-		cleanup_handle := posix.dlsym(handle, cleanup_cname);
+		cleanup_handle := posix.dlsym(dynlib_handle, cleanup_cname);
 		if !cleanup_handle {
 			log_error("Dynamic function loading error: %", to_string(posix.dlerror()));
 			success = false;
@@ -86,7 +86,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugi
 
 		registration := Registration_Entry.{
 			plugin_filename = isolate_name(dynlib_name),
-			handle = handle,
+			dynlib_handle = dynlib_handle,
 			plugin_provided = p,
 			pre_render = pre_render_handle,
 			render = render_handle,
@@ -95,7 +95,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugi
 		};
 		array_add(*all_registrations, registration);
 
-		log("Plugin for '%' succesfully loaded.", p.name_filetype, flags = ifx content_log_plugins then .CONTENT else .VERBOSE_ONLY);
+		log("Plugin for '%' succesfully loaded.", p.name_of_filetype, flags = ifx content_log_plugins then .CONTENT else .VERBOSE_ONLY);
 
 		if amount <= 0 break;
 	}
@@ -179,9 +179,9 @@ cleanup_registrations :: (settings_file: Settings_File_1) {
 			array_add(*registered_names, it.plugin_filename);
 			print(*sb, "%\n", it.plugin_filename);
 		}
-		if !array_find(closed_handles, it.handle) {
-			posix.dlclose(it.handle);
-			array_add(*closed_handles, it.handle);
+		if !array_find(closed_handles, it.dynlib_handle) {
+			posix.dlclose(it.dynlib_handle);
+			array_add(*closed_handles, it.dynlib_handle);
 		}
 	}
 	write_settings_file(settings_file);
@@ -193,7 +193,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do
 	if extension {
 		push_allocator(temp);
 		for * all_registrations {
-			registered_ext := it.extension;
+			registered_ext := it.plugin_provided.extension;
 			found_ext := extension;
 			registered_ext = to_lower_copy(registered_ext);
 			found_ext = to_lower_copy(found_ext);
@@ -217,17 +217,17 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do
 	};
 
 	defer if !ok {
-		log("'%' closed because there was an error.", filepath, flags = .VERBOSE_ONLY);
+		log("'%' closed because it could not be loaded.", filepath, flags = .VERBOSE_ONLY);
 		posix.fclose(file_handle);
 	}
 
 	if !new_plugin {
 		push_allocator(temp);
 		for * all_registrations {
-			found_mn := cast(string, NewArray(it.magic_number.count, u8));
+			found_mn := cast(string, NewArray(it.plugin_provided.magic_number.count, u8));
 			posix.fread(found_mn.data, 1, xx found_mn.count, file_handle);
 			posix.fseek(file_handle, 0, posix.SEEK_SET);
-			if found_mn == it.magic_number {
+			if found_mn == it.plugin_provided.magic_number {
 				new_plugin = it;
 				break;
 			}
@@ -240,20 +240,20 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do
 		return false;
 	}
 
-	found_mn := cast(string, NewArray(new_plugin.magic_number.count, u8));
+	found_mn := cast(string, NewArray(new_plugin.plugin_provided.magic_number.count, u8));
 	defer array_reset(*cast([]u8, found_mn));
 
-	if new_plugin.magic_number {
+	if new_plugin.plugin_provided.magic_number {
 		posix.fread(found_mn.data, 1, xx found_mn.count, file_handle);
 		posix.fseek(file_handle, 0, posix.SEEK_SET);
-		if found_mn != new_plugin.magic_number {
+		if found_mn != new_plugin.plugin_provided.magic_number {
 			expe, foun: string;
-			if valid_ascii(new_plugin.magic_number) expe = new_plugin.magic_number;
-			else expe = tprint("%", cast([]u8, new_plugin.magic_number));
+			if valid_ascii(new_plugin.plugin_provided.magic_number) expe = new_plugin.plugin_provided.magic_number;
+			else expe = tprint("%", cast([]u8, new_plugin.plugin_provided.magic_number));
 			if valid_ascii(found_mn) foun = found_mn;
 			else foun = tprint("%", cast([]u8, found_mn));
 
-			if do_logging log_error("Mismatched magic number. The file type '%' expected the magic number '%', but got '%'.", new_plugin.name_filetype, expe, foun);
+			if do_logging log_error("Mismatched magic number. The file type '%' expected the magic number '%', but got '%'.", new_plugin.plugin_provided.name_of_filetype, expe, foun);
 			// Also do the whole magic number checking here so that the user can choose
 			ok = false;
 			return false;
@@ -261,9 +261,13 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do
 	}
 
 	pre_info_err := new_plugin.pre_render(*pre_info);
+	defer if !ok {
+		log_error(new_plugin.cleanup(*pre_info));
+	}
+
 	posix.fseek(file_handle, 0, posix.SEEK_SET);
 	if pre_info_err {
-		if do_logging log_error("File type '%' metadata reading error: %", new_plugin.name_filetype, pre_info_err);
+		if do_logging log_error("File type '%' metadata reading error: %", new_plugin.plugin_provided.name_of_filetype, pre_info_err);
 		ok = false;
 		return false;
 	}
@@ -284,6 +288,8 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do
 			return false;
 		}
 	}
+
+	if img_ctx.plugin log_error(img_ctx.plugin.cleanup(*img_ctx.pre_info));
 
 	img_ctx.pre_info = pre_info;
 	img_ctx.plugin = new_plugin;
@@ -380,6 +386,7 @@ sanitize_file_list :: (list: *[..]string, file: string, index: *int, do_logging:
 	dummy_img_ctx: Image_Context;
 	for list.* {
 		if !get_loading(it, get_extension(it), *dummy_img_ctx, do_logging) continue;
+		log_error(dummy_img_ctx.plugin.cleanup(*dummy_img_ctx.pre_info));
 		posix.fclose(dummy_img_ctx.pre_info.fileptr);
 		array_add(*new_list, it);
 	}

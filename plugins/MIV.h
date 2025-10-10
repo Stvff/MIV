@@ -15,7 +15,7 @@ string to_string(char *str) {
 
 /* Entirely filled in by the Plugin. */
 typedef struct {
-	string name_filetype;
+	string name_of_filetype;
 	string procedure_prefix;
 	string extension;
 	string magic_number;

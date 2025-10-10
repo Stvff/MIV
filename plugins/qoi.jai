@@ -4,7 +4,7 @@ TOTAL_IMAGE_FORMATS :: 1;
 #program_export
 registration_procedure :: (registration: *Plugin_Registration_Entry) -> s64 #c_call {
 	registration.* = .{
-		name_filetype = "Quite Ok Image Format",
+		name_of_filetype = "Quite Ok Image Format",
 		procedure_prefix = "qoi_",
 		extension = "qoi",
 		magic_number = "qoif",

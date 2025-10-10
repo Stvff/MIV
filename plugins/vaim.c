@@ -1,12 +1,11 @@
 #include "MIV.h"
 #include <stdlib.h>
 
-int64_t registration_procedure(Provided_Registration_Entry *registration) {
-	registration->name_filetype = to_string("Vanadis Image");
+int64_t registration_procedure(Plugin_Registration_Entry *registration) {
+	registration->name_of_filetype = to_string("Vanadis Image");
 	registration->procedure_prefix = to_string("vaim_");
 	registration->extension = to_string("VAIM");
 	registration->magic_number = to_string("vaim");
-	registration->extension_is_case_sensitive = 0;
 	return 0;
 }
 

@@ -6,7 +6,7 @@ exe_name :: "miv";
 compile_MIV :: true;
 compile_pnm_c :: true;
 compile_qoi_jai :: true;
-compile_vaim_c :: false;
+compile_vaim_c :: true;
 
 build :: () {
 	defer set_build_options_dc(.{do_output = false, write_added_strings=false});
