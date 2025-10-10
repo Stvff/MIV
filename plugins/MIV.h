@@ -8,34 +8,37 @@ typedef struct {
 } string;
 
 string to_string(char *str) {
-	return (string){strlen(str), str};
+	return (string){(int64_t) strlen(str), (uint8_t *) str};
 }
 
 /*** The next three structs are used in the mandatory functions. ***/
 
+/* Entirely filled in by the Plugin. */
 typedef struct {
 	string name_filetype;
 	string procedure_prefix;
 	string extension;
 	string magic_number;
-	uint8_t has_magic_number;
-	uint8_t extension_is_case_sensitive;
 	uint8_t has_settings;
-} Provided_Registration_Entry;
+} Plugin_Registration_Entry;
 
 typedef struct {
+	/* <Provided by MIV> */
 	string name;
 	FILE *fileptr;
+	/* <Provided by MIV/> */
+	/* <Provided by Plugin> */
 	int64_t width, height;
-
 	uint8_t bit_depth;
 	uint8_t channels;
 	int64_t metadata_count;
 	string (*metadata)[2];
 
 	void *user_ptr;
+	/* <Provided by Plugin/> */
 } Pre_Rendering_Info;
 
+/* Entirely filled in by MIV, except for the values in the buffer. */
 typedef struct {
 	int64_t buffer_width;
 	int64_t buffer_height;

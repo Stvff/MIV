@@ -45,13 +45,13 @@ Of course, you will need jai beta access for this.
 To make a plugin, jai beta access is not required. It can be done in any compiled language.
 A valid MIV plugin must be a `.so` dynamic library, and define at least 4 functions:
 ```
-int64_t registration_procedure(Provided_Registration_Entry *registration)
+int64_t registration_procedure(Plugin_Registration_Entry *registration)
 
 string pre_render(Pre_Rendering_Info *pre_info)
 string render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info)
 string cleanup(Pre_Rendering_Info *pre_info)
 ```
-The `string`, `Provided_Registration_Entry`, `Pre_Rendering_Info` and `Rendering_Info` types are defined in [plugins/MIV.h](./plugins/MIV.h).
+The `string`, `Plugin_Registration_Entry`, `Pre_Rendering_Info` and `Rendering_Info` types are defined in [plugins/MIV.h](./plugins/MIV.h).
 See [plugins/ppm.c](./plugins/pnm.c) for a comprehensive example on how to use them.
 
 The `registration_procedure()` provides information about what the plugin can read. The integer that the function returns is how many more times it should be called by MIV.

@@ -1,27 +1,30 @@
 /*** The next three structs are used in the mandatory functions. ***/
 
-Provided_Registration_Entry :: struct {
+/* Entirely filled in by the Plugin. */
+Plugin_Registration_Entry :: struct {
 	name_filetype: string;
 	procedure_prefix: string;
 	extension: string;
 	magic_number: string;
-	bytes_before_magic_number: int;
-	extension_is_case_sensitive: bool;
 	has_settings: bool;
 }
 
 Pre_Rendering_Info :: struct {
+	/* <Provided by MIV> */
 	name: string;
 	fileptr: *posix.FILE;
+	/* <Provided by MIV/> */
+	/* <Provided by Plugin> */
 	width, height: s64;
-
 	bit_depth: u8;
 	channels: u8;
 	metadata: [][2]string;
 
 	user_ptr: *void;
+	/* <Provided by Plugin/> */
 }
 
+/* Entirely filled in by MIV, except for the values in the buffer. */
 Rendering_Info :: struct {
 	buffer_width: s64;
 	buffer_height: s64;

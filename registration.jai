@@ -7,14 +7,14 @@ all_registrations: [..]Registration_Entry;
 Registration_Entry :: struct {
 	plugin_filename: string;
 	handle: *void;
-	using provided: Provided_Registration_Entry;
+	using plugin_provided: Plugin_Registration_Entry;
 	pre_render: Pre_Rendering_Procedure;
 	render: Rendering_Procedure;
 	settings: Settings_Procedure;
 	cleanup: Cleanup_Procedure;
 }
 
-Registration_Procedure :: #type (registration: *Provided_Registration_Entry) -> s64 #c_call;
+Registration_Procedure :: #type (registration: *Plugin_Registration_Entry) -> s64 #c_call;
 Pre_Rendering_Procedure :: #type (info: *Pre_Rendering_Info) -> string #c_call;
 Rendering_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> string #c_call;
 Settings_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings_info: *Settings_Info) -> string #c_call;
@@ -45,7 +45,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugi
 
 	success := true;
 	while true {
-		p: Provided_Registration_Entry;
+		p: Plugin_Registration_Entry;
 		amount := reg_proc(*p);
 		if amount < 0 break;
 
@@ -87,7 +87,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugi
 		registration := Registration_Entry.{
 			plugin_filename = isolate_name(dynlib_name),
 			handle = handle,
-			provided = p,
+			plugin_provided = p,
 			pre_render = pre_render_handle,
 			render = render_handle,
 			settings = settings_handle,
@@ -195,10 +195,8 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do
 		for * all_registrations {
 			registered_ext := it.extension;
 			found_ext := extension;
-			if !it.extension_is_case_sensitive {
-				registered_ext = to_lower_copy(registered_ext);
-				found_ext = to_lower_copy(found_ext);
-			}
+			registered_ext = to_lower_copy(registered_ext);
+			found_ext = to_lower_copy(found_ext);
 			if registered_ext == found_ext {
 				new_plugin = it;
 				break;

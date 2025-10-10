@@ -55,6 +55,7 @@
 - [ ] Help mode where the tooltips are wayyy larger
 - [ ] intelligent textflows
 	- [x] Clipping
+- [ ] More advanced UI layouting
 	- [ ] scrollbars I'm afraid
 		- [ ] Also adjustable windows
 - [x] logs onscreen instead of in terminal

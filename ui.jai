@@ -78,7 +78,7 @@ good_message_palette :: Palette.{
 	body = .[20, 160, 20, 255],
 	border = .[30, 170, 30, 255],
 	text = .[235, 255, 235, 255],
-	hover = .[40, 170, 40, 255],
+	hover = .[40, 180, 40, 255],
 };
 
 tool_tip_palette :: Palette.{
@@ -329,9 +329,7 @@ flow_text :: (font: *Simp.Dynamic_Font, text: string) -> [2]int, []string {
 }
 
 draw_flow_text :: (font: *Simp.Dynamic_Font, lines: []string, pos: [2]int, size: [2]int) {
-	// lines := split(text, "\n",, allocator = temp);
 	padding := font.character_height;
-	// tpos := int.[pos[0] + padding/2 + padding, pos[1] + padding/2];
 	tpos := int.[pos[0] + padding/2, pos[1] + size[1] - padding - padding/4];
 	for line: lines {
 		Simp.draw_text(font, tpos[0], tpos[1], line);

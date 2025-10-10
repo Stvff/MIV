@@ -488,11 +488,11 @@ main :: () {
 				}
 				panel_split(*settings_menu_panel, .{bar_height/2, settings_menu_panel.size[1]}, .TOP, false);
 
-				/* verbose logging toggle */
-				verbose_logging_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
-				panel_text(*verbose_logging_panel, main_font, "verbose logging:", .LEFT, .MIDDLE);
-				verbose_button_panel := panel_split(*verbose_logging_panel, .{bar_height*3/2, verbose_logging_panel.size[0]}, .RIGHT, false);
-				if panel_toggle_button(*verbose_button_panel, icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, context.log_level == .VERBOSE) {
+				/* debug logging toggle */
+				debug_logging_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
+				panel_text(*debug_logging_panel, main_font, "debug logging:", .LEFT, .MIDDLE);
+				debug_button_panel := panel_split(*debug_logging_panel, .{bar_height*3/2, debug_logging_panel.size[0]}, .RIGHT, false);
+				if panel_toggle_button(*debug_button_panel, icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, context.log_level == .VERBOSE) {
 					if context.log_level == .VERBOSE context.log_level = .NORMAL;
 					else context.log_level = .VERBOSE;
 				}
@@ -650,7 +650,7 @@ main :: () {
 				tip.text = img_ctx.pre_info.name;
 				if first_layer_is_pressable && panel_button(*file_display, inp.ipointer, inp.left_button_switch, *tip) {
 					os_clipboard_set_text(img_ctx.pre_info.name);
-					log("Filepath copied to clipboard.\nNewsflash bucko\nfjakdlfjlaskdfjlaksdjflkasjl", flags = .CONTENT);
+					log("Filepath copied to clipboard.", flags = .CONTENT);
 				}
 				panel_text(*file_display, main_font, text, .MIDDLE, .MIDDLE);
 			}
@@ -810,7 +810,7 @@ main :: () {
 						free(entry.text);
 						array_ordered_remove_by_index(*log_entries, it_index);
 					} else {
-						//panel_text(*popup_panel, main_font, entry.text, .MIDDLE, .MIDDLE);
+						draw_flow_text(main_font, split(entry.text, "\n",, temp), popup_panel.pos, popup_panel.size);
 					}
 				}
 			}
@@ -875,7 +875,7 @@ logger :: (message: string, data: *void, info: Log_Info) {
 		wakeup_time = current_time_monotonic(),
 		info = info
 	};
-	if info.common_flags == .ERROR {
+	if info.user_flags == 1 {
 		entry.options[0] = "dismiss";
 	}
 	array_add(entries, entry);
