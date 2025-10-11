@@ -1,3 +1,12 @@
+# MIV Plugin Reference/Documentation
+## Table of Contents
+1. [Plugins Overview](#plugins-overview)
+2. [Lifecycle](#lifecycle)
+3. [Registration](#registration)
+4. [Pre-Render](#pre-render)
+5. [Cleanup](#cleanup)
+6. [Settings API](#settings-api)
+
 ## Plugins Overview
 A valid MIV plugin must be a `.so` dynamic library, and define at least 4 functions:
 ```
@@ -13,10 +22,6 @@ See [plugins/ppm.c](../plugins/pnm.c) for a comprehensive example on how to use 
 This API is expected to change to allow for more advanced features. Also it's not done yet.
 It will soon have a versioning system to allow MIV to detect out-of-date plugins.
 
-## Registration
-The `registration_procedure()` provides information about what the plugin can read. The integer that the function returns is how many more times it should be called by MIV.
-If the plugin provides 3 file formats, it returns 2 after the first time it has been called, then 1 after the second, and 0 after the third.
-
 ## Lifecycle
 On program startup, the plugins folder is read, and `registration_procedure()` is called for every plugin.
 Then, when an image is opened, MIV compares the file extension and magic number to all registered file extensions and magic numbers.\
@@ -30,13 +35,17 @@ to see if it should add them to the file queue. This can happen while it is disp
 MIV does not call any plugin functions from multiple threads.
 
 ## Registration
+The `registration_procedure()` provides information about what the plugin can read. The integer that the function returns is how many more times it should be called by MIV.
+If the plugin provides 3 file formats, it returns 2 after the first time it has been called, then 1 after the second, and 0 after the third.
+
+## Pre-Render
 `pre_render()` informs MIV about any metadata that a file might have, as well as its width and height, so that MIV can allocate an appropriately sized buffer.
 Note that MIV opens the file, and that the plugin is presented with a file pointer (which `ftell()` is guaranteed to return 0 on).
 
-## Pre-Render
+## Render
 `render()` extracts actual image data out of the file, and puts it in the buffer provided in the `Rendering_Info` struct.
 
-## Render
+## Cleanup
 Finally, `cleanup()` can be used to clean up internal resources.
 
 ## Settings API
