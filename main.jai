@@ -94,6 +94,8 @@ main :: () {
 	defer if img_ctx.watcher.callback deinit(img_ctx.watcher);
 
 	/*# window specific image context */
+	added_string_queue: [..]string;
+
 	fileq_setting: enum {HISTORY; DIRECTORY;} = .HISTORY;
 	file_history: [..]string;
 	file_history_index: int;
@@ -108,6 +110,7 @@ main :: () {
 		cli_args.data += 1;
 		cli_args.count -= 1;
 		array_add(*files_to_open, ..cli_args);
+		array_add(*added_string_queue, ..cli_args);
 	}
 	gpu_texture: Simp.Texture;
 
@@ -172,7 +175,10 @@ main :: () {
 		}
 		for event: Input.events_this_frame {
 			if event.type == .QUIT then running = false;
-			if event.type == .DRAG_AND_DROP_FILES for event.files array_add(*files_to_open, copy_string(it));
+			if event.type == .DRAG_AND_DROP_FILES for event.files {
+				array_add(*files_to_open, copy_string(it));
+				array_add(*added_string_queue, copy_string(it));
+			}
 			/* Press */
 			if (event.type == .KEYBOARD) && event.key_pressed then if event.key_code == {
 				case .ESCAPE; running = false;
@@ -214,60 +220,94 @@ main :: () {
 
 		/*# Files added via command line or drop-in */
 		loading_time := current_time_monotonic();
-		position_adjusted := false;
-		temp_files_to_open := files_to_open;
-		while temp_files_to_open.count {
-			file_to_open := temp_files_to_open[0];
-			log("%", file_to_open, flags = .VERBOSE_ONLY);
-			ext := get_extension(file_to_open);
-			if ext == "so" {
-				register_dynlib(file_to_open, true, true);
-			} else {
-				array_add(*file_history, file_to_open);
-				img_ctx.render = true;
-				if !position_adjusted {
-					file_history_index = file_history.count-1;
-					position_adjusted = true;
-				}
-			}
-			temp_files_to_open.data += 1;
-			temp_files_to_open.count -= 1;
+
+		/* Filtering out .so files */
+		filter_index := 0;
+		while filter_index < added_string_queue.count {
+			added_string := added_string_queue[filter_index];
+			log("%", added_string, flags = .VERBOSE_ONLY);
+			if get_extension(added_string) == "so" {
+				register_dynlib(added_string, true, true);
+				array_ordered_remove_by_index(*added_string_queue, filter_index);
+			} else filter_index += 1;
 		}
-		if temp_files_to_open.count == 1 {
+		/* filtering out unknown image formats */
+		sanitize_file_list(*added_string_queue, "", null, true);
+
+		for added_string_queue {
+			array_add(*file_history, it);
+			file_history_index = file_history.count-1;
+		}
+		if added_string_queue {
+			img_ctx.render = true;
+		}
+		if added_string_queue.count == 1 {
 			fileq_setting = .DIRECTORY;
 			/* I'm assuming there's always a valid file in this directory */
 			discover_directory(*directory, file_history[file_history_index]);
 			sanitize_file_list(*directory, file_history[file_history_index], *directory_index, false);
 			current_q = *directory;
 			current_q_index = *directory_index;
+			log("%", directory.count);
+		} else if added_string_queue.count > 1 {
+			fileq_setting = .HISTORY;
+			current_q = *file_history;
+			current_q_index = *file_history_index;
 		}
-		array_reset(*files_to_open);
+		array_reset(*added_string_queue);
+
+		// position_adjusted := false;
+		// temp_files_to_open := files_to_open;
+		// while temp_files_to_open.count {
+		// 	file_to_open := temp_files_to_open[0];
+		// 	log("%", file_to_open, flags = .VERBOSE_ONLY);
+		// 	ext := get_extension(file_to_open);
+		// 	if ext == "so" {
+		// 		register_dynlib(file_to_open, true, true);
+		// 	} else {
+		// 		array_add(*file_history, file_to_open);
+		// 		img_ctx.render = true;
+		// 		if !position_adjusted {
+		// 			file_history_index = file_history.count-1;
+		// 			position_adjusted = true;
+		// 		}
+		// 	}
+		// 	temp_files_to_open.data += 1;
+		// 	temp_files_to_open.count -= 1;
+		// }
+		// if temp_files_to_open.count == 1 {
+		// 	fileq_setting = .DIRECTORY;
+		// 	/* I'm assuming there's always a valid file in this directory */
+		// 	discover_directory(*directory, file_history[file_history_index]);
+		// 	sanitize_file_list(*directory, file_history[file_history_index], *directory_index, false);
+		// 	current_q = *directory;
+		// 	current_q_index = *directory_index;
+		// }
+		// array_reset(*files_to_open);
 
 		/*# The watcher */
 		process_changes(*img_ctx.watcher);
 		if img_ctx.watcher_says_something_moved_somewhere {
 			img_ctx.watcher_says_something_moved_somewhere = false;
-			position_adjusted = true;
+
+			sanitize_file_list(*file_history, file_history[file_history_index], *file_history_index, true);
+			if file_history_index == -1 {
+				img_ctx.render = false;
+			} else if fileq_setting == .DIRECTORY {
+				/* I'm assuming there's always a valid file in this directory */
+				discover_directory(*directory, file_history[file_history_index]);
+				sanitize_file_list(*directory, file_history[file_history_index], *directory_index, false);
+			}
 		}
 		if img_ctx.watcher_says_rerender {
 			img_ctx.watcher_says_rerender = false;
 			img_ctx.render = true;
 		}
 
-		/*# Choosing the file to render */
-		if position_adjusted {
-			/* if position_adjusted? */
-			sanitize_file_list(*file_history, file_history[file_history_index], *file_history_index, true);
-			if fileq_setting == .DIRECTORY {
-				/* I'm assuming there's always a valid file in this directory */
-				discover_directory(*directory, file_history[file_history_index]);
-				sanitize_file_list(*directory, file_history[file_history_index], *directory_index, false);
-			}
-		}
 		if current_q.count == 0 img_ctx.render = false;
-
 		/*# image pre-render */
 		if img_ctx.render {
+			log("%, %", current_q_index.*, fileq_setting);
 			old_pre_info := img_ctx.pre_info;
 			new_name := current_q.*[current_q_index.*];
 			img_ctx.render = get_loading(new_name, get_extension(new_name), *img_ctx, true);

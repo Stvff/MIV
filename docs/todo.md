@@ -41,18 +41,17 @@
 - [x] Some pleasant and elaborate tooltips
 - [x] Make modes a radio button selector thing
 	- [x] show index in file queue
-- [ ] Enter directory mode if `files_to_open` is only one file.
+- [x] Enter directory mode if `files_to_open` is only one file.
 - [x] Begin custom icons
 
 ## Bugs to fix
-- Sometimes it doesn't open in directory mode, this maybe happens because there are files it cannot read in the directory?
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
 - When adding a plugin after removing the currently open file, there is a crash.
 - When another window is above MIV, MIV still reads the mouse position from that window.
 
 ## Amersfoort
 - [ ] Another image type
-- [ ] Rework the queue model
+- [x] Rework the queue model
 	- [ ] Option for queue looping
 - [ ] Help mode where the tooltips are wayyy larger
 - [ ] intelligent textflows

@@ -393,10 +393,12 @@ sanitize_file_list :: (list: *[..]string, file: string, index: *int, do_logging:
 	array_reset(list);
 	list.* = new_list;
 
-	found: bool;
-	found, index.* = array_find(list.*, file);
-	if !found {
-		index.* = list.count - 1;
+	if file {
+		found: bool;
+		found, index.* = array_find(list.*, file);
+		if !found {
+			index.* = list.count - 1;
+		}
 	}
 }
 
