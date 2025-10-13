@@ -39,6 +39,12 @@ History is sanitized
 Best available image is chosen to view
 if directory mode, discover directory
 
+dropped files -> added_string_queue
+added_string_queue -> .so file or other
+other -> sanitize -> added_images_this_frame
+added_images_this_frame -> add to added_images
+if added_images_this_frame.count == 1 -> go file_queue on it
+
 Some features:
 - Zoom (percentage is image pixel to screen pixel, zoomlimit is when 1 pixel completely covers the screen)
 - Pan (is in imagepixels removed from the center)

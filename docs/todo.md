@@ -41,7 +41,7 @@
 - [x] Some pleasant and elaborate tooltips
 - [x] Make modes a radio button selector thing
 	- [x] show index in file queue
-- [x] Enter directory mode if `files_to_open` is only one file.
+- [ ] Enter directory mode if `files_to_open` is only one file.
 - [x] Begin custom icons
 
 ## Bugs to fix
@@ -52,6 +52,8 @@
 
 ## Amersfoort
 - [ ] Another image type
+- [ ] Rework the queue model
+	- [ ] Option for queue looping
 - [ ] Help mode where the tooltips are wayyy larger
 - [ ] intelligent textflows
 	- [x] Clipping

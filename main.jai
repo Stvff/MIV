@@ -79,11 +79,6 @@ main :: () {
 	main_font := Simp.get_font_at_size(FONT_DATA, font_pixel_height);
 	icon_font := Simp.get_font_at_size(ICON_FONT_DATA, font_pixel_height);
 
-	/*# Tooltip init */
-	/* Counting this manually is inconvenient; I'd like to write a metaprogram that counts the amount of tooltips here, but it's hard. */
-	/* The reason this isn't a dynamic array is because the pointer of that is unstable. Saving indices into a buffer is messy during usage. */
-	tip: Tool_Tip;
-
 	/*# Image context etc */
 	img_ctx := Image_Context.{
 		fit = .FIT_BEST,
@@ -120,6 +115,7 @@ main :: () {
 	display_metadata := false;
 	display_settings_menu := false;
 	settings_menu_just_opened := false;
+	tip: Tool_Tip;
 
 	first_image_open := true;
 	defer {
