@@ -318,12 +318,12 @@ main :: () {
 		if !img_ctx.plugin { img_ctx.render = false; img_ctx.draw = false; }
 		if img_ctx.render {
 			using img_ctx.render_info;
-			buffer_width = img_ctx.pre_info.width;
-			buffer_height = img_ctx.pre_info.height;
+			buffer_width := img_ctx.pre_info.width;
+			buffer_height := img_ctx.pre_info.height;
 			array_resize(*(buffer), buffer_width*buffer_height);
 			render_error := img_ctx.plugin.render(*img_ctx.pre_info, *img_ctx.render_info);
 			if render_error {
-				log_error("File image data retrieval error: %", render_error);
+				log_error("Image data retrieval error: %", render_error);
 				img_ctx.draw = false;
 			} else {
 				bitmap: Simp.Bitmap;

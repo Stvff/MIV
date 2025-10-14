@@ -36,7 +36,7 @@ to see if it should add them to the file queue. This can happen while it is disp
 MIV does not call any plugin functions from multiple threads.
 
 ## `string`
-The `string` type is used for all MIV functions, and for nearly all of its structs. It's used instead of the more customary `char *`
+The `string` type is used for all plugin functions, and for nearly all of its structs. It's used instead of the more customary `char *`
 because \*gestures vaguely at C's history*.
 
 It's essentially a byte array:
@@ -85,7 +85,9 @@ As mentioned in the section about the [lifecycle](#lifecycle), `pre_render()` is
 ```c
 string pre_render(Pre_Rendering_Info *pre_info)
 ```
-It takes a pointer to `Pre_Rendering_Info`.
+Note that if `procedure_prefix` was defined, that would have to be prepended to the function's name. As an example, if the `procedure_prefix` was `my_very_cool_`,
+then it would have to be called `my_very_cool_pre_render()` for MIV to find it.\
+Regardless, it takes a pointer to `Pre_Rendering_Info`.
 ```c
 typedef struct {
 	/* <Provided by MIV> */
@@ -116,23 +118,50 @@ The first element of a string pair is the name, and the second is the actual val
 string pairs that the library has provided.
 
 Finally, `user_ptr` is a pointer that MIV never touches or looks at, and can be used by the plugin to store its own internal state for between functions.
-Do note the [lifecycle](#lifecycle) when putting elaborate values in it!
+Do note the [lifecycle](#lifecycle) and its implications!
+
+Whenever `pre_render()` detects an error in the image, it can return a non-empty `string` that contains information about what went wrong. This message will be
+presented to the user along with the string: `File metadata reading error: `.
 
 ## Render
-`render()` extracts actual image data out of the file, and puts it in the buffer provided in the `Rendering_Info` struct.
+In a sense, `render()` is the focal point of a plugin.
+```c
+string render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info)
+```
+The `Pre_Rendering_Info` it is passed is the same one that `pre_render()` filled out. MIV will not respond to any more changes to `width` and `height`
+at this point, the struct is only there for the information in it.\
+However, the filepointer will be reset to the start of the file (same as for `pre_render()`), so take this into account.
+
+The new struct here is `Rendering_Info`:
+```c
+typedef struct {
+	int64_t buffer_count;
+	uint8_t (*buffer)[4];
+} Rendering_Info;
+```
+`buffer` is a pointer to the pixel buffer allocated by MIV (and `buffer_count` is the amount of pixels in it).\
+`render()`'s task is to decode the image data in the image file, and to load it, as pixels, into the buffer.
+Every pixel in the buffer is 8-bit sRGBA.
+
+Just like `pre_render()`, `render()` can also return an error, which is presented to the user with the string `Image data retrieval error: `.
 
 ## Cleanup
-Finally, `cleanup()` can be used to clean up internal resources.
+`cleanup()` can be used to clean up internal resources.
+```c
+string cleanup(Pre_Rendering_Info *pre_info)
+```
+This `Pre_Rendering_Info` struct is the same one that `pre_render()` filled out, so the same as the one `render()` got as well.\
+Most relevant usage information of `cleanup()` is described in [Lifecycle](#lifecycle).
 
 ## Settings API
 A plugin can optionally enable the ability to declare its own settings by setting the `has_settings` field in
 `Provided_Registration_Entry` to true.\
-If this flag is set to true, a function with the following signature has to be defined (with the established naming scheme):
+If this flag is set to true, a function with the following signature has to be defined (with the established `procedure_prefix` as well):
 ```c
 string settings(Pre_Rendering_Info *pre_info, Rendering_Info *render_info, Settings_Info *settings_info);
 ```
-The `settings()` function gets called whenever the settings menu is opened in MIV, as well as when a plugin setting has changed (in that menu).
-This function takes the known `Pre_Rendering_Info` and `Rendering_Info` parameters, but also takes `Settings_Info`.
+The `settings()` function gets called whenever the settings menu is opened in MIV, as well as when a plugin setting have changed (in that menu).
+It takes the known `Pre_Rendering_Info` and `Rendering_Info` parameters, but also takes `Settings_Info`.
 ```c
 typedef struct {
 	uint8_t response;

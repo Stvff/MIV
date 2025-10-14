@@ -41,9 +41,6 @@ typedef struct {
 
 /* Entirely filled in by MIV, except for the values in the buffer. */
 typedef struct {
-	int64_t buffer_width;
-	int64_t buffer_height;
-
 	int64_t buffer_count;
 	uint8_t (*buffer)[4];
 } Rendering_Info;

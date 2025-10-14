@@ -27,8 +27,6 @@ Pre_Rendering_Info :: struct {
 
 /* Entirely filled in by MIV, except for the values in the buffer. */
 Rendering_Info :: struct {
-	buffer_width: s64;
-	buffer_height: s64;
 	buffer: [][4]u8;
 }
 
