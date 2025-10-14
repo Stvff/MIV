@@ -4,12 +4,13 @@
 2. [Lifecycle](#lifecycle)
 3. [Registration](#registration)
 4. [Pre-Render](#pre-render)
-5. [Cleanup](#cleanup)
-6. [Settings API](#settings-api)
+5. [Render](#render)
+6. [Cleanup](#cleanup)
+7. [Settings API](#settings-api)
 
 ## Plugins Overview
 A valid MIV plugin must be a `.so` dynamic library, and define at least 4 functions:
-```
+```c
 int64_t registration_procedure(Plugin_Registration_Entry *registration)
 
 string pre_render(Pre_Rendering_Info *pre_info)
@@ -39,7 +40,7 @@ The `string` type is used for all MIV functions, and for nearly all of its struc
 because \*gestures vaguely at C's history*.
 
 It's essentially a byte array:
-```
+```c
 typedef struct {
 	int64_t count;
 	uint8_t *data;
@@ -47,7 +48,7 @@ typedef struct {
 ```
 
 The `to_string()` function is provided to convert 0-terminated string literals.
-```
+```c
 string to_string(char *str) {
 	return (string){(int64_t) strlen(str), (uint8_t *) str};
 }
@@ -80,8 +81,42 @@ If the plugin provides 3 file formats, it returns `2` after the first time it ha
 Every time, the plugin can put new info in the `Plugin_Registration_Entry`.
 
 ## Pre-Render
-`pre_render()` informs MIV about any metadata that a file might have, as well as its width and height, so that MIV can allocate an appropriately sized buffer.
-Note that MIV opens the file, and that the plugin is presented with a file pointer (which `ftell()` is guaranteed to return 0 on).
+As mentioned in the section about the [lifecycle](#lifecycle), `pre_render()` is called whenever MIV has pinned down what filetype a given file is.
+```c
+string pre_render(Pre_Rendering_Info *pre_info)
+```
+It takes a pointer to `Pre_Rendering_Info`.
+```c
+typedef struct {
+	/* <Provided by MIV> */
+	string name;
+	FILE *fileptr;
+	/* <Provided by MIV/> */
+	/* <Provided by Plugin> */
+	int64_t width, height;
+	uint8_t bit_depth;
+	uint8_t channels;
+	int64_t metadata_count;
+	string (*metadata)[2];
+
+	void *user_ptr;
+	/* <Provided by Plugin/> */
+} Pre_Rendering_Info;
+```
+MIV provides the filename (in the `name`) field, and a libc file pointer to the already opened file (which `ftell()` is guaranteed to return 0 on).\
+The main task of `pre_render()` to to inform MIV about any metadata that a file might have, as well as its width and height,
+so that MIV can allocate an appropriately sized buffer for the actual image data to be stored in.\
+`pre_render()` is not expected to start resolving said image data, only the file header (or equivalent).
+
+`width` and `height` should give the size in pixels of each respective dimension.\
+`bit_depth` is not used by MIV, but only displayed as metadata to the user. It is the amount of bits of information that a channel has/can have in the image.\
+`channels` refers to the amount of colour channels (or equivalent). Again, this is not used by MIV (yet).\
+`metadata` is a pointer to a buffer of `string` pairs. Each string pair represents extra metadata that the plugin might want to offer to the user.
+The first element of a string pair is the name, and the second is the actual value (stringified by the plugin). `metadata_count` is the amount of
+string pairs that the library has provided.
+
+Finally, `user_ptr` is a pointer that MIV never touches or looks at, and can be used by the plugin to store its own internal state for between functions.
+Do note the [lifecycle](#lifecycle) when putting elaborate values in it!
 
 ## Render
 `render()` extracts actual image data out of the file, and puts it in the buffer provided in the `Rendering_Info` struct.
