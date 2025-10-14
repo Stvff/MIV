@@ -256,41 +256,13 @@ main :: () {
 		}
 		array_reset(*added_string_queue);
 
-		// position_adjusted := false;
-		// temp_files_to_open := files_to_open;
-		// while temp_files_to_open.count {
-		// 	file_to_open := temp_files_to_open[0];
-		// 	log("%", file_to_open, flags = .VERBOSE_ONLY);
-		// 	ext := get_extension(file_to_open);
-		// 	if ext == "so" {
-		// 		register_dynlib(file_to_open, true, true);
-		// 	} else {
-		// 		array_add(*file_history, file_to_open);
-		// 		img_ctx.render = true;
-		// 		if !position_adjusted {
-		// 			file_history_index = file_history.count-1;
-		// 			position_adjusted = true;
-		// 		}
-		// 	}
-		// 	temp_files_to_open.data += 1;
-		// 	temp_files_to_open.count -= 1;
-		// }
-		// if temp_files_to_open.count == 1 {
-		// 	fileq_setting = .DIRECTORY;
-		// 	/* I'm assuming there's always a valid file in this directory */
-		// 	discover_directory(*directory, file_history[file_history_index]);
-		// 	sanitize_file_list(*directory, file_history[file_history_index], *directory_index, false);
-		// 	current_q = *directory;
-		// 	current_q_index = *directory_index;
-		// }
-		// array_reset(*files_to_open);
-
 		/*# The watcher */
 		process_changes(*img_ctx.watcher);
 		if img_ctx.watcher_says_something_moved_somewhere {
+			log("File watcher has noticed something");
 			img_ctx.watcher_says_something_moved_somewhere = false;
 
-			sanitize_file_list(*file_history, file_history[file_history_index], *file_history_index, true);
+			sanitize_file_list(*file_history, file_history[file_history_index], *file_history_index, false);
 			if file_history_index == -1 {
 				img_ctx.render = false;
 			} else if fileq_setting == .DIRECTORY {
@@ -305,6 +277,7 @@ main :: () {
 		}
 
 		if current_q.count == 0 img_ctx.render = false;
+		pre_render_failed := false;
 		/*# image pre-render */
 		if img_ctx.render {
 			log("%, %", current_q_index.*, fileq_setting);
@@ -313,7 +286,7 @@ main :: () {
 			img_ctx.render = get_loading(new_name, get_extension(new_name), *img_ctx, true);
 			if img_ctx.render {
 				if old_pre_info.fileptr posix.fclose(old_pre_info.fileptr);
-				/* retrieve previous offsets etc from some per-file history */
+				/* TODO: retrieve previous offsets etc from some per-file history */
 
 				if !settings.pers_between_files.of_scale img_ctx.auto_fit = true;
 				if !settings.pers_between_files.of_offset img_ctx.offset = .{0, 0};
@@ -330,16 +303,22 @@ main :: () {
 					first_image_open = false;
 				}
 			} else {
+				pre_render_failed = true;
 				f, index := array_find(file_history, new_name);
 				if f array_ordered_remove_by_index(*file_history, index);
 				file_history_index = clamp(file_history_index, 0, file_history.count-1);
+
+				f, index = array_find(directory, new_name);
+				if f array_ordered_remove_by_index(*directory, index);
+				directory_index = clamp(directory_index, 0, directory.count-1);
 			}
 			new_print_style := context.print_style;
 			new_print_style.default_format_struct.use_newlines_if_long_form = true;
 			new_print_style.default_format_array.stop_printing_after_this_many_elements = 4;
 			log("img_ctx = .%", img_ctx, flags = .VERBOSE_ONLY,, print_style = new_print_style);
 		}
-		img_ctx.draw = true;
+		if current_q_index.* == -1 || pre_render_failed then img_ctx.draw = false;
+		else img_ctx.draw = true;
 
 		/*# Image rendering (aka resolving the actual data) */
 		if !img_ctx.plugin { img_ctx.render = false; img_ctx.draw = false; }
@@ -385,7 +364,7 @@ main :: () {
 			if display_metadata
 				metadata_panel = panel_split(*canvas, .{bar_height*5, canvas.size[0]}, .LEFT, false);
 
-			first_layer_is_pressable := img_ctx.draw && option_entries == 0;
+			first_layer_is_pressable := option_entries == 0;
 
 			/*# Image drawing */
 			canvas.colors = bg_palette;
@@ -756,6 +735,7 @@ main :: () {
 				panel_draw(selected);
 			}
 
+			/* TODO: make unpressable if arrays are empty */
 			fileq_setting_switch := false;
 			for bnf_selector_buttons {
 				fileq_tips :: string.["Set file queue to dropped files", "Set file queue to directory of the current file"];
@@ -774,8 +754,13 @@ main :: () {
 				current_q_index = *file_history_index;
 			case .DIRECTORY;
 				/* I'm assuming there's always a valid file in this directory */
-				discover_directory(*directory, file_history[file_history_index]);
-				sanitize_file_list(*directory, file_history[file_history_index], *directory_index, false);
+				if file_history.count {
+					discover_directory(*directory, file_history[file_history_index]);
+					sanitize_file_list(*directory, file_history[file_history_index], *directory_index, false);
+				} else {
+					array_reset(*directory);
+					current_q_index.* = -1;
+				}
 				current_q = *directory;
 				current_q_index = *directory_index;
 			}

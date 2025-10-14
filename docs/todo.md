@@ -46,12 +46,11 @@
 
 ## Bugs to fix
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
-- When adding a plugin after removing the currently open file, there is a crash.
 - When another window is above MIV, MIV still reads the mouse position from that window.
 
 ## Amersfoort
 - [ ] Another image type
-- [x] Rework the queue model
+- [ ] Rework the queue model
 	- [ ] Option for queue looping
 - [ ] Help mode where the tooltips are wayyy larger
 - [ ] intelligent textflows
