@@ -17,7 +17,7 @@ string render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info)
 string cleanup(Pre_Rendering_Info *pre_info)
 ```
 The `string`, `Plugin_Registration_Entry`, `Pre_Rendering_Info` and `Rendering_Info` types are defined in [plugins/MIV.h](../plugins/MIV.h).
-See [plugins/ppm.c](../plugins/pnm.c) for a comprehensive example on how to use them.
+See [plugins/ppm.c](../plugins/pnm.c) for a comprehensive example on how they are used in a plugin.
 
 This API is expected to change to allow for more advanced features. Also it's not done yet.
 It will soon have a versioning system to allow MIV to detect out-of-date plugins.
@@ -34,9 +34,50 @@ to see if it should add them to the file queue. This can happen while it is disp
 
 MIV does not call any plugin functions from multiple threads.
 
+## `string`
+The `string` type is used for all MIV functions, and for nearly all of its structs. It's used instead of the more customary `char *`
+because \*gestures vaguely at C's history*.
+
+It's essentially a byte array:
+```
+typedef struct {
+	int64_t count;
+	uint8_t *data;
+} string;
+```
+
+The `to_string()` function is provided to convert 0-terminated string literals.
+```
+string to_string(char *str) {
+	return (string){(int64_t) strlen(str), (uint8_t *) str};
+}
+```
+
 ## Registration
-The `registration_procedure()` provides information about what the plugin can read. The integer that the function returns is how many more times it should be called by MIV.
-If the plugin provides 3 file formats, it returns 2 after the first time it has been called, then 1 after the second, and 0 after the third.
+The `registration_procedure()` is the first mandatory function that has to be defined. This is its signature:
+```c
+int64_t registration_procedure(Plugin_Registration_Entry *registration)
+```
+It provides information about which image types the plugin can read. It takes a pointer to a `Plugin_Registration_Entry`.
+```c
+typedef struct {
+	string name_of_filetype;
+	string extension;
+	string magic_number;
+
+	string procedure_prefix;
+	uint8_t has_settings;
+} Plugin_Registration_Entry;
+```
+The `name_of_filetype` is the 'full legal name' of the type of file that the plugin reads.\
+`extension` is the file extension that the filetype is associated with (not including the dot (`.`)). It is case insensitive.\
+`magic_number` is the first set of bytes that files of the filetype in question start with.\
+The `procedure_prefix` is an optional prefix for the rest of the functions in the plugin. This is so that you can have more than one registered filetype in one `.so` file.\
+`has_settings` is a boolean. If true, MIV will also look for the `settings()` function, related to the [Settings API](#settings-api).
+
+To register more than one filetype for a plugin, `registration_procedure()` returns an integer that tells MIV how many more times to call `registration_procedure()`.
+If the plugin provides 3 file formats, it returns `2` after the first time it has been called, then `1` after the second, and `0` after the third.
+Every time, the plugin can put new info in the `Plugin_Registration_Entry`.
 
 ## Pre-Render
 `pre_render()` informs MIV about any metadata that a file might have, as well as its width and height, so that MIV can allocate an appropriately sized buffer.

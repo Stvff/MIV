@@ -3,9 +3,10 @@
 /* Entirely filled in by the Plugin. */
 Plugin_Registration_Entry :: struct {
 	name_of_filetype: string;
-	procedure_prefix: string;
 	extension: string;
 	magic_number: string;
+
+	procedure_prefix: string;
 	has_settings: bool;
 }
 

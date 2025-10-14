@@ -41,21 +41,21 @@ int64_t registration_procedure(Plugin_Registration_Entry *registration) {
 	switch (called_n_times) {
 	case 0:
 		registration->name_of_filetype = to_string("Netpbm Portable BitMap");
-		registration->procedure_prefix = to_string("pbm_");
 		registration->extension = to_string("PBM");
 		registration->magic_number = to_string("P"); /* P1 P4 */
+		registration->procedure_prefix = to_string("pbm_");
 		break;
 	case 1:
 		registration->name_of_filetype = to_string("Netpbm Portable GrayMap");
-		registration->procedure_prefix = to_string("pgm_");
 		registration->extension = to_string("PGM");
 		registration->magic_number = to_string("P"); /* P2 P5 */
+		registration->procedure_prefix = to_string("pgm_");
 		break;
 	case 2:
 		registration->name_of_filetype = to_string("Netpbm Portable PixMap");
-		registration->procedure_prefix = to_string("ppm_");
 		registration->extension = to_string("PPM");
 		registration->magic_number = to_string("P"); /* P3 P6 */
+		registration->procedure_prefix = to_string("ppm_");
 		break;
 	}
 	called_n_times += 1;

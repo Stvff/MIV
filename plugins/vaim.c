@@ -3,9 +3,9 @@
 
 int64_t registration_procedure(Plugin_Registration_Entry *registration) {
 	registration->name_of_filetype = to_string("Vanadis Image");
-	registration->procedure_prefix = to_string("vaim_");
 	registration->extension = to_string("VAIM");
 	registration->magic_number = to_string("vaim");
+	registration->procedure_prefix = to_string("vaim_");
 	return 0;
 }
 

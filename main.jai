@@ -94,8 +94,6 @@ main :: () {
 	defer if img_ctx.watcher.callback deinit(img_ctx.watcher);
 
 	/*# window specific image context */
-	added_string_queue: [..]string;
-
 	fileq_setting: enum {HISTORY; DIRECTORY;} = .HISTORY;
 	file_history: [..]string;
 	file_history_index: int;
@@ -104,12 +102,11 @@ main :: () {
 	current_q: *[..]string = *file_history;
 	current_q_index: *int = *file_history_index;
 
-	files_to_open: [..]string;
+	added_string_queue: [..]string;
 	{
 		cli_args := get_command_line_arguments();
 		cli_args.data += 1;
 		cli_args.count -= 1;
-		array_add(*files_to_open, ..cli_args);
 		array_add(*added_string_queue, ..cli_args);
 	}
 	gpu_texture: Simp.Texture;
@@ -176,7 +173,6 @@ main :: () {
 		for event: Input.events_this_frame {
 			if event.type == .QUIT then running = false;
 			if event.type == .DRAG_AND_DROP_FILES for event.files {
-				array_add(*files_to_open, copy_string(it));
 				array_add(*added_string_queue, copy_string(it));
 			}
 			/* Press */
@@ -248,7 +244,6 @@ main :: () {
 			sanitize_file_list(*directory, file_history[file_history_index], *directory_index, false);
 			current_q = *directory;
 			current_q_index = *directory_index;
-			log("%", directory.count);
 		} else if added_string_queue.count > 1 {
 			fileq_setting = .HISTORY;
 			current_q = *file_history;
@@ -259,7 +254,7 @@ main :: () {
 		/*# The watcher */
 		process_changes(*img_ctx.watcher);
 		if img_ctx.watcher_says_something_moved_somewhere {
-			log("File watcher has noticed something");
+			log("File watcher has noticed something", flags = .VERBOSE_ONLY);
 			img_ctx.watcher_says_something_moved_somewhere = false;
 
 			sanitize_file_list(*file_history, file_history[file_history_index], *file_history_index, false);
@@ -280,7 +275,6 @@ main :: () {
 		pre_render_failed := false;
 		/*# image pre-render */
 		if img_ctx.render {
-			log("%, %", current_q_index.*, fileq_setting);
 			old_pre_info := img_ctx.pre_info;
 			new_name := current_q.*[current_q_index.*];
 			img_ctx.render = get_loading(new_name, get_extension(new_name), *img_ctx, true);

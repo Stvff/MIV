@@ -16,9 +16,10 @@ string to_string(char *str) {
 /* Entirely filled in by the Plugin. */
 typedef struct {
 	string name_of_filetype;
-	string procedure_prefix;
 	string extension;
 	string magic_number;
+
+	string procedure_prefix;
 	uint8_t has_settings;
 } Plugin_Registration_Entry;
 
