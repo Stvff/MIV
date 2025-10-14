@@ -2,11 +2,12 @@
 ## Table of Contents
 1. [Plugins Overview](#plugins-overview)
 2. [Lifecycle](#lifecycle)
-3. [Registration](#registration)
-4. [Pre-Render](#pre-render)
-5. [Render](#render)
-6. [Cleanup](#cleanup)
-7. [Settings API](#settings-api)
+3. [`string`](#string)
+4. [Registration](#registration)
+5. [Pre-Render](#pre-render)
+6. [Render](#render)
+7. [Cleanup](#cleanup)
+8. [Settings API](#settings-api)
 
 ## Plugins Overview
 A valid MIV plugin must be a `.so` dynamic library, and define at least 4 functions:
