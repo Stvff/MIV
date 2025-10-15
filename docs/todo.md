@@ -58,7 +58,7 @@
 	- [x] Clipping
 - [ ] More advanced UI layouting
 	- [ ] scrollbars I'm afraid
-		- [ ] Also adjustable windows
+		- [x] Also adjustable windows
 - [x] logs onscreen instead of in terminal
 - [ ] different types of filesorting
 - [ ] give functions the ability to respond responsibly based on user input option

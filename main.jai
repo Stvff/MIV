@@ -117,6 +117,9 @@ main :: () {
 
 	/*# UI state */
 	display_metadata := false;
+	DEFAULT_METADATA_WIDTH := bar_height*5;
+	metadata_width := DEFAULT_METADATA_WIDTH;
+
 	display_settings_menu := false;
 	settings_menu_just_opened := false;
 	tip: Tool_Tip;
@@ -373,8 +376,9 @@ main :: () {
 
 			if display_settings_menu
 				settings_menu_panel = panel_split(*canvas, .{bar_height*8, canvas.size[0]}, .LEFT, false);
-			if display_metadata
-				metadata_panel = panel_split(*canvas, .{bar_height*5, canvas.size[0]}, .LEFT, false);
+			if display_metadata {
+				metadata_panel = panel_split(*canvas, .{metadata_width, canvas.size[0]}, .LEFT, false);
+			}
 
 			first_layer_is_pressable := option_entries == 0;
 
@@ -387,7 +391,11 @@ main :: () {
 				image_center := Vector2.{ cast(float, img_ctx.pre_info.width)/2, cast(float, img_ctx.pre_info.height)/2 };
 
 				/* we have to process our inputs (not using the keyboard yet) */
-				if first_layer_is_pressable && pointer_is_in_panel(*canvas, inp.ipointer) {
+				process_mouse_activity := first_layer_is_pressable && pointer_is_in_panel(*canvas, inp.ipointer);
+				if inp.left_button && !pointer_is_in_panel(*canvas, .[xx inp.pointer_when_pressed.x, xx inp.pointer_when_pressed.y]) {
+					process_mouse_activity = false;
+				}
+				if process_mouse_activity {
 					if inp.scroll_delta if img_ctx.zoom_alignment == {
 					case .CENTER;
 						img_ctx.auto_fit = false;
@@ -603,6 +611,16 @@ main :: () {
 
 			if display_metadata {
 				panel_draw(*metadata_panel);
+				if panel_scrollbar(*metadata_panel, inp.ipointer, .[xx inp.pointer_when_pressed.x, xx inp.pointer_when_pressed.y], inp.left_button) {
+					metadata_width += (inp.fpointer.x - inp.pointer_when_pressed.x).(int);
+					metadata_width = clamp(metadata_width, 0, window_size[0]);
+					inp.pointer_when_pressed = inp.fpointer;
+				}
+				if metadata_width < SCROLLBAR_SIZE*3 {
+					display_metadata = false;
+					metadata_width = DEFAULT_METADATA_WIDTH;
+					inp.left_button = false;
+				}
 				panel_text_split(*metadata_panel, main_font, tprint("width: % px", img_ctx.pre_info.width), .TOP, .NEAR);
 				panel_text_split(*metadata_panel, main_font, tprint("height: % px", img_ctx.pre_info.height), .TOP, .NEAR);
 				panel_text_split(*metadata_panel, main_font, tprint("bit depth: % bits", img_ctx.pre_info.bit_depth), .TOP, .NEAR);

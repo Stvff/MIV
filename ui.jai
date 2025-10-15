@@ -30,7 +30,7 @@ Creation_Side :: enum {TOP; BOTTOM; LEFT; RIGHT;}
 Text_Align_Ver :: enum {TOP; MIDDLE; BOTTOM;}
 Text_Align_Hor :: enum {LEFT; MIDDLE; RIGHT;}
 
-clipping_texture: Simp.Texture;
+SCROLLBAR_SIZE :: 10;
 
 default_palette :: Palette.{
 	body = .[65, 65, 65, 255],
@@ -201,6 +201,12 @@ panel_toggle_button :: (p: *UI_Panel, font: *Simp.Dynamic_Font, toggle_text: [2]
 	button_pressed := panel_button(p, pointer_position, pressed, tip);
 	panel_text(p, font, text, optional_align_hor, .MIDDLE);
 	return button_pressed;
+}
+
+panel_scrollbar :: (p: *UI_Panel, pointer_position: [2]int, pointer_when_pressed: [2]int, pressed: bool) -> bool {
+	bar := panel_split(p, .{SCROLLBAR_SIZE, p.size[0]}, .RIGHT, false);
+	should_move := panel_button(*bar, ifx !pressed then pointer_position else pointer_when_pressed, pressed);
+	return should_move;
 }
 
 panel_text_split :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, side: Creation_Side, other_align: enum {NEAR; MIDDLE; FAR;} = .MIDDLE) -> UI_Panel {
