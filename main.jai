@@ -121,6 +121,8 @@ main :: () {
 	metadata_width := DEFAULT_METADATA_WIDTH;
 
 	display_settings_menu := false;
+	DEFAULT_SETTINGS_MENU_WIDTH := bar_height*8;
+	settings_menu_width := DEFAULT_SETTINGS_MENU_WIDTH;
 	settings_menu_just_opened := false;
 	tip: Tool_Tip;
 
@@ -375,10 +377,9 @@ main :: () {
 			settings_menu_panel, metadata_panel: UI_Panel;
 
 			if display_settings_menu
-				settings_menu_panel = panel_split(*canvas, .{bar_height*8, canvas.size[0]}, .LEFT, false);
-			if display_metadata {
+				settings_menu_panel = panel_split(*canvas, .{settings_menu_width, canvas.size[0]}, .LEFT, false);
+			if display_metadata
 				metadata_panel = panel_split(*canvas, .{metadata_width, canvas.size[0]}, .LEFT, false);
-			}
 
 			first_layer_is_pressable := option_entries == 0;
 
@@ -493,6 +494,18 @@ main :: () {
 			/*# settings menu */
 			if display_settings_menu {
 				panel_draw(*settings_menu_panel);
+				if panel_scrollbar(*settings_menu_panel, inp.ipointer, .[xx inp.pointer_when_pressed.x, xx inp.pointer_when_pressed.y], inp.left_button) {
+					settings_menu_width += (inp.fpointer.x - inp.pointer_when_pressed.x).(int);
+					settings_menu_width = clamp(settings_menu_width, 0, window_size[0] - settings_menu_panel.size[0]);
+					inp.pointer_when_pressed = inp.fpointer;
+				}
+				if settings_menu_width < SCROLLBAR_SIZE*7 {
+					display_settings_menu = false;
+					settings_menu_width = DEFAULT_SETTINGS_MENU_WIDTH;
+					inp.left_button = false;
+				}
+
+
 				table_space := panel_split(*settings_menu_panel, .{bar_height*9/2, settings_menu_panel.size[1]}, .TOP, false);
 				first_col := panel_split(*table_space, .{bar_height*3, table_space.size[0]}, .LEFT, false);
 				remaining_cols := panel_subdivide(*table_space, 2, .HORIZONTAL, false);
@@ -613,7 +626,7 @@ main :: () {
 				panel_draw(*metadata_panel);
 				if panel_scrollbar(*metadata_panel, inp.ipointer, .[xx inp.pointer_when_pressed.x, xx inp.pointer_when_pressed.y], inp.left_button) {
 					metadata_width += (inp.fpointer.x - inp.pointer_when_pressed.x).(int);
-					metadata_width = clamp(metadata_width, 0, window_size[0]);
+					metadata_width = clamp(metadata_width, 0, window_size[0] - metadata_panel.pos[0]);
 					inp.pointer_when_pressed = inp.fpointer;
 				}
 				if metadata_width < SCROLLBAR_SIZE*3 {
