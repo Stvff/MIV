@@ -6,7 +6,9 @@ Image_Context :: struct {
 	scale: float;
 	angle: float;
 
-	linear_upscaling: bool;
+	aa_on: bool;
+	linear_downscaling: bool;
+
 	auto_fit: bool;
 	render: bool;
 	draw: bool;
@@ -57,8 +59,7 @@ main :: () {
 	context.logger_data = *log_entries;
 	context.logger = logger;
 
-	//errors: [..]Error;
-	settings: Settings_File_1 = load_registrations();
+	settings: Settings_File_2 = load_registrations();
 	defer cleanup_registrations(settings);
 
 	/*# UI definitions */
@@ -122,7 +123,10 @@ main :: () {
 
 	first_image_open := true;
 	defer {
-		if settings.pers_between_restarts.of_aa then settings.aa_setting_on_previous_close = img_ctx.linear_upscaling;
+		if settings.pers_between_restarts.of_aa {
+			settings.aa_setting_on_previous_close = img_ctx.aa_on;
+			settings.downscaling_on_previous_close = img_ctx.linear_downscaling;
+		}
 		if settings.pers_between_restarts.of_scale then settings.scale_on_previous_close = img_ctx.scale;
 		if settings.pers_between_restarts.of_offset {
 			settings.offset_on_previous_close = img_ctx.offset;
@@ -292,10 +296,16 @@ main :: () {
 
 				if !settings.pers_between_files.of_scale img_ctx.auto_fit = true;
 				if !settings.pers_between_files.of_offset img_ctx.offset = .{0, 0};
-				if !settings.pers_between_files.of_aa img_ctx.linear_upscaling = false;
+				if !settings.pers_between_files.of_aa {
+					img_ctx.aa_on = false;
+					img_ctx.linear_downscaling = false;
+				}
 
 				if first_image_open {
-					if settings.pers_between_restarts.of_aa then img_ctx.linear_upscaling = settings.aa_setting_on_previous_close;
+					if settings.pers_between_restarts.of_aa {
+						img_ctx.aa_on = settings.aa_setting_on_previous_close;
+						img_ctx.linear_downscaling = settings.downscaling_on_previous_close;;
+					}
 					if settings.pers_between_restarts.of_scale {
 						img_ctx.scale = settings.scale_on_previous_close;
 						img_ctx.auto_fit = false;
@@ -460,8 +470,13 @@ main :: () {
 				Simp.set_shader_for_images(*gpu_texture);
 				Simp.immediate_begin();
 				glBindTexture(GL_TEXTURE_2D, gpu_texture.gl_handle);
-				if img_ctx.linear_upscaling glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				else glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				if img_ctx.aa_on {
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					if img_ctx.linear_downscaling glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				} else {
+ 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+ 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+				}
 				Simp.immediate_quad(image_bounds[0], image_bounds[1], image_bounds[2], image_bounds[3]);
 			}
 			panel_draw(*top_bar);
@@ -503,8 +518,8 @@ main :: () {
 						settings_table.*[col-1][row-1] = !settings_table.*[col-1][row-1];
 					}
 				}
-				panel_split(*settings_menu_panel, .{bar_height/2, settings_menu_panel.size[1]}, .TOP, false);
 
+				panel_split(*settings_menu_panel, .{bar_height/2, settings_menu_panel.size[1]}, .TOP, false);
 				/* debug logging toggle */
 				debug_logging_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
 				panel_text(*debug_logging_panel, main_font, "debug logging:", .LEFT, .MIDDLE);
@@ -512,6 +527,15 @@ main :: () {
 				if panel_toggle_button(*debug_button_panel, icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, context.log_level == .VERBOSE) {
 					if context.log_level == .VERBOSE context.log_level = .NORMAL;
 					else context.log_level = .VERBOSE;
+				}
+
+				panel_split(*settings_menu_panel, .{bar_height/2, settings_menu_panel.size[1]}, .TOP, false);
+				/* downscaling setting */
+				downscaling_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
+				panel_text(*downscaling_panel, main_font, "linear downscaling:", .LEFT, .MIDDLE);
+				downscaling_button_panel := panel_split(*downscaling_panel, .{bar_height*3/2, downscaling_panel.size[0]}, .RIGHT, false);
+				if panel_toggle_button(*downscaling_button_panel, icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, img_ctx.linear_downscaling) {
+					img_ctx.linear_downscaling = !img_ctx.linear_downscaling;
 				}
 
 				/*# plugin settings */
@@ -631,11 +655,11 @@ main :: () {
 			}
 
 			/*# AA button */
-			aa_button.colors = ifx img_ctx.linear_upscaling then selected_button_palette else button_palette;
+			aa_button.colors = ifx img_ctx.aa_on then selected_button_palette else button_palette;
 			panel_draw(*aa_button);
 			tip.text = "Toggle anti-aliasing";
 			if first_layer_is_pressable && panel_button(*aa_button, inp.ipointer, inp.left_button_switch, *tip) {
-				img_ctx.linear_upscaling = !img_ctx.linear_upscaling;
+				img_ctx.aa_on = !img_ctx.aa_on;
 			}
 			panel_text(*aa_button, icon_font, ICON.ANTI_ALIAS, .MIDDLE, .MIDDLE);
 

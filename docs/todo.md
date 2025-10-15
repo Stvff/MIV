@@ -47,6 +47,7 @@
 ## Bugs to fix
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
 - When another window is above MIV, MIV still reads the mouse position from that window.
+- The OpenGL Linear Downscaling does not appear to work
 
 ## Amersfoort
 - [ ] Another image type
@@ -67,7 +68,7 @@
 - [ ] Exif data
 - [ ] Follow files when they are moved, also in the history
 - [ ] Nicer looking upscaling
-	- [ ] up/downscaling settings in the settings menu
+	- [x] up/downscaling settings in the settings menu
 - [ ] Serialize the plugin settings for the settings file in some way
 - [ ] Fractional slider for Plugin settings
 	- [ ] Maybe with indents

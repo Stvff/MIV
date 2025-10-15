@@ -122,15 +122,26 @@ Settings_File_1 :: struct {
 	zoom_alignment_on_previous_close: Zoom_Alignment_Setting;
 }
 
+Settings_File_2 :: struct {
+	version: u8 = 2;
+ 	pers_between_files: Persistence_Setting;
+	pers_between_restarts: Persistence_Setting;
+	aa_setting_on_previous_close: bool;
+	downscaling_on_previous_close: bool;
+	scale_on_previous_close: float #align 1;
+	offset_on_previous_close: Vector2 #align 1;
+	zoom_alignment_on_previous_close: Zoom_Alignment_Setting;
+}
+
 Persistence_Setting :: struct {
 	of_aa: bool;
 	of_scale: bool;
 	of_offset: bool;
 }
 
-Default_Settings :: Settings_File_1.{};
+Default_Settings :: Settings_File_2.{};
 
-load_registrations :: () -> Settings_File_1 {
+load_registrations :: () -> Settings_File_2 {
 	path := path_strip_filename(system.get_path_of_running_executable());
 	path = tprint("%plugins/", path);
 	make_directory_if_it_does_not_exist(path);
@@ -143,7 +154,7 @@ load_registrations :: () -> Settings_File_1 {
 	if !exists return Default_Settings;
 
 	settings_file_buffer := cast([]u8, settings_file_string);
-	settings_file: Settings_File_1;
+	settings_file: Settings_File_2;
 	if settings_file_buffer[0] == {
 	case 0;
 		if settings_file_buffer.count != size_of(Settings_File_0) return Default_Settings;
@@ -155,7 +166,15 @@ load_registrations :: () -> Settings_File_1 {
 		settings_file.offset_on_previous_close = sf0.offset_on_previous_close;
 	case 1;
 		if settings_file_buffer.count != size_of(Settings_File_1) return Default_Settings;
-		settings_file = cast(*Settings_File_1, settings_file_buffer.data).*;
+		sf1 := cast(*Settings_File_1, settings_file_buffer.data).*;
+		settings_file.pers_between_files = sf1.pers_between_files;
+		settings_file.pers_between_restarts = sf1.pers_between_restarts;
+		settings_file.aa_setting_on_previous_close = sf1.aa_setting_on_previous_close;
+		settings_file.scale_on_previous_close = sf1.scale_on_previous_close;
+		settings_file.offset_on_previous_close = sf1.offset_on_previous_close;
+	case 2;
+		if settings_file_buffer.count != size_of(Settings_File_2) return Default_Settings;
+		settings_file = cast(*Settings_File_2, settings_file_buffer.data).*;
 	case;
 		log("Unsupported settings file version '%'.", settings_file_buffer[0], flags = .WARNING);
 		return Default_Settings;
@@ -164,12 +183,12 @@ load_registrations :: () -> Settings_File_1 {
 	return settings_file;
 }
 
-write_settings_file :: (settings_file: Settings_File_1) {
+write_settings_file :: (settings_file: Settings_File_2) {
 	path := tprint("%plugins/settings.miv", path_strip_filename(system.get_path_of_running_executable()));
 	write_entire_file(path, *settings_file, size_of(type_of(settings_file)));
 }
 
-cleanup_registrations :: (settings_file: Settings_File_1) {
+cleanup_registrations :: (settings_file: Settings_File_2) {
 	sb: String_Builder;
 
 	closed_handles: [..]*void;
