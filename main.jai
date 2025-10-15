@@ -35,8 +35,11 @@ Input_State :: struct {
 
 	left_button_switch: bool;
 
+	v: bool;
+
 	using persistent: struct {
 		shifted: bool;
+		ctrl: bool;
 		left_button: bool;
 		right_button: bool;
 		middle_button: bool;
@@ -172,13 +175,11 @@ main :: () {
 		}
 		for event: Input.events_this_frame {
 			if event.type == .QUIT then running = false;
-			if event.type == .DRAG_AND_DROP_FILES for event.files {
-				array_add(*added_string_queue, copy_string(it));
-			}
 			/* Press */
 			if (event.type == .KEYBOARD) && event.key_pressed then if event.key_code == {
 				case .ESCAPE; running = false;
 				case .SHIFT; inp.shifted = true;
+				case .CTRL; inp.ctrl = true;
 				case .ARROW_UP; inp.arrow_up = true;
 				case .ARROW_DOWN; inp.arrow_down = true;
 				case .ARROW_LEFT; inp.arrow_left = true;
@@ -187,6 +188,7 @@ main :: () {
 				case #char "A"; inp.a = true;
 				case #char "S"; inp.s = true;
 				case #char "D"; inp.d = true;
+				case #char "V"; inp.v = true;
 				case .MOUSE_BUTTON_RIGHT;
 					inp.pointer_when_pressed = get_pointer_position();
 					inp.right_button = true;
@@ -201,6 +203,7 @@ main :: () {
 			/* Release */
 			if (event.type == .KEYBOARD) && !event.key_pressed then if event.key_code == {
 				case .SHIFT; inp.shifted = false;
+				case .CTRL; inp.ctrl = false;
 				case .MOUSE_BUTTON_LEFT; inp.left_button = false;
 				case .MOUSE_BUTTON_RIGHT; inp.right_button = false;
 				case .MOUSE_BUTTON_MIDDLE; inp.middle_button = false;
@@ -209,12 +212,19 @@ main :: () {
 			if event.type == .MOUSE_WHEEL {
 				inp.scroll_delta = cast(float, event.wheel_delta)/cast(float, event.typical_wheel_delta);
 			}
+
+			if event.type == .DRAG_AND_DROP_FILES for event.files {
+				array_add(*added_string_queue, copy_string(it));
+			}
+			if inp.ctrl && inp.v {
+				added_files := split(os_clipboard_get_text(), "\n",, temp);
+				for added_files array_add(*added_string_queue, copy_string(it));
+			}
 		}
 		/* mouse */
 		inp.fpointer = get_pointer_position();
 		inp.ipointer = .[xx inp.fpointer.x, xx inp.fpointer.y];
 
-		/*# Files added via command line or drop-in */
 		loading_time := current_time_monotonic();
 
 		/* Filtering out .so files */
@@ -233,9 +243,7 @@ main :: () {
 		for added_string_queue {
 			array_add(*file_history, it);
 			file_history_index = file_history.count-1;
-		}
-		if added_string_queue {
-			img_ctx.render = true;
+			img_ctx.render = true; /* I know we're setting this for every dropped file, but it's worth it in code clarity imo */
 		}
 		if added_string_queue.count == 1 {
 			fileq_setting = .DIRECTORY;

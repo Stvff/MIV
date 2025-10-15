@@ -77,11 +77,9 @@
 - [ ] Image rotation controls and logic
 - [ ] Save settings in case of crash by saving the settings file right after settings changed
 - [x] Maybe tooltip of full path on filename
-- [ ] Clipboard
+- [x] Clipboard
 	- [x] copy filename to clipboard
-	- [ ] get filename from clipboard?
-	- [ ] copy image to clipboard?
-	- [ ] get image from clipboard??
+	- [x] get filename from clipboard
 - [ ] Modernize Custom icons
 	- [ ] Fit buttons
 	- [ ] Queueue mode buttons
