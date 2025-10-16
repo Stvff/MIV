@@ -496,7 +496,7 @@ main :: () {
 				panel_draw(*settings_menu_panel);
 				if panel_scrollbar(*settings_menu_panel, inp.ipointer, .[xx inp.pointer_when_pressed.x, xx inp.pointer_when_pressed.y], inp.left_button) {
 					settings_menu_width += (inp.fpointer.x - inp.pointer_when_pressed.x).(int);
-					settings_menu_width = clamp(settings_menu_width, 0, window_size[0] - settings_menu_panel.size[0]);
+					settings_menu_width = clamp(settings_menu_width, 0, window_size[0] - settings_menu_panel.pos[0]);
 					inp.pointer_when_pressed = inp.fpointer;
 				}
 				if settings_menu_width < SCROLLBAR_SIZE*7 {
