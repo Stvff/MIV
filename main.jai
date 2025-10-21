@@ -26,9 +26,12 @@ Image_Context :: struct {
 Input_State :: struct {
 	arrow_up: bool;
 	arrow_down: bool;
+
 	arrow_left: bool;
 	arrow_right: bool;
+
 	scroll_delta: float;
+
 
 	w, a, s, d: bool;
 
@@ -40,6 +43,9 @@ Input_State :: struct {
 	v: bool;
 
 	using persistent: struct {
+		arrow_left_repeat: bool;
+		arrow_right_repeat: bool;
+
 		shifted: bool;
 		ctrl: bool;
 		left_button: bool;
@@ -191,8 +197,12 @@ main :: () {
 				case .CTRL; inp.ctrl = true;
 				case .ARROW_UP; inp.arrow_up = true;
 				case .ARROW_DOWN; inp.arrow_down = true;
-				case .ARROW_LEFT; inp.arrow_left = true;
-				case .ARROW_RIGHT; inp.arrow_right = true;
+				case .ARROW_LEFT;
+					inp.arrow_left = true;
+					inp.arrow_left_repeat = event.repeat;
+				case .ARROW_RIGHT;
+					inp.arrow_right = true;
+					inp.arrow_right_repeat = event.repeat;
 				case #char "W"; inp.w = true;
 				case #char "A"; inp.a = true;
 				case #char "S"; inp.s = true;
@@ -211,6 +221,8 @@ main :: () {
 			}
 			/* Release */
 			if (event.type == .KEYBOARD) && !event.key_pressed then if event.key_code == {
+				case .ARROW_LEFT; inp.arrow_left_repeat = false;
+				case .ARROW_RIGHT; inp.arrow_right_repeat = false;
 				case .SHIFT; inp.shifted = false;
 				case .CTRL; inp.ctrl = false;
 				case .MOUSE_BUTTON_LEFT; inp.left_button = false;
@@ -505,7 +517,6 @@ main :: () {
 					inp.left_button = false;
 				}
 
-
 				table_space := panel_split(*settings_menu_panel, .{bar_height*9/2, settings_menu_panel.size[1]}, .TOP, false);
 				first_col := panel_split(*table_space, .{bar_height*3, table_space.size[0]}, .LEFT, false);
 				remaining_cols := panel_subdivide(*table_space, 2, .HORIZONTAL, false);
@@ -750,7 +761,7 @@ main :: () {
 			bottom_bar.colors.text = ifx frame_time < target_frame_time then u8.[100, 210, 25, 255] else .[220, 60, 25, 255];
 			panel_text(*bottom_bar, main_font, tprint("fps: %", frame_count_over_1s), .LEFT, .MIDDLE);
 			bottom_bar.colors.text = default_palette.text;
-			show_fps := false;
+			show_fps := inp.arrow_left_repeat || inp.arrow_right_repeat;
 
 			/*# Backwards and forwards buttons (bnf buttons) */
 			bnf_menu_space := panel_split(*bottom_bar, .{bar_height*6, bottom_bar.size[0]}, .RIGHT, !show_fps);
@@ -760,7 +771,7 @@ main :: () {
 			bnf_buttons := panel_subdivide(*bnf_button_space, 2, .HORIZONTAL, true);
 			if first_layer_is_pressable && current_q_index.* > 0 && current_q.count != 0 {
 				tip.text = "Previous file in queue";
-				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch, *tip) || inp.arrow_left {
+				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch, *tip) || inp.arrow_left || inp.arrow_left_repeat {
 					current_q_index.* -= 1;
 					img_ctx.render = true;
 				}
@@ -770,7 +781,7 @@ main :: () {
 			}
 			if first_layer_is_pressable && current_q_index.* < current_q.count-1 && current_q.count != 0 {
 				tip.text = "Next file in queue";
-				if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch, *tip) || inp.arrow_right {
+				if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch, *tip) || inp.arrow_right || inp.arrow_right_repeat {
 					current_q_index.* += 1;
 					img_ctx.render = true;
 				}

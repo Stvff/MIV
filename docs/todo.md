@@ -74,7 +74,7 @@
 	- [ ] Maybe with indents
 	- [ ] Choice between every change or after mouse release.
 - [ ] FPS slider for when holding down next or prev
-	- [ ] When holding down next or prev, go up to full fps, that or a slideshow
+	- [x] When holding down next or prev, go up to full fps
 - [ ] Image rotation controls and logic
 - [ ] Save settings in case of crash by saving the settings file right after settings changed
 - [x] Maybe tooltip of full path on filename
