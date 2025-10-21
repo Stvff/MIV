@@ -570,6 +570,15 @@ main :: () {
 					img_ctx.linear_downscaling = !img_ctx.linear_downscaling;
 				}
 
+				panel_split(*settings_menu_panel, .{bar_height/2, settings_menu_panel.size[1]}, .TOP, false);
+				/* FPS slider */
+				fps_panel := panel_split(*settings_menu_panel, .{bar_height*2, settings_menu_panel.size[1]}, .TOP, false);
+				fps_slider_panel := panel_split(*fps_panel, .{1, 2}, .BOTTOM, true);
+				fps_text := tprint("% fps, % ms", formatFloat(1/target_frame_time, trailing_width = 2), formatFloat(target_frame_time*1000, trailing_width = 2));
+				panel_text_split(*fps_panel, main_font, fps_text, .RIGHT, .MIDDLE);
+				panel_text(*fps_panel, main_font, "fps target:", .LEFT, .MIDDLE);
+				panel_slider(*fps_slider_panel, 10, inp.ipointer, inp.left_button, .{1, 2});
+
 				/*# plugin settings */
 				if img_ctx.plugin && img_ctx.plugin.plugin_provided.has_settings {
 					if settings_menu_just_opened || img_ctx.settings_info.options.data == null {
