@@ -57,7 +57,9 @@ Input_State :: struct {
 
 window_size: [2]int;
 os_window: Winc.Window_Type;
-TARGET_FRAME_TIME :: 1.0/120.0;
+MAX_FRAME_TIME :: 1.0/10.0;
+DEFAULT_FRAME_TIME :: 1/120.0;
+MIN_FRAME_TIME :: 1.0/240.0;
 
 main :: () {
 	log_entries: [..]Log_Entry;
@@ -97,7 +99,7 @@ main :: () {
 		draw = true,
 	};
 
-	if !init(*img_ctx.watcher, file_change_callback, *img_ctx, events_to_watch = .ALL_EVENTS, merge_window_seconds = 2*TARGET_FRAME_TIME, verbose = false, watch_recursively = false) {
+	if !init(*img_ctx.watcher, file_change_callback, *img_ctx, events_to_watch = .ALL_EVENTS, merge_window_seconds = 2*DEFAULT_FRAME_TIME, verbose = false, watch_recursively = false) {
 		log_error("Could not initialize watcher");
 		return;
 	}
@@ -146,7 +148,7 @@ main :: () {
 	}
 
 	/*# Timing */
-	target_frame_time: float64 = TARGET_FRAME_TIME;
+	target_frame_time: float64 = DEFAULT_FRAME_TIME;
 	last_1s_time := current_time_monotonic();
 	prev_time := last_1s_time;
 
@@ -577,7 +579,13 @@ main :: () {
 				fps_text := tprint("% fps, % ms", formatFloat(1/target_frame_time, trailing_width = 2), formatFloat(target_frame_time*1000, trailing_width = 2));
 				panel_text_split(*fps_panel, main_font, fps_text, .RIGHT, .MIDDLE);
 				panel_text(*fps_panel, main_font, "fps target:", .LEFT, .MIDDLE);
-				panel_slider(*fps_slider_panel, 10, inp.ipointer, inp.left_button, .{1, 2});
+
+				handle_size := 10;
+				slider_pos := (1/target_frame_time.(float) - 1/MIN_FRAME_TIME)/(1/MAX_FRAME_TIME - 1/MIN_FRAME_TIME);
+				// slider_ratio := Ratio.{cast(int, (fps_panel.size[0] - handle_size).(float)*slider_pos), fps_panel.size[0] - handle_size};
+				// slider_ratio := Ratio.{1, 2};
+				slider_pos = panel_slider(*fps_slider_panel, handle_size, inp.ipointer, inp.left_button, slider_pos);
+				target_frame_time = 1/(1/MIN_FRAME_TIME + slider_pos*(1/MAX_FRAME_TIME - 1/MIN_FRAME_TIME));
 
 				/*# plugin settings */
 				if img_ctx.plugin && img_ctx.plugin.plugin_provided.has_settings {

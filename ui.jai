@@ -209,18 +209,24 @@ panel_scrollbar :: (p: *UI_Panel, pointer_position: [2]int, pointer_when_pressed
 	return should_move;
 }
 
-panel_slider :: (p: *UI_Panel, handle_size: int, pointer_position: [2]int, pressed: bool, current_state: Ratio, tip: *Tool_Tip = null) -> Ratio {
+panel_slider :: (p: *UI_Panel, handle_size: int, pointer_position: [2]int, pressed: bool, current_state: float, tip: *Tool_Tip = null) -> float {
 	in_panel := pointer_is_in_panel(p, pointer_position);
 
+	new_state := current_state;
 	if in_panel {
 		tc := p.colors;
 		p.colors.body = tc.hover;
 		panel_draw(p);
 		p.colors = tc;
+		if pressed {
+			pos := pointer_position[0] - p.pos[0] - handle_size/2;
+			pos = clamp(pos, 0, p.size[0] - handle_size);
+			new_state = pos.(float)/(p.size[0] - handle_size).(float);
+		}
 	}
 
 	handle: UI_Panel;
-	handle.pos[0] = p.pos[0] + current_state.num*p.size[0]/current_state.den + handle_size/2;
+	handle.pos[0] = p.pos[0] + cast(int, new_state*(p.size[0] - handle_size).(float));
 	handle.pos[1] = p.pos[1];
 	handle.size[0] = handle_size;
 	handle.size[1] = p.size[1];
@@ -239,7 +245,7 @@ panel_slider :: (p: *UI_Panel, handle_size: int, pointer_position: [2]int, press
 		}
 		tip.pointer_position = pointer_position;
 	}
-	return current_state;
+	return new_state;
 }
 
 panel_text_split :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, side: Creation_Side, other_align: enum {NEAR; MIDDLE; FAR;} = .MIDDLE) -> UI_Panel {

@@ -293,7 +293,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do
 
 	if img_ctx.watcher.callback {
 		deinit(img_ctx.watcher);
-		if !init(*img_ctx.watcher, file_change_callback, img_ctx, events_to_watch = .ALL_EVENTS, merge_window_seconds = 2*TARGET_FRAME_TIME, verbose = false, watch_recursively = false) {
+		if !init(*img_ctx.watcher, file_change_callback, img_ctx, events_to_watch = .ALL_EVENTS, merge_window_seconds = 2*DEFAULT_FRAME_TIME, verbose = false, watch_recursively = false) {
 			if do_logging log_error("Could not initialize watcher");
 			ok = false;
 			return false;
