@@ -47,10 +47,9 @@
 ## Bugs to fix
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
 - When another window is above MIV, MIV still reads the mouse position from that window.
-- The OpenGL Linear Downscaling does not appear to work
+- The OpenGL Linear Downscaling does not appear to do anything at all
 
 ## Amersfoort
-- [ ] Logo and possible rename.......
 - [ ] Another image type
 - [ ] Rework the queue model
 	- [ ] Option for queue looping
@@ -61,9 +60,8 @@
 	- [ ] scrollbars I'm afraid
 		- [x] Also adjustable windows
 - [x] logs onscreen instead of in terminal
+- [ ] Plugin error, message, and warning lists instead of single only-errors
 - [ ] different types of filesorting
-- [ ] give functions the ability to respond responsibly based on user input option
-	- [ ] More advanced plugin interactions
 - [ ] Being more elaborate about what failed during loading (which part of the directory, which type of error)
 - [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
 - [ ] Exif data
@@ -85,6 +83,7 @@
 - [x] Clipboard
 	- [x] copy filename to clipboard
 	- [x] get filename from clipboard
+- [ ] Logo and possible rename.......
 - [ ] Modernize Custom icons
 	- [ ] Fit buttons
 	- [ ] Queueue mode buttons
