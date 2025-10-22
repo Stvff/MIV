@@ -211,19 +211,18 @@ panel_scrollbar :: (p: *UI_Panel, pointer_position: [2]int, pointer_when_pressed
 
 panel_slider :: (p: *UI_Panel, handle_size: int, pointer_position: [2]int, pressed: bool, current_state: float, tip: *Tool_Tip = null) -> float {
 	in_panel := pointer_is_in_panel(p, pointer_position);
+	p.colors = selected_button_palette;
 
 	new_state := current_state;
 	if in_panel {
-		tc := p.colors;
-		p.colors.body = tc.hover;
-		panel_draw(p);
-		p.colors = tc;
+		p.colors.body = p.colors.hover;
 		if pressed {
 			pos := pointer_position[0] - p.pos[0] - handle_size/2;
 			pos = clamp(pos, 0, p.size[0] - handle_size);
 			new_state = pos.(float)/(p.size[0] - handle_size).(float);
 		}
 	}
+	panel_draw(p);
 
 	handle: UI_Panel;
 	handle.pos[0] = p.pos[0] + cast(int, new_state*(p.size[0] - handle_size).(float));

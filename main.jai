@@ -39,6 +39,7 @@ Input_State :: struct {
 	ipointer: [2]int;
 
 	left_button_switch: bool;
+	middle_button_switch: bool;
 
 	v: bool;
 
@@ -60,6 +61,7 @@ os_window: Winc.Window_Type;
 MAX_FRAME_TIME :: 1.0/10.0;
 DEFAULT_FRAME_TIME :: 1/120.0;
 MIN_FRAME_TIME :: 1.0/240.0;
+FRAME_TIME_CYCLE :: float64.[1/24.0, 1/29.97, 1/30.0, 1/60.0, 1/120.0];
 
 main :: () {
 	log_entries: [..]Log_Entry;
@@ -218,6 +220,7 @@ main :: () {
 					inp.pointer_when_pressed = get_pointer_position();
 					inp.left_button = true;
 				case .MOUSE_BUTTON_MIDDLE;
+					inp.middle_button_switch = true;
 					inp.pointer_when_pressed = get_pointer_position();
 					inp.middle_button = true;
 			}
@@ -563,7 +566,7 @@ main :: () {
 					else context.log_level = .VERBOSE;
 				}
 
-				panel_split(*settings_menu_panel, .{bar_height/2, settings_menu_panel.size[1]}, .TOP, false);
+				// panel_split(*settings_menu_panel, .{bar_height/2, settings_menu_panel.size[1]}, .TOP, false);
 				/* downscaling setting */
 				downscaling_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
 				panel_text(*downscaling_panel, main_font, "linear downscaling:", .LEFT, .MIDDLE);
@@ -572,7 +575,7 @@ main :: () {
 					img_ctx.linear_downscaling = !img_ctx.linear_downscaling;
 				}
 
-				panel_split(*settings_menu_panel, .{bar_height/2, settings_menu_panel.size[1]}, .TOP, false);
+				// panel_split(*settings_menu_panel, .{bar_height/2, settings_menu_panel.size[1]}, .TOP, false);
 				/* FPS slider */
 				fps_panel := panel_split(*settings_menu_panel, .{bar_height*2, settings_menu_panel.size[1]}, .TOP, false);
 				fps_slider_panel := panel_split(*fps_panel, .{1, 2}, .BOTTOM, true);
@@ -581,11 +584,21 @@ main :: () {
 				panel_text(*fps_panel, main_font, "fps target:", .LEFT, .MIDDLE);
 
 				handle_size := 10;
-				slider_pos := (1/target_frame_time.(float) - 1/MIN_FRAME_TIME)/(1/MAX_FRAME_TIME - 1/MIN_FRAME_TIME);
-				// slider_ratio := Ratio.{cast(int, (fps_panel.size[0] - handle_size).(float)*slider_pos), fps_panel.size[0] - handle_size};
-				// slider_ratio := Ratio.{1, 2};
-				slider_pos = panel_slider(*fps_slider_panel, handle_size, inp.ipointer, inp.left_button, slider_pos);
-				target_frame_time = 1/(1/MIN_FRAME_TIME + slider_pos*(1/MAX_FRAME_TIME - 1/MIN_FRAME_TIME));
+				slider_pos := (target_frame_time.(float) - MIN_FRAME_TIME)/(MAX_FRAME_TIME - MIN_FRAME_TIME);
+				slider_pos = 1 - panel_slider(*fps_slider_panel, handle_size, inp.ipointer, inp.left_button, 1 - slider_pos);
+				target_frame_time = (MIN_FRAME_TIME + slider_pos*(MAX_FRAME_TIME - MIN_FRAME_TIME));
+
+				if pointer_is_in_panel(*fps_slider_panel, inp.ipointer) && inp.middle_button_switch {
+					found := false;
+					for ft: FRAME_TIME_CYCLE {
+						if abs(1/ft - 1/target_frame_time) < 0.001 {
+							found = true;
+							target_frame_time = FRAME_TIME_CYCLE[(it_index + 1)%FRAME_TIME_CYCLE.count];
+							break;
+						}
+					}
+					if !found target_frame_time = DEFAULT_FRAME_TIME;
+				}
 
 				/*# plugin settings */
 				if img_ctx.plugin && img_ctx.plugin.plugin_provided.has_settings {
