@@ -52,8 +52,16 @@ typedef struct {
 	string name;
 } List_Item;
 
+#define DEFAULT_SLIDER_HANDLE_SIZE 10;
+typedef struct {
+	float value;
+	string value_text;
+	int32_t handle_size;
+} Slider;
+
 #define OPTION_TYPE_TOGGLE 0;
 #define OPTION_TYPE_LIST 1;
+#define OPTION_TYPE_SLIDER 2;
 
 typedef struct {
 	string name;
@@ -64,6 +72,7 @@ typedef struct {
 			int64_t count;
 			List_Item *data;
 		} list;
+		Slider slider;
 	};
 } Option;
 

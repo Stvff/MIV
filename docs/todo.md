@@ -50,6 +50,7 @@
 - The OpenGL Linear Downscaling does not appear to work
 
 ## Amersfoort
+- [ ] Logo and possible rename.......
 - [ ] Another image type
 - [ ] Rework the queue model
 	- [ ] Option for queue looping
@@ -69,15 +70,17 @@
 - [ ] Follow files when they are moved, also in the history
 - [ ] Nicer looking upscaling
 	- [x] up/downscaling settings in the settings menu
-- [ ] Serialize the plugin settings for the settings file in some way
-- [ ] Fractional slider for Plugin settings
+- [ ] Settings file total update
+	- [ ] Serialize the plugin settings for the settings file in some way
+	- [ ] Save settings in case of crash by saving the settings file right after settings changed
+	- [ ] Save set framerate
+- [x] Slider for Plugin settings
 	- [ ] Maybe with indents
 	- [ ] Choice between every change or after mouse release.
 	- [ ] Also the Uberslider
 - [x] FPS slider for when holding down next or prev
 	- [x] When holding down next or prev, go up to full fps
 - [ ] Image rotation controls and logic
-- [ ] Save settings in case of crash by saving the settings file right after settings changed
 - [x] Maybe tooltip of full path on filename
 - [x] Clipboard
 	- [x] copy filename to clipboard

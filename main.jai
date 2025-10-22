@@ -583,9 +583,8 @@ main :: () {
 				panel_text_split(*fps_panel, main_font, fps_text, .RIGHT, .MIDDLE);
 				panel_text(*fps_panel, main_font, "fps target:", .LEFT, .MIDDLE);
 
-				handle_size := 10;
 				slider_pos := (target_frame_time.(float) - MIN_FRAME_TIME)/(MAX_FRAME_TIME - MIN_FRAME_TIME);
-				slider_pos = 1 - panel_slider(*fps_slider_panel, handle_size, inp.ipointer, inp.left_button, 1 - slider_pos);
+				slider_pos = 1 - panel_slider(*fps_slider_panel, DEFAULT_SLIDER_HANDLE_SIZE, inp.ipointer, inp.left_button, 1 - slider_pos);
 				target_frame_time = (MIN_FRAME_TIME + slider_pos*(MAX_FRAME_TIME - MIN_FRAME_TIME));
 
 				if pointer_is_in_panel(*fps_slider_panel, inp.ipointer) && inp.middle_button_switch {
@@ -646,7 +645,21 @@ main :: () {
 
 								panel_text(it, main_font, option.list[it_index].name, .RIGHT, .MIDDLE);
 							}
+
+						case .SLIDER;
+							slider_panel := panel_split(*settings_menu_panel, .{bar_height*2, settings_menu_panel.size[1]}, .TOP, true);
+							slider_track_panel := panel_split(*slider_panel, .{1, 2}, .BOTTOM, true);
+							panel_text_split(*slider_panel, main_font, option.slider.value_text, .RIGHT, .MIDDLE);
+							panel_text(*slider_panel, main_font, tprint("%:", option.name), .LEFT, .MIDDLE);
+
+							result := panel_slider(*slider_track_panel, option.slider.handle_size, inp.ipointer, inp.left_button, option.slider.value);
+							if result != option.slider.value {
+								option.slider.value = result;
+								img_ctx.settings_info.changed_index = xx it_index;
+								changed = true;
+							}
 						}
+
 						if changed {
 							settings_info := img_ctx.settings_info;
 							error_str := img_ctx.plugin.settings(*img_ctx.pre_info, *img_ctx.render_info, *settings_info);

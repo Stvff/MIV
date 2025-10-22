@@ -8,7 +8,7 @@ registration_procedure :: (registration: *Plugin_Registration_Entry) -> s64 #c_c
 		procedure_prefix = "qoi_",
 		extension = "qoi",
 		magic_number = "qoif",
-		has_settings = false,
+		has_settings = true,
 	};
 	return 0;
 }
@@ -160,7 +160,7 @@ index_hash :: (pixel: [4]u8) -> u64 {
 qoi_settings :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings_info: *Settings_Info) -> string #c_call {
 	push_context,defer_pop pre_info.user_ptr.(*#Context);
 	if !settings_info.options {
-		settings_info.options = NewArray(3, Option);
+		settings_info.options = NewArray(4, Option);
 
 		settings_info.options[0] = .{
 			name = "toggle setting",
@@ -182,6 +182,12 @@ qoi_settings :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, se
 			name = "toggle setting (sequel)",
 			type = .TOGGLE,
 			toggle = false
+		};
+
+		settings_info.options[3] = .{
+			name = "rotato",
+			type = .SLIDER,
+			slider = .{0.5, "should be half", DEFAULT_SLIDER_HANDLE_SIZE}
 		};
 		return "";
 	}

@@ -37,8 +37,15 @@ List_Item :: struct {
 	name: string;
 }
 
+DEFAULT_SLIDER_HANDLE_SIZE :: 10;
+Slider :: struct {
+	value: float32;
+	value_text: string;
+	handle_size: s32;
+}
+
 Option_Type :: enum u8 {
-	TOGGLE; LIST;
+	TOGGLE; LIST; SLIDER;
 }
 
 Option :: struct {
@@ -47,6 +54,7 @@ Option :: struct {
 	union {
 		toggle: bool;
 		list: []List_Item;
+		slider: Slider;
 	};
 }
 
