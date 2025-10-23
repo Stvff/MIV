@@ -1054,6 +1054,8 @@ Simp :: #import "Simp";
 X11 :: #import "X11";
 #import "GL";
 
+Hash :: #import "Hash";
+
 #import "Math";
 #import "File";
 #import "File_Watcher";

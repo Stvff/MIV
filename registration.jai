@@ -124,7 +124,7 @@ Settings_File_1 :: struct {
 
 Settings_File_2 :: struct {
 	version: u8 = 2;
- 	pers_between_files: Persistence_Setting;
+	pers_between_files: Persistence_Setting;
 	pers_between_restarts: Persistence_Setting;
 	aa_setting_on_previous_close: bool;
 	downscaling_on_previous_close: bool;
@@ -137,6 +137,23 @@ Persistence_Setting :: struct {
 	of_aa: bool;
 	of_scale: bool;
 	of_offset: bool;
+}
+
+Setting_Header :: struct {
+	name_hash: u32;
+	data_length: s32;
+}
+
+Settings_File_3 :: struct {
+	version: u8 = 3;
+	pers_between_files: Persistence_Setting;
+	pers_between_restarts: Persistence_Setting;
+	aa_setting_on_previous_close: bool;
+	downscaling_on_previous_close: bool;
+	scale_on_previous_close: float #align 1;
+	offset_on_previous_close: Vector2 #align 1;
+	zoom_alignment_on_previous_close: Zoom_Alignment_Setting;
+	target_frame_time_on_previous_close: float #align 1;
 }
 
 Default_Settings :: Settings_File_2.{};
@@ -175,6 +192,19 @@ load_registrations :: () -> Settings_File_2 {
 	case 2;
 		if settings_file_buffer.count != size_of(Settings_File_2) return Default_Settings;
 		settings_file = cast(*Settings_File_2, settings_file_buffer.data).*;
+	case 3;
+		progress := 0;
+		while settings_file_buffer.count - progress - 1  > size_of(Setting_Header) {
+			header := (settings_file_buffer.data + progress).(*Setting_Header).*;
+			for member: type_info(Setting_Header).members if Hash.sdbm_hash(member.name.data, member.name.count) == header.name_hash {
+				if member.type.runtime_size != header.data_length continue member;
+				if settings_file_buffer.count - progress - 1 - header.data_length < 1 break member;
+				progress += size_of(Setting_Header);
+				memcpy(*settings_file + member.offset_in_bytes, settings_file_buffer.data + progress, header.data_length);
+				break member;
+			}
+			progress += header.data_length;
+		}
 	case;
 		log("Unsupported settings file version '%'.", settings_file_buffer[0], flags = .WARNING);
 		return Default_Settings;
@@ -186,6 +216,16 @@ load_registrations :: () -> Settings_File_2 {
 write_settings_file :: (settings_file: Settings_File_2) {
 	path := tprint("%plugins/settings.miv", path_strip_filename(system.get_path_of_running_executable()));
 	write_entire_file(path, *settings_file, size_of(type_of(settings_file)));
+
+	if settings_file.version < 3 return;
+
+	buffer: [..]u8;
+	array_add(*buffer, settings_file.version);
+	for member: type_info(type_of(settings_file)).members {
+		header := Setting_Header.{Hash.sdbm_hash(member.name.data, member.name.count), xx member.type.runtime_size};
+		array_add(*buffer, ..[]u8.{size_of(Setting_Header), (*header).(*u8)});
+	}
+	write_entire_file(path, buffer.data, buffer.count);
 }
 
 cleanup_registrations :: (settings_file: Settings_File_2) {
