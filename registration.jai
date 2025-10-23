@@ -156,9 +156,9 @@ Settings_File_3 :: struct {
 	target_frame_time_on_previous_close: float #align 1;
 }
 
-Default_Settings :: Settings_File_2.{};
+Default_Settings :: Settings_File_3.{};
 
-load_registrations :: () -> Settings_File_2 {
+load_registrations :: () -> Settings_File_3 {
 	path := path_strip_filename(system.get_path_of_running_executable());
 	path = tprint("%plugins/", path);
 	make_directory_if_it_does_not_exist(path);
@@ -171,7 +171,7 @@ load_registrations :: () -> Settings_File_2 {
 	if !exists return Default_Settings;
 
 	settings_file_buffer := cast([]u8, settings_file_string);
-	settings_file: Settings_File_2;
+	settings_file: Settings_File_3;
 	if settings_file_buffer[0] == {
 	case 0;
 		if settings_file_buffer.count != size_of(Settings_File_0) return Default_Settings;
@@ -191,7 +191,13 @@ load_registrations :: () -> Settings_File_2 {
 		settings_file.offset_on_previous_close = sf1.offset_on_previous_close;
 	case 2;
 		if settings_file_buffer.count != size_of(Settings_File_2) return Default_Settings;
-		settings_file = cast(*Settings_File_2, settings_file_buffer.data).*;
+		sf2 := cast(*Settings_File_2, settings_file_buffer.data).*;
+		settings_file.pers_between_files = sf2.pers_between_files;
+		settings_file.pers_between_restarts = sf2.pers_between_restarts;
+		settings_file.aa_setting_on_previous_close = sf2.aa_setting_on_previous_close;
+		settings_file.downscaling_on_previous_close = sf2.downscaling_on_previous_close;
+		settings_file.scale_on_previous_close = sf2.scale_on_previous_close;
+		settings_file.offset_on_previous_close = sf2.offset_on_previous_close;
 	case 3;
 		progress := 0;
 		while settings_file_buffer.count - progress - 1  > size_of(Setting_Header) {
@@ -213,22 +219,20 @@ load_registrations :: () -> Settings_File_2 {
 	return settings_file;
 }
 
-write_settings_file :: (settings_file: Settings_File_2) {
-	path := tprint("%plugins/settings.miv", path_strip_filename(system.get_path_of_running_executable()));
-	write_entire_file(path, *settings_file, size_of(type_of(settings_file)));
-
-	if settings_file.version < 3 return;
-
+write_settings_file :: (settings_file: Settings_File_3) {
 	buffer: [..]u8;
 	array_add(*buffer, settings_file.version);
 	for member: type_info(type_of(settings_file)).members {
 		header := Setting_Header.{Hash.sdbm_hash(member.name.data, member.name.count), xx member.type.runtime_size};
 		array_add(*buffer, ..[]u8.{size_of(Setting_Header), (*header).(*u8)});
+		array_add(*buffer, ..[]u8.{member.type.runtime_size, (*settings_file).(*u8) + member.offset_in_bytes});
 	}
+
+	path := tprint("%plugins/settings.miv", path_strip_filename(system.get_path_of_running_executable()));
 	write_entire_file(path, buffer.data, buffer.count);
 }
 
-cleanup_registrations :: (settings_file: Settings_File_2) {
+cleanup_registrations :: (settings_file: Settings_File_3) {
 	sb: String_Builder;
 
 	closed_handles: [..]*void;

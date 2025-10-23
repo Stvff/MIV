@@ -69,7 +69,7 @@ main :: () {
 	context.logger_data = *log_entries;
 	context.logger = logger;
 
-	settings: Settings_File_2 = load_registrations();
+	settings: Settings_File_3 = load_registrations();
 	defer cleanup_registrations(settings);
 
 	/*# UI definitions */
