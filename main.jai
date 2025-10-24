@@ -135,7 +135,7 @@ main :: () {
 	settings_menu_width := DEFAULT_SETTINGS_MENU_WIDTH;
 	settings_menu_just_opened := false;
 	tip: Tool_Tip;
-
+	elaborate_tips := settings.elaborate_tips;
 
 	/*# Timing */
 	target_frame_time: float64 = DEFAULT_FRAME_TIME;
@@ -161,6 +161,7 @@ main :: () {
 		}
 		settings.zoom_alignment_on_previous_close = img_ctx.zoom_alignment;
 		settings.target_frame_time_on_previous_close = xx target_frame_time;
+		settings.elaborate_tips = elaborate_tips;
 	}
 
 	running := true;
@@ -573,7 +574,6 @@ main :: () {
 					else context.log_level = .VERBOSE;
 				}
 
-				// panel_split(*settings_menu_panel, .{bar_height/2, settings_menu_panel.size[1]}, .TOP, false);
 				/* downscaling setting */
 				downscaling_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
 				panel_text(*downscaling_panel, main_font, "linear downscaling:", .LEFT, .MIDDLE);
@@ -582,7 +582,15 @@ main :: () {
 					img_ctx.linear_downscaling = !img_ctx.linear_downscaling;
 				}
 
-				// panel_split(*settings_menu_panel, .{bar_height/2, settings_menu_panel.size[1]}, .TOP, false);
+				/* elaborate tooltips settings */
+				elaborate_tips_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
+				panel_text(*elaborate_tips_panel, main_font, "elaborate tooltips:", .LEFT, .MIDDLE);
+				elaborate_tips_button_panel := panel_split(*elaborate_tips_panel, .{bar_height*3/2, elaborate_tips_panel.size[0]}, .RIGHT, false);
+				tip.text = "When turned on, tooltips will contain more information about what a setting or button does.";
+				if panel_toggle_button(*elaborate_tips_button_panel, icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, elaborate_tips, tip = *tip) {
+					elaborate_tips = !elaborate_tips;
+				}
+
 				/* FPS slider */
 				fps_panel := panel_split(*settings_menu_panel, .{bar_height*2, settings_menu_panel.size[1]}, .TOP, false);
 				fps_slider_panel := panel_split(*fps_panel, .{1, 2}, .BOTTOM, true);
@@ -718,6 +726,7 @@ main :: () {
 			settings_button.colors = ifx display_settings_menu then selected_button_palette else button_palette;
 			panel_draw(*settings_button);
 			tip.text = "Toggle settings menu";
+			if elaborate_tips tip.text = "Toggle settings menu:\nThe settings menu will appear when this button is clicked.\nIf the settings menu is already visible, it will instead disappear.";
 			if first_layer_is_pressable && panel_button(*settings_button, inp.ipointer, inp.left_button_switch, *tip){
 				display_settings_menu = !display_settings_menu;
 				if display_settings_menu then settings_menu_just_opened = true;
@@ -735,7 +744,14 @@ main :: () {
 
 			for fit_buttons {
 				fit_tips :: string.["Fit pixel to pixel", "Fit to screen width", "Fit to screen height", "Use best fit"];
+				elaborate_fit_tips :: string.[
+					"Fit pixel to pixel:\nThis setting scales the image so that one pixel on the\nscreen corresponds to exactly one pixel of the image.",
+					"Fit to screen width:\nThis setting scales the image so that the image takes up the full width of the screen.",
+					"Fit to screen height:\nThis setting scales the image so that the image takes up the full height of the screen.",
+					"Use best fit:\nThis setting scales the image so that it is both as large as possible, as well as fully visible."
+				];
 				tip.text = fit_tips[it_index];
+				if elaborate_tips tip.text = elaborate_fit_tips[it_index];
 				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *tip) {
 					img_ctx.fit = xx it_index;
 					img_ctx.auto_fit = true;
@@ -750,6 +766,7 @@ main :: () {
 			aa_button.colors = ifx img_ctx.aa_on then selected_button_palette else button_palette;
 			panel_draw(*aa_button);
 			tip.text = "Toggle anti-aliasing";
+			if elaborate_tips tip.text = "Toggle anti-aliasing:\nIf turned on, anti-aliasing will smooth out the pixels when\nupscaling, which makes lower resolution photos look better.";
 			if first_layer_is_pressable && panel_button(*aa_button, inp.ipointer, inp.left_button_switch, *tip) {
 				img_ctx.aa_on = !img_ctx.aa_on;
 			}
@@ -781,6 +798,7 @@ main :: () {
 				file_display := panel_text_split(*top_bar, main_font, text, .RIGHT);
 
 				tip.text = img_ctx.pre_info.name;
+				if elaborate_tips tip.text = tprint("The full filepath to this image (click to copy to clipboard):\n%", tip.text);
 				if first_layer_is_pressable && panel_button(*file_display, inp.ipointer, inp.left_button_switch, *tip) {
 					os_clipboard_set_text(img_ctx.pre_info.name);
 					log("Filepath copied to clipboard.", flags = .CONTENT);
@@ -802,6 +820,7 @@ main :: () {
 			metadata_button.colors = ifx display_metadata then selected_button_palette else button_palette;
 			panel_draw(*metadata_button);
 			tip.text = "Toggle image metadata view";
+			if elaborate_tips tip.text = "Toggle image metadata view:\nMetadata is extra information stored in images, about the image itself,\nlike image size, camera information, time of photo, etc.\nThe metadata view will appear when this button is clicked.\nIf the metadata view is already visible, it will instead disappear.";
 			if first_layer_is_pressable && panel_button(*metadata_button, inp.ipointer, inp.left_button_switch, *tip) {
 				display_metadata = !display_metadata;
 			}

@@ -150,6 +150,8 @@ Settings_File_3 :: struct {
 	pers_between_restarts: Persistence_Setting;
 	aa_setting_on_previous_close: bool;
 	downscaling_on_previous_close: bool;
+	elaborate_tips: bool;
+
 	scale_on_previous_close: float #align 1;
 	offset_on_previous_close: Vector2 #align 1;
 	zoom_alignment_on_previous_close: Zoom_Alignment_Setting;
@@ -200,16 +202,11 @@ load_registrations :: () -> Settings_File_3 {
 		settings_file.offset_on_previous_close = sf2.offset_on_previous_close;
 	case 3;
 		progress := 1;
-		// hex_print_style := context.print_style;
-		// hex_print_style.default_format_int.base = 16;
-		// print("%\n", settings_file_buffer,, print_style = hex_print_style);
 		while settings_file_buffer.count - progress - 1  > size_of(Setting_Header) {
 			header := (settings_file_buffer.data + progress).(*Setting_Header).*;
-			// print("%\n", header,, print_style = hex_print_style);
 			for member: type_info(Settings_File_3).members {
 				if it_index == 0 continue member;
 				hash := Hash.sdbm_hash(member.name.data, member.name.count);
-				// print("%, %\n", hash, header.name_hash,, print_style = hex_print_style);
 				if hash == header.name_hash {
 					if member.type.runtime_size != header.data_length continue member;
 					if settings_file_buffer.count - progress - 1 - header.data_length < 1 break member;
@@ -235,7 +232,6 @@ write_settings_file :: (settings_file: Settings_File_3) {
 	for member: type_info(type_of(settings_file)).members {
 		if it_index == 0 continue;
 		header := Setting_Header.{Hash.sdbm_hash(member.name.data, member.name.count), xx member.type.runtime_size};
-		// print("%\n", header);
 		array_add(*buffer, ..[]u8.{size_of(Setting_Header), (*header).(*u8)});
 		array_add(*buffer, ..[]u8.{header.data_length, (*settings_file).(*u8) + member.offset_in_bytes});
 	}

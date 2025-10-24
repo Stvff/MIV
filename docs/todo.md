@@ -53,25 +53,22 @@
 - [ ] Another image type
 - [ ] Rework the queue model
 	- [ ] Option for queue looping
-- [ ] Help mode where the tooltips are wayyy larger
+- [x] Help mode where the tooltips are wayyy larger
+	- [ ] fill out all tooltips
 - [ ] intelligent textflows
 	- [x] Clipping
 - [ ] More advanced UI layouting
 	- [ ] scrollbars I'm afraid
-		- [x] Also adjustable windows
+		- [x] Also adjustable panels
 - [x] logs onscreen instead of in terminal
 - [ ] Plugin error, message, and warning lists instead of single only-errors
-- [ ] different types of filesorting
 - [ ] Being more elaborate about what failed during loading (which part of the directory, which type of error)
-- [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
 - [ ] Exif data
-- [ ] Follow files when they are moved, also in the history
 - [ ] Nicer looking upscaling
 	- [x] up/downscaling settings in the settings menu
 - [ ] Settings file total update
 	- [x] Serialize the plugin settings for the settings file in some way
 	- [ ] Save settings in case of crash by saving the settings file right after settings changed
-	- [x] Save set framerate
 	- [ ] Save plugin settings saving GUI
 - [x] Slider for Plugin settings
 	- [ ] Maybe with indents
@@ -94,3 +91,8 @@
 	- [ ] AA button
 	- [ ] Metadata
 	- [x] Toggles
+
+## Utrecht
+- [ ] different types of filesorting
+- [ ] Follow files when they are moved, also in the history
+- [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
