@@ -136,6 +136,19 @@ main :: () {
 	settings_menu_just_opened := false;
 	tip: Tool_Tip;
 
+
+	/*# Timing */
+	target_frame_time: float64 = DEFAULT_FRAME_TIME;
+	if settings.target_frame_time_on_previous_close >= MIN_FRAME_TIME && settings.target_frame_time_on_previous_close <= MAX_FRAME_TIME {
+		target_frame_time = settings.target_frame_time_on_previous_close;
+	}
+	last_1s_time := current_time_monotonic();
+	prev_time := last_1s_time;
+
+	frame_1s_counter := 0;
+	frame_count_over_1s := 60;
+
+	/*# settings saving */
 	first_image_open := true;
 	defer {
 		if settings.pers_between_restarts.of_aa {
@@ -147,15 +160,9 @@ main :: () {
 			settings.offset_on_previous_close = img_ctx.offset;
 		}
 		settings.zoom_alignment_on_previous_close = img_ctx.zoom_alignment;
+		settings.target_frame_time_on_previous_close = xx target_frame_time;
 	}
 
-	/*# Timing */
-	target_frame_time: float64 = DEFAULT_FRAME_TIME;
-	last_1s_time := current_time_monotonic();
-	prev_time := last_1s_time;
-
-	frame_1s_counter := 0;
-	frame_count_over_1s := 60;
 	running := true;
 	while running {
 		/*# Timings etc */

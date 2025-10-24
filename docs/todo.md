@@ -69,9 +69,10 @@
 - [ ] Nicer looking upscaling
 	- [x] up/downscaling settings in the settings menu
 - [ ] Settings file total update
-	- [ ] Serialize the plugin settings for the settings file in some way
+	- [x] Serialize the plugin settings for the settings file in some way
 	- [ ] Save settings in case of crash by saving the settings file right after settings changed
-	- [ ] Save set framerate
+	- [x] Save set framerate
+	- [ ] Save plugin settings saving GUI
 - [x] Slider for Plugin settings
 	- [ ] Maybe with indents
 	- [ ] Choice between every change or after mouse release.
@@ -83,8 +84,8 @@
 - [x] Clipboard
 	- [x] copy filename to clipboard
 	- [x] get filename from clipboard
-- [ ] Logo and possible rename.......
 - [ ] Modernize Custom icons
+	- [ ] Logo and possible rename.......
 	- [ ] Fit buttons
 	- [ ] Queueue mode buttons
 	- [ ] Next/prev

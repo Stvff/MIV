@@ -199,17 +199,27 @@ load_registrations :: () -> Settings_File_3 {
 		settings_file.scale_on_previous_close = sf2.scale_on_previous_close;
 		settings_file.offset_on_previous_close = sf2.offset_on_previous_close;
 	case 3;
-		progress := 0;
+		progress := 1;
+		// hex_print_style := context.print_style;
+		// hex_print_style.default_format_int.base = 16;
+		// print("%\n", settings_file_buffer,, print_style = hex_print_style);
 		while settings_file_buffer.count - progress - 1  > size_of(Setting_Header) {
 			header := (settings_file_buffer.data + progress).(*Setting_Header).*;
-			for member: type_info(Setting_Header).members if Hash.sdbm_hash(member.name.data, member.name.count) == header.name_hash {
-				if member.type.runtime_size != header.data_length continue member;
-				if settings_file_buffer.count - progress - 1 - header.data_length < 1 break member;
-				progress += size_of(Setting_Header);
-				memcpy(*settings_file + member.offset_in_bytes, settings_file_buffer.data + progress, header.data_length);
-				break member;
+			// print("%\n", header,, print_style = hex_print_style);
+			for member: type_info(Settings_File_3).members {
+				if it_index == 0 continue member;
+				hash := Hash.sdbm_hash(member.name.data, member.name.count);
+				// print("%, %\n", hash, header.name_hash,, print_style = hex_print_style);
+				if hash == header.name_hash {
+					if member.type.runtime_size != header.data_length continue member;
+					if settings_file_buffer.count - progress - 1 - header.data_length < 1 break member;
+					dst := (*settings_file).(*u8) + member.offset_in_bytes;
+					src := settings_file_buffer.data + progress + size_of(Setting_Header);
+					memcpy(dst, src, header.data_length);
+					break member;
+				}
 			}
-			progress += header.data_length;
+			progress += header.data_length + size_of(Setting_Header);;
 		}
 	case;
 		log("Unsupported settings file version '%'.", settings_file_buffer[0], flags = .WARNING);
@@ -223,9 +233,11 @@ write_settings_file :: (settings_file: Settings_File_3) {
 	buffer: [..]u8;
 	array_add(*buffer, settings_file.version);
 	for member: type_info(type_of(settings_file)).members {
+		if it_index == 0 continue;
 		header := Setting_Header.{Hash.sdbm_hash(member.name.data, member.name.count), xx member.type.runtime_size};
+		// print("%\n", header);
 		array_add(*buffer, ..[]u8.{size_of(Setting_Header), (*header).(*u8)});
-		array_add(*buffer, ..[]u8.{member.type.runtime_size, (*settings_file).(*u8) + member.offset_in_bytes});
+		array_add(*buffer, ..[]u8.{header.data_length, (*settings_file).(*u8) + member.offset_in_bytes});
 	}
 
 	path := tprint("%plugins/settings.miv", path_strip_filename(system.get_path_of_running_executable()));
