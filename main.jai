@@ -5,6 +5,7 @@ Image_Context :: struct {
 	zoom_alignment: Zoom_Alignment_Setting;
 	scale: float;
 	angle: float;
+	pre_rot_angle: float;
 
 	aa_on: bool;
 	linear_downscaling: bool;
@@ -446,8 +447,20 @@ main :: () {
 
 					if inp.left_button {
 						img_ctx.auto_fit = false;
-						img_ctx.offset = img_ctx.pre_pan_offset + (inp.fpointer - inp.pointer_when_pressed)/img_ctx.scale;
+						diff := inp.fpointer - inp.pointer_when_pressed;
+						if inp.shifted {
+							from := normalize(inp.pointer_when_pressed - screen_center - img_ctx.offset*img_ctx.scale);
+							to := normalize(inp.fpointer - screen_center - img_ctx.offset*img_ctx.scale);
+							cos_a := dot(from, to);
+							sign := ifx from.x*to.y - to.x*from.y < 0 then -1 else 1;
+							//print("% = %\n", (atan2(to.y, to.x) - atan2(from.y, from.x))/TAU, sign*acos(cos_a)/TAU);
+							angle := sign*acos(cos_a)/TAU + 1;
+							img_ctx.angle = img_ctx.pre_rot_angle + angle*360;
+						} else {
+							img_ctx.offset = img_ctx.pre_pan_offset + diff/img_ctx.scale;
+						}
 					} else {
+						img_ctx.pre_rot_angle = img_ctx.angle;
 						img_ctx.pre_pan_offset = img_ctx.offset;
 					}
 
@@ -494,6 +507,7 @@ main :: () {
 				};
 				for * image_bounds {
 					it.* = rot_mat*it.*;
+
 					it.* += img_ctx.offset;
 					it.* *= img_ctx.scale;
 					it.* += screen_center;
@@ -826,7 +840,7 @@ main :: () {
 
 			/*# angle indicator */
 			if img_ctx.angle != 0.0 {
-				angle_text := tprint("%°", formatFloat(img_ctx.angle));
+				angle_text := tprint("%°", formatFloat(img_ctx.angle, trailing_width = 2));
 				panel_text_split(*bottom_bar, main_font, angle_text, .LEFT, .MIDDLE);
 			}
 
