@@ -507,6 +507,7 @@ main :: () {
 				if img_ctx.aa_on {
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					if img_ctx.linear_downscaling glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+					else glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 				} else {
  					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
  					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -724,15 +725,12 @@ main :: () {
 			zoom_buttons_space := panel_split(*top_bar, .{bar_height*2, top_bar.size[0]}, .LEFT, false);
 
 			/*# settings button */
-			settings_button.colors = ifx display_settings_menu then selected_button_palette else button_palette;
-			panel_draw(*settings_button);
 			tip.text = "Toggle settings menu";
 			if elaborate_tips tip.text = "Toggle settings menu:\nThe settings menu will appear when this button is clicked.\nIf the settings menu is already visible, it will instead disappear.";
-			if first_layer_is_pressable && panel_button(*settings_button, inp.ipointer, inp.left_button_switch, *tip){
+			if first_layer_is_pressable && panel_toggle_button(*settings_button, icon_font, ICON.SETTINGS, inp.ipointer, inp.left_button_switch,  display_settings_menu, *tip){
 				display_settings_menu = !display_settings_menu;
 				if display_settings_menu then settings_menu_just_opened = true;
 			}
-			panel_text(*settings_button, icon_font, ICON.SETTINGS, .MIDDLE, .MIDDLE);
 
 			/*# fit buttons */
 			fit_buttons_space.colors = button_palette;
@@ -764,14 +762,11 @@ main :: () {
 			}
 
 			/*# AA button */
-			aa_button.colors = ifx img_ctx.aa_on then selected_button_palette else button_palette;
-			panel_draw(*aa_button);
 			tip.text = "Toggle anti-aliasing";
 			if elaborate_tips tip.text = "Toggle anti-aliasing:\nIf turned on, anti-aliasing will smooth out the pixels when\nupscaling, which makes lower resolution photos look better.";
-			if first_layer_is_pressable && panel_button(*aa_button, inp.ipointer, inp.left_button_switch, *tip) {
+			if first_layer_is_pressable && panel_toggle_button(*aa_button, icon_font, ICON.ANTI_ALIAS, inp.ipointer, inp.left_button_switch, img_ctx.aa_on, *tip) {
 				img_ctx.aa_on = !img_ctx.aa_on;
 			}
-			panel_text(*aa_button, icon_font, ICON.ANTI_ALIAS, .MIDDLE, .MIDDLE);
 
 			/*# zoom setting button */
 			zoom_buttons_space.colors = button_palette;
@@ -823,14 +818,11 @@ main :: () {
 
 			/*# metadata button */
 			metadata_button := panel_split(*bottom_bar, .{bar_height*3/2, bottom_bar.size[0]}, .LEFT, false);
-			metadata_button.colors = ifx display_metadata then selected_button_palette else button_palette;
-			panel_draw(*metadata_button);
 			tip.text = "Toggle image metadata view";
 			if elaborate_tips tip.text = "Toggle image metadata view:\nMetadata is extra information stored in images, about the image itself,\nlike image size, camera information, time of photo, etc.\nThe metadata view will appear when this button is clicked.\nIf the metadata view is already visible, it will instead disappear.";
-			if first_layer_is_pressable && panel_button(*metadata_button, inp.ipointer, inp.left_button_switch, *tip) {
+			if first_layer_is_pressable && panel_toggle_button(*metadata_button, icon_font, ICON.METADATA, inp.ipointer, inp.left_button_switch, display_metadata, *tip) {
 				display_metadata = !display_metadata;
 			}
-			panel_text(*metadata_button, icon_font, ICON.METADATA, .MIDDLE, .MIDDLE);
 
 			/*# fps counter */
 			bottom_bar.colors.text = ifx frame_time < target_frame_time then u8.[100, 210, 25, 255] else .[220, 60, 25, 255];
@@ -1059,16 +1051,16 @@ FONT_DATA :: #run cast([]u8) read_entire_file(FONT_PATH);
 ICON_FONT_PATH :: "./assets/IconsMIV.otf";
 ICON_FONT_DATA :: #run cast([]u8) read_entire_file(ICON_FONT_PATH);
 ICON :: struct {
-	SETTINGS :: "S";
+	SETTINGS :: string.["S", "S"];
 	FIT_121 :: "1";
 	FIT_WIDTH :: "W";
 	FIT_HEIGHT :: "H";
 	FIT_BEST :: "B";
-	ANTI_ALIAS :: "A";
+	ANTI_ALIAS :: string.["A", "A"];
 	ZOOM_CENTER :: "M";
 	ZOOM_POINTER :: "P";
 
-	METADATA :: "m";
+	METADATA :: string.["m", "m"];
 	HISTORY :: "C";
 	DIRECTORY :: "D";
 	PREV :: "<";

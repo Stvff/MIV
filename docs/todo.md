@@ -47,8 +47,6 @@
 ## Bugs to fix
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
 - When another window is above MIV, MIV still reads the mouse position from that window.
-- The OpenGL Linear Downscaling does not appear to do anything at all
-	- This has something to do with the downscaling setting upon turning AA on
 
 ## Amersfoort
 - [ ] Another image type
