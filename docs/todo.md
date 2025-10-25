@@ -76,6 +76,7 @@
 - [x] FPS slider for when holding down next or prev
 	- [x] When holding down next or prev, go up to full fps
 - [ ] Image rotation controls and logic
+	- [ ] Image mirroring?
 - [x] Maybe tooltip of full path on filename
 - [x] Clipboard
 	- [x] copy filename to clipboard

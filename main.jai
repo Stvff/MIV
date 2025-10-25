@@ -73,7 +73,7 @@ main :: () {
 	defer cleanup_registrations(settings);
 
 	/*# UI definitions */
-	fontsize := 20;
+	fontsize := 17;
 	{
 		window_width := 1400;
 		window_height := 800;
@@ -824,14 +824,21 @@ main :: () {
 				display_metadata = !display_metadata;
 			}
 
+			/*# angle indicator */
+			if img_ctx.angle != 0.0 {
+				angle_text := tprint("%°", formatFloat(img_ctx.angle));
+				panel_text_split(*bottom_bar, main_font, angle_text, .LEFT, .MIDDLE);
+			}
+
 			/*# fps counter */
-			bottom_bar.colors.text = ifx frame_time < target_frame_time then u8.[100, 210, 25, 255] else .[220, 60, 25, 255];
-			panel_text(*bottom_bar, main_font, tprint("fps: %", frame_count_over_1s), .LEFT, .MIDDLE);
-			bottom_bar.colors.text = default_palette.text;
-			show_fps := inp.arrow_left_repeat || inp.arrow_right_repeat;
+			if inp.arrow_left_repeat || inp.arrow_right_repeat {
+				bottom_bar.colors.text = ifx frame_time < target_frame_time then u8.[100, 210, 25, 255] else .[220, 60, 25, 255];
+				panel_text_split(*bottom_bar, main_font, tprint("fps: %", frame_count_over_1s), .LEFT, .MIDDLE);
+				bottom_bar.colors.text = default_palette.text;
+			}
 
 			/*# Backwards and forwards buttons (bnf buttons) */
-			bnf_menu_space := panel_split(*bottom_bar, .{bar_height*6, bottom_bar.size[0]}, .RIGHT, !show_fps);
+			bnf_menu_space := panel_split(*bottom_bar, .{bar_height*6, bottom_bar.size[0]}, .RIGHT, false);
 			bnf_menu_space.colors = button_palette;
 			bnf_button_space := panel_split(*bnf_menu_space, .{bar_height*2, bnf_menu_space.size[0]}, .RIGHT, true);
 
