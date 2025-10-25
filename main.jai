@@ -546,6 +546,7 @@ main :: () {
 					table[col][3] = remaining_rows[2];
 				}
 				tip.text = "Menu for persistence of settings between files or restarts";
+				if elaborate_tips tip.text = "Menu for persistence of settings between files or restarts:\nWith this menu, you can choose which settings are reset when you restart MIV,\nand which settings are reset every time a new image is opened.";
 				panel_button(*table[0][0], inp.ipointer, false, *tip);
 				panel_text(*table[0][0], main_font, "Persistence", .MIDDLE, .MIDDLE);
 				panel_text(*table[1][0], main_font, "between", .MIDDLE, .TOP);
@@ -782,7 +783,12 @@ main :: () {
 
 			for zoom_buttons {
 				zoom_tips :: string.["Zoom on screen center", "Zoom on pointer"];
+				elaborate_zoom_tips :: string.[
+					"Zoom on screen center:\nWhen performing zooming actions, the image will scale so that\nthe image pixel in the center of the screen stays in that same spot.",
+					"Zoom on pointer:\nWhen performing zooming actions, the image will scale so that\nthe image pixel underneath the mouse pointer stays in that same spot."
+				];
 				tip.text = zoom_tips[it_index];
+				if elaborate_tips tip.text = elaborate_zoom_tips[it_index];
 				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *tip){
 					img_ctx.zoom_alignment = xx it_index;
 				}
@@ -840,6 +846,7 @@ main :: () {
 			bnf_buttons := panel_subdivide(*bnf_button_space, 2, .HORIZONTAL, true);
 			if first_layer_is_pressable && current_q_index.* > 0 && current_q.count != 0 {
 				tip.text = "Previous file in queue";
+				if elaborate_tips tip.text = "Next file in queue:\nWhen pressed, the previous file in the current image queue will be displayed.";
 				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch, *tip) || inp.arrow_left || inp.arrow_left_repeat {
 					current_q_index.* -= 1;
 					img_ctx.render = true;
@@ -850,6 +857,7 @@ main :: () {
 			}
 			if first_layer_is_pressable && current_q_index.* < current_q.count-1 && current_q.count != 0 {
 				tip.text = "Next file in queue";
+				if elaborate_tips tip.text = "Next file in queue:\nWhen pressed, the next file in the current image queue will be displayed.";
 				if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch, *tip) || inp.arrow_right || inp.arrow_right_repeat {
 					current_q_index.* += 1;
 					img_ctx.render = true;
@@ -876,7 +884,12 @@ main :: () {
 			fileq_setting_switch := false;
 			for bnf_selector_buttons {
 				fileq_tips :: string.["Set file queue to dropped files", "Set file queue to directory of the current file"];
+				elaborate_fileq_tips :: string.[
+					"Set file queue to dropped files:\nWhen selected, the viewing queue will become the list of\nfiles that has been added via drop-in or via the command line.",
+					"Set file queue to directory of the current file:\nWhen selected, the viewing queue will become the list of\nviewable images in the directory of the current image."
+				];
 				tip.text = fileq_tips[it_index];
+				if elaborate_tips tip.text = elaborate_fileq_tips[it_index];
 				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *tip) {
 					fileq_setting_switch = true;
 					fileq_setting = xx it_index;
