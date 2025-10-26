@@ -189,9 +189,6 @@ main :: () {
 				window_size = .[it.width, it.height];
 				/* if I ever dynamically adjust bar height, I would do it here (see how I did it in git) */
 				glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(os_window).specific.glx_window, 0);
-				img_ctx.auto_fit = true;
-				img_ctx.offset = .{};
-				img_ctx.angle = 0;
 			}
 		}
 
@@ -206,7 +203,9 @@ main :: () {
 			/* Press */
 			if (event.type == .KEYBOARD) && event.key_pressed then if event.key_code == {
 				case .ESCAPE; running = false;
-				case .SHIFT; inp.shifted = true;
+				case .SHIFT;
+					inp.shifted = true;
+					inp.pointer_when_pressed = get_pointer_position();
 				case .CTRL; inp.ctrl = true;
 				case .ARROW_UP; inp.arrow_up = true;
 				case .ARROW_DOWN; inp.arrow_down = true;
@@ -237,7 +236,9 @@ main :: () {
 			if (event.type == .KEYBOARD) && !event.key_pressed then if event.key_code == {
 				case .ARROW_LEFT; inp.arrow_left_repeat = false;
 				case .ARROW_RIGHT; inp.arrow_right_repeat = false;
-				case .SHIFT; inp.shifted = false;
+				case .SHIFT;
+					inp.shifted = false;
+					inp.pointer_when_pressed = get_pointer_position();
 				case .CTRL; inp.ctrl = false;
 				case .MOUSE_BUTTON_LEFT; inp.left_button = false;
 				case .MOUSE_BUTTON_RIGHT; inp.right_button = false;
@@ -452,9 +453,8 @@ main :: () {
 							from := normalize(inp.pointer_when_pressed - screen_center - img_ctx.offset*img_ctx.scale);
 							to := normalize(inp.fpointer - screen_center - img_ctx.offset*img_ctx.scale);
 							cos_a := dot(from, to);
-							sign := ifx from.x*to.y - to.x*from.y < 0 then -1 else 1;
-							//print("% = %\n", (atan2(to.y, to.x) - atan2(from.y, from.x))/TAU, sign*acos(cos_a)/TAU);
-							angle := sign*acos(cos_a)/TAU + 1;
+							sign := ifx from.x*to.y - from.y*to.x < 0 then -1 else 1;
+							angle := sign*acos(cos_a)/TAU;
 							img_ctx.angle = img_ctx.pre_rot_angle + angle*360;
 						} else {
 							img_ctx.offset = img_ctx.pre_pan_offset + diff/img_ctx.scale;
@@ -499,7 +499,10 @@ main :: () {
 					-image_center, .{image_center.x, -image_center.y}, image_center, .{-image_center.x, image_center.y}
 				];
 
-				/* maybe shift arrow left right lolol */
+				if 0 > img_ctx.angle || img_ctx.angle > 360 {
+					f := (img_ctx.angle + 720)/360;
+					img_ctx.angle = (f - floor(f))*360;
+				}
 				rad := 2*PI*img_ctx.angle/360;
 				rot_mat := Matrix2.{
 					cos(rad), -sin(rad),
@@ -822,13 +825,6 @@ main :: () {
 			}
 
 			/*# bottom bar */
-			scale_text: string;
-			if img_ctx.draw {
-				scale_text = tprint("%\%", formatFloat(img_ctx.scale*100, trailing_width = 2, zero_removal = .NO));
-			} else {
-				scale_text = "----.--%";
-			}
-			panel_text_split(*bottom_bar, main_font, scale_text, .LEFT);
 
 			/*# metadata button */
 			metadata_button := panel_split(*bottom_bar, .{bar_height*3/2, bottom_bar.size[0]}, .LEFT, false);
@@ -837,6 +833,14 @@ main :: () {
 			if first_layer_is_pressable && panel_toggle_button(*metadata_button, icon_font, ICON.METADATA, inp.ipointer, inp.left_button_switch, display_metadata, *tip) {
 				display_metadata = !display_metadata;
 			}
+
+			scale_text: string;
+			if img_ctx.draw {
+				scale_text = tprint("%\%", formatFloat(img_ctx.scale*100, trailing_width = 2, zero_removal = .NO));
+			} else {
+				scale_text = "----.--%";
+			}
+			panel_text_split(*bottom_bar, main_font, scale_text, .LEFT);
 
 			/*# angle indicator */
 			if img_ctx.angle != 0.0 {
