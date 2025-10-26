@@ -148,12 +148,13 @@ Settings_File_3 :: struct {
 	version: u8 = 3;
 	pers_between_files: Persistence_Setting;
 	pers_between_restarts: Persistence_Setting;
-	aa_setting_on_previous_close: bool;
+	smoothing_setting_on_previous_close: bool;
 	downscaling_on_previous_close: bool;
 	elaborate_tips: bool;
 
 	scale_on_previous_close: float #align 1;
 	offset_on_previous_close: Vector2 #align 1;
+	angle_on_previous_close: float #align 1;
 	zoom_alignment_on_previous_close: Zoom_Alignment_Setting;
 	target_frame_time_on_previous_close: float #align 1;
 }
@@ -180,7 +181,7 @@ load_registrations :: () -> Settings_File_3 {
 		sf0 := cast(*Settings_File_0, settings_file_buffer.data).*;
 		settings_file.pers_between_files = sf0.pers_between_files;
 		settings_file.pers_between_restarts = sf0.pers_between_restarts;
-		settings_file.aa_setting_on_previous_close = sf0.aa_setting_on_previous_close;
+		settings_file.smoothing_setting_on_previous_close = sf0.aa_setting_on_previous_close;
 		settings_file.scale_on_previous_close = sf0.scale_on_previous_close;
 		settings_file.offset_on_previous_close = sf0.offset_on_previous_close;
 	case 1;
@@ -188,7 +189,7 @@ load_registrations :: () -> Settings_File_3 {
 		sf1 := cast(*Settings_File_1, settings_file_buffer.data).*;
 		settings_file.pers_between_files = sf1.pers_between_files;
 		settings_file.pers_between_restarts = sf1.pers_between_restarts;
-		settings_file.aa_setting_on_previous_close = sf1.aa_setting_on_previous_close;
+		settings_file.smoothing_setting_on_previous_close = sf1.aa_setting_on_previous_close;
 		settings_file.scale_on_previous_close = sf1.scale_on_previous_close;
 		settings_file.offset_on_previous_close = sf1.offset_on_previous_close;
 	case 2;
@@ -196,7 +197,7 @@ load_registrations :: () -> Settings_File_3 {
 		sf2 := cast(*Settings_File_2, settings_file_buffer.data).*;
 		settings_file.pers_between_files = sf2.pers_between_files;
 		settings_file.pers_between_restarts = sf2.pers_between_restarts;
-		settings_file.aa_setting_on_previous_close = sf2.aa_setting_on_previous_close;
+		settings_file.smoothing_setting_on_previous_close = sf2.aa_setting_on_previous_close;
 		settings_file.downscaling_on_previous_close = sf2.downscaling_on_previous_close;
 		settings_file.scale_on_previous_close = sf2.scale_on_previous_close;
 		settings_file.offset_on_previous_close = sf2.offset_on_previous_close;

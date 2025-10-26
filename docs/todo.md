@@ -47,6 +47,7 @@
 ## Bugs to fix
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
 - When another window is above MIV, MIV still reads the mouse position from that window.
+- Very strange resetting behaviour when pressing shift and leftpress
 
 ## Amersfoort
 - [ ] Another image type
@@ -75,10 +76,10 @@
 	- [ ] Also the Uberslider
 - [x] FPS slider for when holding down next or prev
 	- [x] When holding down next or prev, go up to full fps
-- [ ] Image rotation controls and logic
+- [x] Image rotation controls and logic
 	- [ ] Bounding box fitting
 	- [ ] Fill screen setting
-	- [ ] Angle button resets and rotates to 90 -> 180 -> -90
+	- [x] Angle button resets and rotates to 90 -> 180 -> -90
 - [x] Maybe tooltip of full path on filename
 - [x] Clipboard
 	- [x] copy filename to clipboard
@@ -102,3 +103,4 @@
 - [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
 - [ ] UI size selection
 	- [ ] Asking the OS what is up with it
+- [ ] Save window size (or at least do something better than current behviour)

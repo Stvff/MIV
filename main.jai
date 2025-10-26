@@ -7,7 +7,7 @@ Image_Context :: struct {
 	angle: float;
 	pre_rot_angle: float;
 
-	aa_on: bool;
+	smoothing_on: bool;
 	linear_downscaling: bool;
 
 	auto_fit: bool;
@@ -153,12 +153,13 @@ main :: () {
 	first_image_open := true;
 	defer {
 		if settings.pers_between_restarts.of_aa {
-			settings.aa_setting_on_previous_close = img_ctx.aa_on;
+			settings.smoothing_setting_on_previous_close = img_ctx.smoothing_on;
 			settings.downscaling_on_previous_close = img_ctx.linear_downscaling;
 		}
 		if settings.pers_between_restarts.of_scale then settings.scale_on_previous_close = img_ctx.scale;
 		if settings.pers_between_restarts.of_offset {
 			settings.offset_on_previous_close = img_ctx.offset;
+			settings.angle_on_previous_close = img_ctx.angle;
 		}
 		settings.zoom_alignment_on_previous_close = img_ctx.zoom_alignment;
 		settings.target_frame_time_on_previous_close = xx target_frame_time;
@@ -329,20 +330,23 @@ main :: () {
 				if !settings.pers_between_files.of_scale img_ctx.auto_fit = true;
 				if !settings.pers_between_files.of_offset img_ctx.offset = .{0, 0};
 				if !settings.pers_between_files.of_aa {
-					img_ctx.aa_on = false;
+					img_ctx.smoothing_on = false;
 					img_ctx.linear_downscaling = false;
 				}
 
 				if first_image_open {
 					if settings.pers_between_restarts.of_aa {
-						img_ctx.aa_on = settings.aa_setting_on_previous_close;
+						img_ctx.smoothing_on = settings.smoothing_setting_on_previous_close;
 						img_ctx.linear_downscaling = settings.downscaling_on_previous_close;;
 					}
 					if settings.pers_between_restarts.of_scale {
 						img_ctx.scale = settings.scale_on_previous_close;
 						img_ctx.auto_fit = false;
 					} else img_ctx.auto_fit = true;
-					if settings.pers_between_restarts.of_offset then img_ctx.offset = settings.offset_on_previous_close;
+					if settings.pers_between_restarts.of_offset {
+						img_ctx.offset = settings.offset_on_previous_close;
+						img_ctx.angle = settings.angle_on_previous_close;
+					}
 					img_ctx.zoom_alignment = settings.zoom_alignment_on_previous_close;
 					first_image_open = false;
 				}
@@ -499,10 +503,12 @@ main :: () {
 					-image_center, .{image_center.x, -image_center.y}, image_center, .{-image_center.x, image_center.y}
 				];
 
-				if 0 > img_ctx.angle || img_ctx.angle > 360 {
+				if 0 > img_ctx.angle || img_ctx.angle >= 360 {
 					f := (img_ctx.angle + 720)/360;
 					img_ctx.angle = (f - floor(f))*360;
 				}
+				if img_ctx.angle - floor(img_ctx.angle) >= 0.5 then img_ctx.angle = floor(img_ctx.angle) + 1;
+				else img_ctx.angle = floor(img_ctx.angle);
 				rad := 2*PI*img_ctx.angle/360;
 				rot_mat := Matrix2.{
 					cos(rad), -sin(rad),
@@ -521,7 +527,7 @@ main :: () {
 				Simp.set_shader_for_images(*gpu_texture);
 				Simp.immediate_begin();
 				glBindTexture(GL_TEXTURE_2D, gpu_texture.gl_handle);
-				if img_ctx.aa_on {
+				if img_ctx.smoothing_on {
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					if img_ctx.linear_downscaling glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 					else glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -572,7 +578,7 @@ main :: () {
 				panel_text(*table[2][0], main_font, "between", .MIDDLE, .TOP);
 				panel_text(*table[2][0], main_font, "restarts", .MIDDLE, .BOTTOM);
 
-				panel_text(*table[0][1], main_font, "of aa", .MIDDLE, .MIDDLE);
+				panel_text(*table[0][1], main_font, "of smoothing", .MIDDLE, .MIDDLE);
 				panel_text(*table[0][2], main_font, "of zoom", .MIDDLE, .MIDDLE);
 				panel_text(*table[0][3], main_font, "of offset", .MIDDLE, .MIDDLE);
 
@@ -737,7 +743,7 @@ main :: () {
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 			fit_buttons_space := panel_split(*top_bar, .{bar_height*4, top_bar.size[0]}, .LEFT, false);
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
-			aa_button := panel_split(*top_bar, .{bar_height*6/5, top_bar.size[0]}, .LEFT, false);
+			smoothing_button := panel_split(*top_bar, .{bar_height*6/5, top_bar.size[0]}, .LEFT, false);
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 			zoom_buttons_space := panel_split(*top_bar, .{bar_height*2, top_bar.size[0]}, .LEFT, false);
 
@@ -778,11 +784,11 @@ main :: () {
 				panel_text(*it, icon_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
 
-			/*# AA button */
-			tip.text = "Toggle anti-aliasing";
-			if elaborate_tips tip.text = "Toggle anti-aliasing:\nIf turned on, anti-aliasing will smooth out the pixels when\nupscaling, which makes lower resolution photos look better.";
-			if first_layer_is_pressable && panel_toggle_button(*aa_button, icon_font, ICON.ANTI_ALIAS, inp.ipointer, inp.left_button_switch, img_ctx.aa_on, *tip) {
-				img_ctx.aa_on = !img_ctx.aa_on;
+			/*# Smoothing button */
+			tip.text = "Toggle smoothing";
+			if elaborate_tips tip.text = "Toggle smoothing:\nIf turned on, pixels will be smoothed out when upscaling,\nwhich makes lower resolution photos look better.";
+			if first_layer_is_pressable && panel_toggle_button(*smoothing_button, icon_font, ICON.ANTI_ALIAS, inp.ipointer, inp.left_button_switch, img_ctx.smoothing_on, *tip) {
+				img_ctx.smoothing_on = !img_ctx.smoothing_on;
 			}
 
 			/*# zoom setting button */
@@ -843,10 +849,16 @@ main :: () {
 			panel_text_split(*bottom_bar, main_font, scale_text, .LEFT);
 
 			/*# angle indicator */
-			if img_ctx.angle != 0.0 {
-				angle_text := tprint("%°", formatFloat(img_ctx.angle, trailing_width = 2));
-				panel_text_split(*bottom_bar, main_font, angle_text, .LEFT, .MIDDLE);
+			angle_text := tprint("%°", img_ctx.angle);
+			angle_panel := panel_split(*bottom_bar, .{bar_height*3/2, bottom_bar.size[0]}, .LEFT, false);
+			angle_panel.colors = button_palette;
+			panel_draw(*angle_panel);
+			if panel_button(*angle_panel, inp.ipointer, inp.left_button_switch) {
+				if img_ctx.angle != 0.00 && img_ctx.angle != 90 && img_ctx.angle != 180 && img_ctx.angle != 270 {
+					img_ctx.angle = 0;
+				} else img_ctx.angle -= 90;
 			}
+			panel_text(*angle_panel, main_font, angle_text, .MIDDLE, .MIDDLE);
 
 			/*# fps counter */
 			if inp.arrow_left_repeat || inp.arrow_right_repeat {
