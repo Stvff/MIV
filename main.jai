@@ -39,6 +39,7 @@ Input_State :: struct {
 	fpointer: Vector2;
 	ipointer: [2]int;
 
+	right_button_switch: bool;
 	left_button_switch: bool;
 	middle_button_switch: bool;
 
@@ -53,7 +54,8 @@ Input_State :: struct {
 		left_button: bool;
 		right_button: bool;
 		middle_button: bool;
-		pointer_when_pressed: Vector2;
+		lpointer_when_pressed: Vector2;
+		rpointer_when_pressed: Vector2;
 	}
 }
 
@@ -204,9 +206,7 @@ main :: () {
 			/* Press */
 			if (event.type == .KEYBOARD) && event.key_pressed then if event.key_code == {
 				case .ESCAPE; running = false;
-				case .SHIFT;
-					inp.shifted = true;
-					inp.pointer_when_pressed = get_pointer_position();
+				case .SHIFT; inp.shifted = true;
 				case .CTRL; inp.ctrl = true;
 				case .ARROW_UP; inp.arrow_up = true;
 				case .ARROW_DOWN; inp.arrow_down = true;
@@ -222,24 +222,22 @@ main :: () {
 				case #char "D"; inp.d = true;
 				case #char "V"; inp.v = true;
 				case .MOUSE_BUTTON_RIGHT;
-					inp.pointer_when_pressed = get_pointer_position();
+					inp.right_button_switch = true;
+					inp.rpointer_when_pressed = get_pointer_position();
 					inp.right_button = true;
 				case .MOUSE_BUTTON_LEFT;
 					inp.left_button_switch = true;
-					inp.pointer_when_pressed = get_pointer_position();
+					inp.lpointer_when_pressed = get_pointer_position();
 					inp.left_button = true;
 				case .MOUSE_BUTTON_MIDDLE;
 					inp.middle_button_switch = true;
-					inp.pointer_when_pressed = get_pointer_position();
 					inp.middle_button = true;
 			}
 			/* Release */
 			if (event.type == .KEYBOARD) && !event.key_pressed then if event.key_code == {
 				case .ARROW_LEFT; inp.arrow_left_repeat = false;
 				case .ARROW_RIGHT; inp.arrow_right_repeat = false;
-				case .SHIFT;
-					inp.shifted = false;
-					inp.pointer_when_pressed = get_pointer_position();
+				case .SHIFT; inp.shifted = false;
 				case .CTRL; inp.ctrl = false;
 				case .MOUSE_BUTTON_LEFT; inp.left_button = false;
 				case .MOUSE_BUTTON_RIGHT; inp.right_button = false;
@@ -328,7 +326,10 @@ main :: () {
 				/* TODO: retrieve previous offsets etc from some per-file history */
 
 				if !settings.pers_between_files.of_scale img_ctx.auto_fit = true;
-				if !settings.pers_between_files.of_offset img_ctx.offset = .{0, 0};
+				if !settings.pers_between_files.of_offset {
+					img_ctx.offset = .{0, 0};
+					img_ctx.angle = 0;
+				}
 				if !settings.pers_between_files.of_aa {
 					img_ctx.smoothing_on = false;
 					img_ctx.linear_downscaling = false;
@@ -424,7 +425,7 @@ main :: () {
 
 				/* we have to process our inputs (not using the keyboard yet) */
 				process_mouse_activity := first_layer_is_pressable && pointer_is_in_panel(*canvas, inp.ipointer);
-				if inp.left_button && !pointer_is_in_panel(*canvas, .[xx inp.pointer_when_pressed.x, xx inp.pointer_when_pressed.y]) {
+				if inp.left_button && !pointer_is_in_panel(*canvas, .[xx inp.lpointer_when_pressed.x, xx inp.lpointer_when_pressed.y]) {
 					process_mouse_activity = false;
 				}
 				if process_mouse_activity {
@@ -452,30 +453,22 @@ main :: () {
 
 					if inp.left_button {
 						img_ctx.auto_fit = false;
-						diff := inp.fpointer - inp.pointer_when_pressed;
-						if inp.shifted {
-							from := normalize(inp.pointer_when_pressed - screen_center - img_ctx.offset*img_ctx.scale);
-							to := normalize(inp.fpointer - screen_center - img_ctx.offset*img_ctx.scale);
-							cos_a := dot(from, to);
-							sign := ifx from.x*to.y - from.y*to.x < 0 then -1 else 1;
-							angle := sign*acos(cos_a)/TAU;
-							img_ctx.angle = img_ctx.pre_rot_angle + angle*360;
-						} else {
-							img_ctx.offset = img_ctx.pre_pan_offset + diff/img_ctx.scale;
-						}
+						diff := inp.fpointer - inp.lpointer_when_pressed;
+						img_ctx.offset = img_ctx.pre_pan_offset + diff/img_ctx.scale;
 					} else {
-						img_ctx.pre_rot_angle = img_ctx.angle;
 						img_ctx.pre_pan_offset = img_ctx.offset;
 					}
 
-					if inp.shifted && inp.d {
+					if inp.right_button {
 						img_ctx.auto_fit = false;
-						img_ctx.angle -= 5;
-					}
-					if inp.shifted && inp.a {
-						img_ctx.auto_fit = false;
-						img_ctx.angle += 5;
-					}
+						diff := inp.fpointer - inp.rpointer_when_pressed;
+						from := normalize(inp.rpointer_when_pressed - screen_center - img_ctx.offset*img_ctx.scale);
+						to := normalize(inp.fpointer - screen_center - img_ctx.offset*img_ctx.scale);
+						cos_a := dot(from, to);
+						sign := ifx from.x*to.y - from.y*to.x < 0 then -1 else 1;
+						angle := sign*acos(cos_a)/TAU;
+						img_ctx.angle = img_ctx.pre_rot_angle + angle*360;
+					} else img_ctx.pre_rot_angle = img_ctx.angle;
 				}
 				img_ctx.scale = clamp(img_ctx.scale, 1/cast(float, max(img_ctx.pre_info.width, img_ctx.pre_info.height)), cast(float, max(canvas.size[0], canvas.size[1])));
 
@@ -543,10 +536,10 @@ main :: () {
 			/*# settings menu */
 			if display_settings_menu {
 				panel_draw(*settings_menu_panel);
-				if panel_scrollbar(*settings_menu_panel, inp.ipointer, .[xx inp.pointer_when_pressed.x, xx inp.pointer_when_pressed.y], inp.left_button) {
-					settings_menu_width += (inp.fpointer.x - inp.pointer_when_pressed.x).(int);
+				if panel_scrollbar(*settings_menu_panel, inp.ipointer, .[xx inp.lpointer_when_pressed.x, xx inp.lpointer_when_pressed.y], inp.left_button) {
+					settings_menu_width += (inp.fpointer.x - inp.lpointer_when_pressed.x).(int);
 					settings_menu_width = clamp(settings_menu_width, 0, window_size[0] - settings_menu_panel.pos[0]);
-					inp.pointer_when_pressed = inp.fpointer;
+					inp.lpointer_when_pressed = inp.fpointer;
 				}
 				if settings_menu_width < SCROLLBAR_SIZE*7 {
 					display_settings_menu = false;
@@ -555,7 +548,7 @@ main :: () {
 				}
 
 				table_space := panel_split(*settings_menu_panel, .{bar_height*9/2, settings_menu_panel.size[1]}, .TOP, false);
-				first_col := panel_split(*table_space, .{bar_height*3, table_space.size[0]}, .LEFT, false);
+				first_col := panel_split(*table_space, .{bar_height*7/2, table_space.size[0]}, .LEFT, false);
 				remaining_cols := panel_subdivide(*table_space, 2, .HORIZONTAL, false);
 				cols: [3]UI_Panel = .[first_col, remaining_cols[0], remaining_cols[1]];
 				table: [3][4]UI_Panel;
@@ -718,10 +711,10 @@ main :: () {
 
 			if display_metadata {
 				panel_draw(*metadata_panel);
-				if panel_scrollbar(*metadata_panel, inp.ipointer, .[xx inp.pointer_when_pressed.x, xx inp.pointer_when_pressed.y], inp.left_button) {
-					metadata_width += (inp.fpointer.x - inp.pointer_when_pressed.x).(int);
+				if panel_scrollbar(*metadata_panel, inp.ipointer, .[xx inp.lpointer_when_pressed.x, xx inp.lpointer_when_pressed.y], inp.left_button) {
+					metadata_width += (inp.fpointer.x - inp.lpointer_when_pressed.x).(int);
 					metadata_width = clamp(metadata_width, 0, window_size[0] - metadata_panel.pos[0]);
-					inp.pointer_when_pressed = inp.fpointer;
+					inp.lpointer_when_pressed = inp.fpointer;
 				}
 				if metadata_width < SCROLLBAR_SIZE*3 {
 					display_metadata = false;

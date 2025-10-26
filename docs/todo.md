@@ -47,7 +47,6 @@
 ## Bugs to fix
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
 - When another window is above MIV, MIV still reads the mouse position from that window.
-- Very strange resetting behaviour when pressing shift and leftpress
 
 ## Amersfoort
 - [ ] Another image type
@@ -66,6 +65,7 @@
 - [ ] Being more elaborate about what failed during loading (which part of the directory, which type of error)
 - [ ] Exif data
 - [x] up/downscaling settings in the settings menu
+- [ ] Make persistence settings UI make sense
 - [ ] Settings file total update
 	- [x] Serialize the plugin settings for the settings file in some way
 	- [ ] Save settings in case of crash by saving the settings file right after settings changed
@@ -80,6 +80,7 @@
 	- [ ] Bounding box fitting
 	- [ ] Fill screen setting
 	- [x] Angle button resets and rotates to 90 -> 180 -> -90
+	- [ ] Show little rotation UI?
 - [x] Maybe tooltip of full path on filename
 - [x] Clipboard
 	- [x] copy filename to clipboard
