@@ -80,6 +80,12 @@ main :: () {
 	{
 		window_width := 1400;
 		window_height := 800;
+		// window_width := settings.window_size_on_previous_close[0];
+		// window_height := settings.window_size_on_previous_close[1];
+		// if window_width == 0 || window_height == 0 {
+		// 	window_width = 1400;
+		// 	window_height = 800;
+		// }
 		os_window = Winc.create_window(window_width, window_height, "MIV");
 		Simp.prepare_window(os_window, 4);
 		dnd_typelist := string.["url/url", "text/uri-list", "text/plain", "application/octet-stream"];
@@ -164,8 +170,10 @@ main :: () {
 			settings.angle_on_previous_close = img_ctx.angle;
 		}
 		settings.zoom_alignment_on_previous_close = img_ctx.zoom_alignment;
-		settings.target_frame_time_on_previous_close = xx target_frame_time;
+		settings.target_frame_time_on_previous_close = target_frame_time;
 		settings.elaborate_tips = elaborate_tips;
+
+		settings.window_size_on_previous_close = window_size;
 	}
 
 	running := true;
@@ -191,7 +199,7 @@ main :: () {
 			if it.window == os_window {
 				window_size = .[it.width, it.height];
 				/* if I ever dynamically adjust bar height, I would do it here (see how I did it in git) */
-				glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(os_window).specific.glx_window, 0);
+				Gl.glXSwapIntervalEXT(X11.x_global_display, Simp.find_window_info(os_window).specific.glx_window, 0);
 			}
 		}
 
@@ -252,7 +260,7 @@ main :: () {
 				array_add(*added_string_queue, copy_string(it));
 			}
 			if inp.ctrl && inp.v {
-				added_files := split(os_clipboard_get_text(), "\n",, temp);
+				added_files := split(Clippy.os_clipboard_get_text(), "\n",, temp);
 				for added_files array_add(*added_string_queue, copy_string(it));
 			}
 		}
@@ -519,14 +527,14 @@ main :: () {
 
 				Simp.set_shader_for_images(*gpu_texture);
 				Simp.immediate_begin();
-				glBindTexture(GL_TEXTURE_2D, gpu_texture.gl_handle);
+				Gl.glBindTexture(Gl.GL_TEXTURE_2D, gpu_texture.gl_handle);
 				if img_ctx.smoothing_on {
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-					if img_ctx.linear_downscaling glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-					else glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+					Gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_LINEAR);
+					if img_ctx.linear_downscaling Gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_LINEAR);
+					else Gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
 				} else {
- 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
- 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+ 					Gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_NEAREST);
+ 					Gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
 				}
 				Simp.immediate_quad(image_bounds[0], image_bounds[1], image_bounds[2], image_bounds[3]);
 			}
@@ -817,7 +825,7 @@ main :: () {
 				tip.text = img_ctx.pre_info.name;
 				if elaborate_tips tip.text = tprint("The full filepath to this image (click to copy to clipboard):\n%", tip.text);
 				if first_layer_is_pressable && panel_button(*file_display, inp.ipointer, inp.left_button_switch, *tip) {
-					os_clipboard_set_text(img_ctx.pre_info.name);
+					Clippy.os_clipboard_set_text(img_ctx.pre_info.name);
 					log("Filepath copied to clipboard.", flags = .CONTENT);
 				}
 				panel_text(*file_display, main_font, text, .MIDDLE, .MIDDLE);
@@ -1108,12 +1116,12 @@ ICON :: struct {
 #load "registration.jai";
 #load "ui.jai";
 
-#import "Clipboard";
+Clippy :: #import "Clipboard";
 Winc :: #import "Window_Creation";
 Input :: #import "Input";
 Simp :: #import "Simp";
 X11 :: #import "X11";
-#import "GL";
+Gl :: #import "GL";
 
 Hash :: #import "Hash";
 

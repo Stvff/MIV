@@ -47,6 +47,7 @@
 ## Bugs to fix
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
 - When another window is above MIV, MIV still reads the mouse position from that window.
+- Slider drops input when you move out of it too fast.
 
 ## Amersfoort
 - [ ] Another image type
@@ -85,23 +86,17 @@
 - [x] Clipboard
 	- [x] copy filename to clipboard
 	- [x] get filename from clipboard
-- [ ] Modernize Custom icons
+- [ ] Produce a coherent concept of the design language
 	- [ ] Logo and possible rename.......
-	- [ ] Fit buttons
-	- [ ] Queueue mode buttons
-	- [ ] Next/prev
-	- [ ] Zoom buttons
-	- [ ] Settings
-	- [ ] AA button
-	- [ ] Metadata
-	- [x] Toggles
 
 ## Utrecht
-- [ ] Nicer looking Scaling
+- [ ] Double press instead of middle mouse to reset
+- [ ] Nicer looking scaling
 - [ ] Image mirroring?
 - [ ] different types of filesorting
 - [ ] Follow files when they are moved, also in the history
 - [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
 - [ ] UI size selection
 	- [ ] Asking the OS what is up with it
+- [ ] Consider proper wayland support
 - [ ] Save window size (or at least do something better than current behviour)

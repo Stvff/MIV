@@ -156,7 +156,8 @@ Settings_File_3 :: struct {
 	offset_on_previous_close: Vector2 #align 1;
 	angle_on_previous_close: float #align 1;
 	zoom_alignment_on_previous_close: Zoom_Alignment_Setting;
-	target_frame_time_on_previous_close: float #align 1;
+	target_frame_time_on_previous_close: float64 #align 1;
+	window_size_on_previous_close: [2]int #align 1;
 }
 
 Default_Settings :: Settings_File_3.{};
