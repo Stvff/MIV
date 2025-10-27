@@ -425,6 +425,9 @@ main :: () {
 
 			/*# Image drawing */
 			canvas.colors = bg_palette;
+			canvas.colors.body[0] = settings.bg_color[0];
+			canvas.colors.body[1] = settings.bg_color[1];
+			canvas.colors.body[2] = settings.bg_color[2];
 			panel_draw(*canvas);
 			if img_ctx.draw {
 				screen_offset := Vector2.{ cast(float, canvas.pos[0]), cast(float, canvas.pos[1]) };
@@ -639,6 +642,21 @@ main :: () {
 					}
 					if !found target_frame_time = DEFAULT_FRAME_TIME;
 				}
+
+				/* Background color selection */
+				bg_color_panel := panel_split(*settings_menu_panel, .{bar_height*4, settings_menu_panel.size[1]}, .TOP, false);
+				bg_color_subpanels := panel_subdivide(*bg_color_panel, 4, .VERTICAL, false);
+				bg_color_text := tprint("(%, %, %)", settings.bg_color[0], settings.bg_color[1], settings.bg_color[2]);
+				panel_text_split(*bg_color_subpanels[3], main_font, bg_color_text, .RIGHT);
+				panel_text(*bg_color_subpanels[3], main_font, "background color:", .LEFT, .MIDDLE);
+				for 0..2 {
+					colornames :: string.["B", "G", "R"];
+					p := panel_split(*bg_color_subpanels[it], .{bar_height, bg_color_subpanels[it].size[0]}, .LEFT, true);
+					panel_text(*p, main_font, colornames[it], .MIDDLE, .MIDDLE);
+				}
+				settings.bg_color[2] = cast(u8, panel_slider(*bg_color_subpanels[0], DEFAULT_SLIDER_HANDLE_SIZE, inp.ipointer, inp.left_button, settings.bg_color[2].(float)/255)*255);
+				settings.bg_color[1] = cast(u8, panel_slider(*bg_color_subpanels[1], DEFAULT_SLIDER_HANDLE_SIZE, inp.ipointer, inp.left_button, settings.bg_color[1].(float)/255)*255);
+				settings.bg_color[0] = cast(u8, panel_slider(*bg_color_subpanels[2], DEFAULT_SLIDER_HANDLE_SIZE, inp.ipointer, inp.left_button, settings.bg_color[0].(float)/255)*255);
 
 				/*# plugin settings */
 				if img_ctx.plugin && img_ctx.plugin.plugin_provided.has_settings {

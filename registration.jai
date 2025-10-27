@@ -158,6 +158,7 @@ Settings_File_3 :: struct {
 	zoom_alignment_on_previous_close: Zoom_Alignment_Setting;
 	target_frame_time_on_previous_close: float64 #align 1;
 	window_size_on_previous_close: [2]int #align 1;
+	bg_color: [3]u8 = .[30, 25, 30];
 }
 
 Default_Settings :: Settings_File_3.{};
