@@ -1111,10 +1111,14 @@ ICON :: struct {
 	FIT_121 :: "1";
 	FIT_WIDTH :: "W";
 	FIT_HEIGHT :: "H";
-	FIT_BEST :: "B";
+	FIT_BEST :: "F";
+	FIT_BOUNDS :: "B";
 	ANTI_ALIAS :: string.["A", "A"];
 	ZOOM_CENTER :: "M";
 	ZOOM_POINTER :: "P";
+	ROTATE :: "R";
+	COPY :: "c";
+	COPY_TEXT :: "T"; //Unused
 
 	METADATA :: string.["m", "m"];
 	HISTORY :: "C";
