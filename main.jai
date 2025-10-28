@@ -1109,12 +1109,16 @@ ICON_FONT_DATA :: #run cast([]u8) read_entire_file(ICON_FONT_PATH);
 ICON :: struct {
 	SETTINGS :: string.["S", "S"];
 	FIT_121 :: "1";
+	FIT_FILL :: "F";
 	FIT_WIDTH :: "W";
 	FIT_HEIGHT :: "H";
 	FIT_BEST :: "B";
 	ANTI_ALIAS :: string.["A", "A"];
 	ZOOM_CENTER :: "M";
 	ZOOM_POINTER :: "P";
+	ROTATE :: "R";
+	COPY :: "c";
+	COPY_TEXT :: "T"; //Unused
 
 	METADATA :: string.["m", "m"];
 	HISTORY :: "C";
