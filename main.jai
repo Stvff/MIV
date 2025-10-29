@@ -1,5 +1,5 @@
 Image_Context :: struct {
-	fit : enum {ONE_TO_ONE; FIT_WIDTH; FIT_HEIGHT; FIT_BEST;}
+	fit : enum {ONE_TO_ONE; FIT_FILL; FIT_WIDTH; FIT_HEIGHT; FIT_BEST;}
 	offset: Vector2;
 	pre_pan_offset: Vector2;
 	zoom_alignment: Zoom_Alignment_Setting;
@@ -490,11 +490,18 @@ main :: () {
 					if screen_woh > image_woh now_fit = .FIT_HEIGHT;
 					else now_fit = .FIT_WIDTH;
 				}
+				if now_fit == .FIT_FILL {
+					screen_woh := screen_center.x/screen_center.y;
+					image_woh := image_center.x/image_center.y;
+					if screen_woh > image_woh now_fit = .FIT_WIDTH;
+					else now_fit = .FIT_HEIGHT;
+				}
 
 				if img_ctx.auto_fit {
-					if now_fit == {
+					if #complete now_fit == {
 					case .ONE_TO_ONE;
 						img_ctx.scale = 1;
+					case .FIT_FILL; /* should be unreachable */
 					case .FIT_WIDTH;
 						img_ctx.scale = screen_center.x/image_center.x;
 					case .FIT_HEIGHT;
@@ -650,6 +657,11 @@ main :: () {
 				panel_text_split(*bg_color_subpanels[3], main_font, bg_color_text, .RIGHT);
 				panel_text(*bg_color_subpanels[3], main_font, "background color:", .LEFT, .MIDDLE);
 				for 0..2 {
+					if pointer_is_in_panel(*bg_color_subpanels[it], inp.ipointer) && inp.middle_button {
+						settings.bg_color[0] = bg_palette.body[0];
+						settings.bg_color[1] = bg_palette.body[1];
+						settings.bg_color[2] = bg_palette.body[2];
+					}
 					colornames :: string.["B", "G", "R"];
 					p := panel_split(*bg_color_subpanels[it], .{bar_height, bg_color_subpanels[it].size[0]}, .LEFT, true);
 					panel_text(*p, main_font, colornames[it], .MIDDLE, .MIDDLE);
@@ -760,11 +772,13 @@ main :: () {
 			/*# top bar */
 			settings_button := panel_split(*top_bar, .{bar_height*6/5, top_bar.size[0]}, .LEFT, false);
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
-			fit_buttons_space := panel_split(*top_bar, .{bar_height*4, top_bar.size[0]}, .LEFT, false);
+			fit_buttons_space := panel_split(*top_bar, .{bar_height*5, top_bar.size[0]}, .LEFT, false);
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 			smoothing_button := panel_split(*top_bar, .{bar_height*6/5, top_bar.size[0]}, .LEFT, false);
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 			zoom_buttons_space := panel_split(*top_bar, .{bar_height*2, top_bar.size[0]}, .LEFT, false);
+			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
+			rotate_button_space := panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 
 			/*# settings button */
 			tip.text = "Toggle settings menu";
@@ -777,19 +791,20 @@ main :: () {
 			/*# fit buttons */
 			fit_buttons_space.colors = button_palette;
 			panel_draw(*fit_buttons_space);
-			fit_buttons := panel_subdivide(*fit_buttons_space, 4, .HORIZONTAL, false);
+			fit_buttons := panel_subdivide(*fit_buttons_space, 5, .HORIZONTAL, false);
 			if img_ctx.auto_fit {
 				fit_buttons[img_ctx.fit].colors = selected_button_palette;
 				panel_draw(*fit_buttons[img_ctx.fit]);
 			}
 
 			for fit_buttons {
-				fit_tips :: string.["Fit pixel to pixel", "Fit to screen width", "Fit to screen height", "Use best fit"];
+				fit_tips :: string.["Fit pixel to pixel", "Fit to fill", "Fit to screen width", "Fit to screen height", "Use best fit"];
 				elaborate_fit_tips :: string.[
 					"Fit pixel to pixel:\nThis setting scales the image so that one pixel on the\nscreen corresponds to exactly one pixel of the image.",
+					"Fit to fill:\nThis setting scales the image so that it completely fills the view,\nat any aspect ratio of the screen or image.",
 					"Fit to screen width:\nThis setting scales the image so that the image takes up the full width of the screen.",
 					"Fit to screen height:\nThis setting scales the image so that the image takes up the full height of the screen.",
-					"Use best fit:\nThis setting scales the image so that it is both as large as possible, as well as fully visible."
+					"Use best fit:\nThis setting scales the image so that it is fully visible,\nat any aspect ratio of the screen or image."
 				];
 				tip.text = fit_tips[it_index];
 				if elaborate_tips tip.text = elaborate_fit_tips[it_index];
@@ -799,7 +814,7 @@ main :: () {
 					img_ctx.offset = .{};
 					img_ctx.angle = 0;
 				}
-				fit_button_text :: string.[ICON.FIT_121, ICON.FIT_WIDTH, ICON.FIT_HEIGHT, ICON.FIT_BEST];
+				fit_button_text :: string.[ICON.FIT_121, ICON.FIT_FILL, ICON.FIT_WIDTH, ICON.FIT_HEIGHT, ICON.FIT_BEST];
 				panel_text(*it, icon_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
 
@@ -832,6 +847,8 @@ main :: () {
 				zoom_button_text :: string.[ICON.ZOOM_CENTER, ICON.ZOOM_POINTER];
 				panel_text(*it, icon_font, zoom_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
+
+			/*# Rotate button */
 
 			/*# filename display */
 			if !img_ctx.draw {
@@ -1099,40 +1116,6 @@ logger :: (message: string, data: *void, info: Log_Info) {
 		entry.options[0] = "dismiss";
 	}
 	array_add(entries, entry);
-}
-
-FONT_PATH :: "./assets/LibertinusSerif-Regular.otf";
-FONT_DATA :: #run cast([]u8) read_entire_file(FONT_PATH);
-
-ICON_FONT_PATH :: "./assets/IconsMIV.otf";
-ICON_FONT_DATA :: #run cast([]u8) read_entire_file(ICON_FONT_PATH);
-ICON :: struct {
-	SETTINGS :: string.["S", "S"];
-	FIT_121 :: "1";
-	FIT_FILL :: "F";
-	FIT_WIDTH :: "W";
-	FIT_HEIGHT :: "H";
-	FIT_BEST :: "B";
-	ANTI_ALIAS :: string.["A", "A"];
-	ZOOM_CENTER :: "M";
-	ZOOM_POINTER :: "P";
-	ROTATE :: "R";
-	COPY :: "c";
-	COPY_TEXT :: "T"; //Unused
-
-	METADATA :: string.["m", "m"];
-	HISTORY :: "C";
-	DIRECTORY :: "D";
-	PREV :: "<";
-	NEXT :: ">";
-
-	OFF :: "[)";
-	ON :: "(]";
-	RADIO_OFF :: "o";
-	RADIO_ON :: "O";
-
-	TOGGLE :: string.[ICON.OFF, ICON.ON];
-	RADIO :: string.[ICON.RADIO_OFF, ICON.RADIO_ON];
 }
 
 #load "registration.jai";

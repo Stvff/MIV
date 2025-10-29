@@ -380,3 +380,37 @@ draw_flow_text :: (font: *Simp.Dynamic_Font, lines: []string, pos: [2]int, size:
 		tpos[1] -= padding;
 	}
 }
+
+FONT_PATH :: "./assets/LibertinusSerif-Regular.otf";
+FONT_DATA :: #run cast([]u8) read_entire_file(FONT_PATH);
+
+ICON_FONT_PATH :: "./assets/IconsMIV.otf";
+ICON_FONT_DATA :: #run cast([]u8) read_entire_file(ICON_FONT_PATH);
+ICON :: struct {
+	SETTINGS :: string.["S", "S"];
+	FIT_121 :: "1";
+	FIT_FILL :: "F";
+	FIT_WIDTH :: "W";
+	FIT_HEIGHT :: "H";
+	FIT_BEST :: "B";
+	ANTI_ALIAS :: string.["A", "A"];
+	ZOOM_CENTER :: "M";
+	ZOOM_POINTER :: "P";
+	ROTATE :: "R";
+	COPY :: "c";
+	COPY_TEXT :: "T"; //Unused
+
+	METADATA :: string.["m", "m"];
+	HISTORY :: "C";
+	DIRECTORY :: "D";
+	PREV :: "<";
+	NEXT :: ">";
+
+	OFF :: "[)";
+	ON :: "(]";
+	RADIO_OFF :: "o";
+	RADIO_ON :: "O";
+
+	TOGGLE :: string.[ICON.OFF, ICON.ON];
+	RADIO :: string.[ICON.RADIO_OFF, ICON.RADIO_ON];
+}
