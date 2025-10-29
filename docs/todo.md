@@ -51,8 +51,8 @@
 
 ## Amersfoort
 - [ ] Another image type
-- [ ] Rework the queue model
-	- [ ] Option for queue looping
+- [x] Rework the queue model
+	- [x] Option for queue looping
 - [x] Help mode where the tooltips are wayyy larger
 	- [x] fill out all tooltips
 - [x] Text clipping

@@ -209,6 +209,15 @@ panel_scrollbar :: (p: *UI_Panel, pointer_position: [2]int, pointer_when_pressed
 	return should_move;
 }
 
+panel_settings_toggle :: (p: *UI_Panel, icon_font: *Simp.Dynamic_Font, font: *Simp.Dynamic_Font, setting_text: string,
+                          pointer_position: [2]int, pressed: bool, current_state: bool, tip: *Tool_Tip = null) -> bool {
+	bar_height := font.character_height*2;
+	this_setting_panel := panel_split(p, .{bar_height, p.size[1]}, .TOP, true);
+	panel_text(*this_setting_panel, font, setting_text, .LEFT, .MIDDLE);
+	this_setting_button_panel := panel_split(*this_setting_panel, .{bar_height*3/2, this_setting_panel.size[0]}, .RIGHT, false);
+	return panel_toggle_button(*this_setting_button_panel, icon_font, ICON.TOGGLE, pointer_position, pressed, current_state, tip);
+}
+
 panel_slider :: (p: *UI_Panel, handle_size: int, pointer_position: [2]int, pressed: bool, current_state: float, tip: *Tool_Tip = null) -> float {
 	in_panel := pointer_is_in_panel(p, pointer_position);
 	p.colors = selected_button_palette;

@@ -601,29 +601,29 @@ main :: () {
 
 				panel_split(*settings_menu_panel, .{bar_height/2, settings_menu_panel.size[1]}, .TOP, false);
 				/* debug logging toggle */
-				debug_logging_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
-				panel_text(*debug_logging_panel, main_font, "debug logging:", .LEFT, .MIDDLE);
-				debug_button_panel := panel_split(*debug_logging_panel, .{bar_height*3/2, debug_logging_panel.size[0]}, .RIGHT, false);
-				if panel_toggle_button(*debug_button_panel, icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, context.log_level == .VERBOSE) {
+				if panel_settings_toggle(*settings_menu_panel, icon_font, main_font, "debug logging:",
+				                         inp.ipointer, inp.left_button_switch, context.log_level == .VERBOSE) {
 					if context.log_level == .VERBOSE context.log_level = .NORMAL;
 					else context.log_level = .VERBOSE;
 				}
 
 				/* downscaling setting */
-				downscaling_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
-				panel_text(*downscaling_panel, main_font, "linear downscaling:", .LEFT, .MIDDLE);
-				downscaling_button_panel := panel_split(*downscaling_panel, .{bar_height*3/2, downscaling_panel.size[0]}, .RIGHT, false);
-				if panel_toggle_button(*downscaling_button_panel, icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, img_ctx.linear_downscaling) {
+				if panel_settings_toggle(*settings_menu_panel, icon_font, main_font, "linear downscaling:",
+				                         inp.ipointer, inp.left_button_switch, img_ctx.linear_downscaling) {
 					img_ctx.linear_downscaling = !img_ctx.linear_downscaling;
 				}
 
 				/* elaborate tooltips settings */
-				elaborate_tips_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
-				panel_text(*elaborate_tips_panel, main_font, "elaborate tooltips:", .LEFT, .MIDDLE);
-				elaborate_tips_button_panel := panel_split(*elaborate_tips_panel, .{bar_height*3/2, elaborate_tips_panel.size[0]}, .RIGHT, false);
 				tip.text = "When turned on, tooltips will contain more information about what a setting or button does.";
-				if panel_toggle_button(*elaborate_tips_button_panel, icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, elaborate_tips, tip = *tip) {
+				if panel_settings_toggle(*settings_menu_panel, icon_font, main_font, "elaborate_tooltips:",
+				                         inp.ipointer, inp.left_button_switch, elaborate_tips, *tip) {
 					elaborate_tips = !elaborate_tips;
+				}
+
+				/* queues loop setting */
+				if panel_settings_toggle(*settings_menu_panel, icon_font, main_font, "file queue loops:",
+				                         inp.ipointer, inp.left_button_switch, settings.queues_loop) {
+					settings.queues_loop = !settings.queues_loop;
 				}
 
 				/* FPS slider */
@@ -689,11 +689,8 @@ main :: () {
 						changed := false;
 						if #complete option.type == {
 						case .TOGGLE;
-							section := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, true);
-							panel_text(*section, main_font, tprint(" %:", option.name), .LEFT, .MIDDLE);
-							button_panel := panel_split(*section, .{bar_height*3/2, section.size[0]}, .RIGHT, false);
-
-							if panel_toggle_button(*button_panel, icon_font, ICON.TOGGLE, inp.ipointer, inp.left_button_switch, option.toggle) {
+							if panel_settings_toggle(*settings_menu_panel, icon_font, main_font, tprint(" %:", option.name),
+							                         inp.ipointer, inp.left_button_switch, option.toggle) {
 								option.toggle = !option.toggle;
 								img_ctx.settings_info.changed_index = xx it_index;
 								changed = true;
@@ -906,34 +903,33 @@ main :: () {
 			bnf_menu_space.colors = button_palette;
 			bnf_button_space := panel_split(*bnf_menu_space, .{bar_height*2, bnf_menu_space.size[0]}, .RIGHT, true);
 
+			bnf_tips :: string.["Previous file in queue", "Next file in queue"];
+			elaborate_bnf_tips :: string.[
+				"Previous file in queue:\nWhen pressed, the previous file in the current image queue will be displayed.",
+				"Next file in queue:\nWhen pressed, the next file in the current image queue will be displayed."
+			];
+			bnf_should_be_pressable := bool.[current_q_index.* > 0, current_q_index.* < current_q.count-1];
+			queue_movement_input := bool.[inp.arrow_left || inp.arrow_left_repeat, inp.arrow_right || inp.arrow_right_repeat];
 			bnf_buttons := panel_subdivide(*bnf_button_space, 2, .HORIZONTAL, true);
-			if first_layer_is_pressable && current_q_index.* > 0 && current_q.count != 0 {
-				tip.text = "Previous file in queue";
-				if elaborate_tips tip.text = "Next file in queue:\nWhen pressed, the previous file in the current image queue will be displayed.";
-				if panel_button(*bnf_buttons[0], inp.ipointer, inp.left_button_switch, *tip) || inp.arrow_left || inp.arrow_left_repeat {
-					current_q_index.* -= 1;
-					img_ctx.render = true;
+			for 0..1 {
+				if (settings.queues_loop || bnf_should_be_pressable[it]) && current_q.count > 1 {
+					tip.text = bnf_tips[it];
+					if elaborate_tips tip.text = elaborate_bnf_tips[it];
+					if first_layer_is_pressable && panel_button(*bnf_buttons[it], inp.ipointer, inp.left_button_switch, *tip) || queue_movement_input[it] {
+						current_q_index.* += (it-1)*2 + 1;
+						if current_q_index.* < 0 current_q_index.* = current_q.count-1;
+						if current_q_index.* > current_q.count-1 current_q_index.* = 0;
+						img_ctx.render = true;
+					}
+				} else {
+					bnf_buttons[it].colors.body = default_palette.body;
+					panel_draw(*bnf_buttons[it]);
 				}
-			} else {
-				bnf_buttons[0].colors.body = default_palette.body;
-				panel_draw(*bnf_buttons[0]);
+				panel_text(*bnf_buttons[it], icon_font, string.[ICON.PREV, ICON.NEXT][it], .MIDDLE, .MIDDLE);
 			}
-			if first_layer_is_pressable && current_q_index.* < current_q.count-1 && current_q.count != 0 {
-				tip.text = "Next file in queue";
-				if elaborate_tips tip.text = "Next file in queue:\nWhen pressed, the next file in the current image queue will be displayed.";
-				if panel_button(*bnf_buttons[1], inp.ipointer, inp.left_button_switch, *tip) || inp.arrow_right || inp.arrow_right_repeat {
-					current_q_index.* += 1;
-					img_ctx.render = true;
-				}
-			} else {
-				bnf_buttons[1].colors.body = default_palette.body;
-				panel_draw(*bnf_buttons[1]);
-			}
-			panel_text(*bnf_buttons[0], icon_font, ICON.PREV, .MIDDLE, .MIDDLE);
-			panel_text(*bnf_buttons[1], icon_font, ICON.NEXT, .MIDDLE, .MIDDLE);
 
 			/*# history or directory selector */
-			file_queues_exist := file_history.count && directory.count;
+			file_queues_exist := file_history.count != 0;
 			bnf_selector_space := panel_split(*bnf_menu_space, .{bar_height*3, bnf_menu_space.size[0]}, .LEFT, false);
 			bnf_menu_space.colors = default_palette;
 			panel_draw(*bnf_menu_space);
@@ -956,6 +952,7 @@ main :: () {
 				if file_queues_exist && first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *tip) {
 					fileq_setting_switch = true;
 					fileq_setting = xx it_index;
+					img_ctx.render = true;
 				}
 				fileq_setting_text :: string.[ICON.HISTORY, ICON.DIRECTORY];
 				panel_text(*it, icon_font, fileq_setting_text[it_index], .MIDDLE, .MIDDLE);

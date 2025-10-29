@@ -149,8 +149,9 @@ Settings_File_3 :: struct {
 	pers_between_files: Persistence_Setting;
 	pers_between_restarts: Persistence_Setting;
 	smoothing_setting_on_previous_close: bool;
-	downscaling_on_previous_close: bool;
+	downscaling_on_previous_close: bool = true;
 	elaborate_tips: bool;
+	queues_loop: bool = true;
 
 	scale_on_previous_close: float #align 1;
 	offset_on_previous_close: Vector2 #align 1;
