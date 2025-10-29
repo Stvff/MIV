@@ -331,7 +331,6 @@ main :: () {
 			img_ctx.render = get_loading(new_name, get_extension(new_name), *img_ctx, true);
 			if img_ctx.render {
 				if old_pre_info.fileptr posix.fclose(old_pre_info.fileptr);
-				/* TODO: retrieve previous offsets etc from some per-file history */
 
 				if !settings.pers_between_files.of_scale img_ctx.auto_fit = true;
 				if !settings.pers_between_files.of_offset {
@@ -934,17 +933,17 @@ main :: () {
 			panel_text(*bnf_buttons[1], icon_font, ICON.NEXT, .MIDDLE, .MIDDLE);
 
 			/*# history or directory selector */
+			file_queues_exist := file_history.count && directory.count;
 			bnf_selector_space := panel_split(*bnf_menu_space, .{bar_height*3, bnf_menu_space.size[0]}, .LEFT, false);
 			bnf_menu_space.colors = default_palette;
 			panel_draw(*bnf_menu_space);
 			bnf_selector_buttons := panel_subdivide(*bnf_selector_space, 2, .HORIZONTAL, false);
-			{ /* the selected button */
+			if file_queues_exist { /* the selected button */
 				selected := *bnf_selector_buttons[fileq_setting];
 				selected.colors = selected_button_palette;
 				panel_draw(selected);
 			}
 
-			/* TODO: make unpressable if arrays are empty */
 			fileq_setting_switch := false;
 			for bnf_selector_buttons {
 				fileq_tips :: string.["Set file queue to dropped files", "Set file queue to directory of the current file"];
@@ -954,7 +953,7 @@ main :: () {
 				];
 				tip.text = fileq_tips[it_index];
 				if elaborate_tips tip.text = elaborate_fileq_tips[it_index];
-				if first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *tip) {
+				if file_queues_exist && first_layer_is_pressable && panel_button(*it, inp.ipointer, inp.left_button_switch, *tip) {
 					fileq_setting_switch = true;
 					fileq_setting = xx it_index;
 				}

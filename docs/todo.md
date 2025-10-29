@@ -55,26 +55,20 @@
 	- [ ] Option for queue looping
 - [x] Help mode where the tooltips are wayyy larger
 	- [x] fill out all tooltips
-- [ ] intelligent textflows
-	- [x] Clipping
-- [ ] More advanced UI layouting
-	- [ ] scrollbars I'm afraid
-		- [x] Also adjustable panels
+- [x] Text clipping
+- [x] Adjustable panels
 - [x] logs onscreen instead of in terminal
-- [ ] Rework plugin settings API to be less sum-type-y
-- [ ] Plugin error, message, and warning lists instead of single only-errors
 - [ ] Being more elaborate about what failed during loading (which part of the directory, which type of error)
 - [ ] Exif data
 - [x] up/downscaling settings in the settings menu
-- [ ] Make persistence settings UI make sense
+- [ ] Rework plugin settings API to be less sum-type-y
+- [ ] Plugin error, message, and warning lists instead of single only-errors
 - [ ] Settings file total update
 	- [x] Serialize the plugin settings for the settings file in some way
 	- [ ] Save settings in case of crash by saving the settings file right after settings changed
 	- [ ] Save plugin settings saving GUI
 - [x] Slider for Plugin settings
-	- [ ] Maybe with indents
 	- [ ] Choice between every change or after mouse release.
-	- [ ] Also the Uberslider
 - [x] FPS slider for when holding down next or prev
 	- [x] When holding down next or prev, go up to full fps
 - [x] Image rotation controls and logic (with button)
@@ -92,12 +86,20 @@
 
 ## Utrecht
 - [ ] Double press instead of middle mouse to reset
-- [ ] Nicer looking scaling
-- [ ] Image mirroring?
 - [ ] different types of filesorting
 - [ ] Follow files when they are moved, also in the history
+- [ ] per-file offset history?
 - [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
-- [ ] UI size selection
-	- [ ] Asking the OS what is up with it
-- [ ] Consider proper wayland support
-- [ ] Save window size (or at least do something better than current behviour)
+- [ ] Image mirroring?
+- [ ] Nicer looking scaling
+- [ ] UI rework
+	- [ ] Make persistence settings UI make sense and more dynamic
+	- [ ] intelligent textflows
+	- [ ] scrollbars I'm afraid
+	- [ ] Sliders in general should be more advanced
+		- [ ] Maybe with indents
+		- [ ] Also the Uberslider
+	- [ ] UI size selection
+		- [ ] Asking the OS what is up with it
+	- [ ] Consider proper wayland support
+	- [ ] Save window size (or at least do something better than current behviour)
