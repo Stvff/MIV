@@ -77,15 +77,16 @@
 	- [ ] Also the Uberslider
 - [x] FPS slider for when holding down next or prev
 	- [x] When holding down next or prev, go up to full fps
-- [x] Image rotation controls and logic
+- [x] Image rotation controls and logic (with button)
 	- [ ] Bounding box fitting
-	- [ ] Fill screen setting
+	- [x] Fill screen setting
 	- [x] Angle button resets and rotates to 90 -> 180 -> -90
 	- [ ] Show little rotation UI?
 - [x] Maybe tooltip of full path on filename
 - [x] Clipboard
 	- [x] copy filename to clipboard
 	- [x] get filename from clipboard
+- [x] background color setting
 - [ ] Produce a coherent concept of the design language
 	- [ ] Logo and possible rename.......
 

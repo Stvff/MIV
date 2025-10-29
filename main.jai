@@ -778,7 +778,7 @@ main :: () {
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 			zoom_buttons_space := panel_split(*top_bar, .{bar_height*2, top_bar.size[0]}, .LEFT, false);
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
-			rotate_button_space := panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
+			rotation_button := panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 
 			/*# settings button */
 			tip.text = "Toggle settings menu";
@@ -848,7 +848,14 @@ main :: () {
 				panel_text(*it, icon_font, zoom_button_text[it_index], .MIDDLE, .MIDDLE);
 			}
 
-			/*# Rotate button */
+			/*# Rotation button */
+			tip.text = "Rotate 90 degrees or reset";
+			if elaborate_tips tip.text = "Rotate 90 degrees or reset:\nIf the image is at an angle of 0°, 90°, 180° or 270°,\nthis button will futher turn the image by another 90°.\nIf it is at another angle, this button will reset it to 0°.";
+			if first_layer_is_pressable && panel_toggle_button(*rotation_button, icon_font, ICON.ROTATE, inp.ipointer, inp.left_button_switch, img_ctx.angle != 0, *tip) {
+				if img_ctx.angle != 0.00 && img_ctx.angle != 90 && img_ctx.angle != 180 && img_ctx.angle != 270 {
+					img_ctx.angle = 0;
+				} else img_ctx.angle -= 90;
+			}
 
 			/*# filename display */
 			if !img_ctx.draw {
@@ -886,15 +893,7 @@ main :: () {
 
 			/*# angle indicator */
 			angle_text := tprint("%°", img_ctx.angle);
-			angle_panel := panel_split(*bottom_bar, .{bar_height*3/2, bottom_bar.size[0]}, .LEFT, false);
-			angle_panel.colors = button_palette;
-			panel_draw(*angle_panel);
-			if panel_button(*angle_panel, inp.ipointer, inp.left_button_switch) {
-				if img_ctx.angle != 0.00 && img_ctx.angle != 90 && img_ctx.angle != 180 && img_ctx.angle != 270 {
-					img_ctx.angle = 0;
-				} else img_ctx.angle -= 90;
-			}
-			panel_text(*angle_panel, main_font, angle_text, .MIDDLE, .MIDDLE);
+			angle_panel := panel_text_split(*bottom_bar, main_font, angle_text, .LEFT);
 
 			/*# fps counter */
 			if inp.arrow_left_repeat || inp.arrow_right_repeat {

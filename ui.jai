@@ -396,7 +396,7 @@ ICON :: struct {
 	ANTI_ALIAS :: string.["A", "A"];
 	ZOOM_CENTER :: "M";
 	ZOOM_POINTER :: "P";
-	ROTATE :: "R";
+	ROTATE :: string.["R", "R"];
 	COPY :: "c";
 	COPY_TEXT :: "T"; //Unused
 
