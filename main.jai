@@ -431,7 +431,6 @@ main :: () {
 			if img_ctx.draw {
 				screen_offset := Vector2.{ cast(float, canvas.pos[0]), cast(float, canvas.pos[1]) };
 				screen_center := Vector2.{ cast(float, canvas.size[0])/2, cast(float, canvas.size[1])/2 };
-				image_center := Vector2.{ cast(float, img_ctx.pre_info.width)/2, cast(float, img_ctx.pre_info.height)/2 };
 
 				/* we have to process our inputs (not using the keyboard yet) */
 				process_mouse_activity := first_layer_is_pressable && pointer_is_in_panel(*canvas, inp.ipointer);
@@ -470,7 +469,7 @@ main :: () {
 					}
 
 					if inp.right_button {
-						img_ctx.auto_fit = false;
+						// img_ctx.auto_fit = false;
 						diff := inp.fpointer - inp.rpointer_when_pressed;
 						from := normalize(inp.rpointer_when_pressed - screen_center - img_ctx.offset*img_ctx.scale);
 						to := normalize(inp.fpointer - screen_center - img_ctx.offset*img_ctx.scale);
@@ -482,16 +481,33 @@ main :: () {
 				}
 				img_ctx.scale = clamp(img_ctx.scale, 1/cast(float, max(img_ctx.pre_info.width, img_ctx.pre_info.height)), cast(float, max(canvas.size[0], canvas.size[1])));
 
+				image_center := Vector2.{ cast(float, img_ctx.pre_info.width)/2, cast(float, img_ctx.pre_info.height)/2 };
+				image_bounds := image_center;
+				// image_bounds := Vector2.{ cast(float, img_ctx.pre_info.width), cast(float, img_ctx.pre_info.height) };
+
+				if 0 > img_ctx.angle || img_ctx.angle >= 360 {
+					f := (img_ctx.angle + 720)/360;
+					img_ctx.angle = (f - floor(f))*360;
+				}
+				if img_ctx.angle - floor(img_ctx.angle) >= 0.5 then img_ctx.angle = floor(img_ctx.angle) + 1;
+				else img_ctx.angle = floor(img_ctx.angle);
+				rad := 2*PI*img_ctx.angle/360;
+
+				image_bounds = .{
+					image_bounds.x*abs(cos(rad)) + image_bounds.y*abs(sin(rad)),
+					image_bounds.y*abs(cos(rad)) + image_bounds.x*abs(sin(rad))
+				};
+
 				now_fit := img_ctx.fit;
 				if now_fit == .FIT_BEST {
 					screen_woh := screen_center.x/screen_center.y;
-					image_woh := image_center.x/image_center.y;
+					image_woh := image_bounds.x/image_bounds.y;
 					if screen_woh > image_woh now_fit = .FIT_HEIGHT;
 					else now_fit = .FIT_WIDTH;
 				}
 				if now_fit == .FIT_FILL {
 					screen_woh := screen_center.x/screen_center.y;
-					image_woh := image_center.x/image_center.y;
+					image_woh := image_bounds.x/image_bounds.y;
 					if screen_woh > image_woh now_fit = .FIT_WIDTH;
 					else now_fit = .FIT_HEIGHT;
 				}
@@ -502,29 +518,22 @@ main :: () {
 						img_ctx.scale = 1;
 					case .FIT_FILL; /* should be unreachable */
 					case .FIT_WIDTH;
-						img_ctx.scale = screen_center.x/image_center.x;
+						img_ctx.scale = screen_center.x/image_bounds.x;
 					case .FIT_HEIGHT;
-						img_ctx.scale = screen_center.y/image_center.y;
+						img_ctx.scale = screen_center.y/image_bounds.y;
 					case .FIT_BEST; /* should be unreachable */
 					}
 				}
 
-				image_bounds := Vector2.[
+				image_edges := Vector2.[
 					-image_center, .{image_center.x, -image_center.y}, image_center, .{-image_center.x, image_center.y}
 				];
 
-				if 0 > img_ctx.angle || img_ctx.angle >= 360 {
-					f := (img_ctx.angle + 720)/360;
-					img_ctx.angle = (f - floor(f))*360;
-				}
-				if img_ctx.angle - floor(img_ctx.angle) >= 0.5 then img_ctx.angle = floor(img_ctx.angle) + 1;
-				else img_ctx.angle = floor(img_ctx.angle);
-				rad := 2*PI*img_ctx.angle/360;
 				rot_mat := Matrix2.{
 					cos(rad), -sin(rad),
 					sin(rad), cos(rad)
 				};
-				for * image_bounds {
+				for * image_edges {
 					it.* = rot_mat*it.*;
 
 					it.* += img_ctx.offset;
@@ -545,7 +554,7 @@ main :: () {
  					Gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_NEAREST);
  					Gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
 				}
-				Simp.immediate_quad(image_bounds[0], image_bounds[1], image_bounds[2], image_bounds[3]);
+				Simp.immediate_quad(image_edges[0], image_edges[1], image_edges[2], image_edges[3]);
 			}
 			panel_draw(*top_bar);
 			panel_draw(*bottom_bar);
@@ -808,7 +817,7 @@ main :: () {
 					img_ctx.fit = xx it_index;
 					img_ctx.auto_fit = true;
 					img_ctx.offset = .{};
-					img_ctx.angle = 0;
+					//img_ctx.angle = 0;
 				}
 				fit_button_text :: string.[ICON.FIT_121, ICON.FIT_FILL, ICON.FIT_WIDTH, ICON.FIT_HEIGHT, ICON.FIT_BEST];
 				panel_text(*it, icon_font, fit_button_text[it_index], .MIDDLE, .MIDDLE);

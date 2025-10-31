@@ -86,13 +86,17 @@
 
 ## Utrecht
 - [ ] Double press instead of middle mouse to reset
+- [ ] Think even harder about first installation
 - [ ] different types of filesorting
 - [ ] Follow files when they are moved, also in the history
 - [ ] per-file offset history?
 - [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
 - [ ] Image mirroring?
+- [ ] Show Licenses button
+
 - [ ] Nicer looking scaling
 - [ ] UI rework
+	- [ ] Textbox input
 	- [ ] Make persistence settings UI make sense and more dynamic
 	- [ ] intelligent textflows
 	- [ ] scrollbars I'm afraid
