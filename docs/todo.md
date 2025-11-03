@@ -48,6 +48,7 @@
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
 - When another window is above MIV, MIV still reads the mouse position from that window.
 - Slider drops input when you move out of it too fast.
+- Should fit to height and width fill in such a way that there is no background visible at the top/bottom or left/right respectively?
 
 ## Amersfoort
 - [ ] Another image type
@@ -72,7 +73,7 @@
 - [x] FPS slider for when holding down next or prev
 	- [x] When holding down next or prev, go up to full fps
 - [x] Image rotation controls and logic (with button)
-	- [ ] Bounding box fitting
+	- [x] Bounding box fitting
 	- [x] Fill screen setting
 	- [x] Angle button resets and rotates to 90 -> 180 -> -90
 	- [ ] Show little rotation UI?

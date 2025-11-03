@@ -427,6 +427,7 @@ main :: () {
 			canvas.colors.body[0] = settings.bg_color[0];
 			canvas.colors.body[1] = settings.bg_color[1];
 			canvas.colors.body[2] = settings.bg_color[2];
+			canvas.border_size = 0;
 			panel_draw(*canvas);
 			if img_ctx.draw {
 				screen_offset := Vector2.{ cast(float, canvas.pos[0]), cast(float, canvas.pos[1]) };
@@ -483,7 +484,6 @@ main :: () {
 
 				image_center := Vector2.{ cast(float, img_ctx.pre_info.width)/2, cast(float, img_ctx.pre_info.height)/2 };
 				image_bounds := image_center;
-				// image_bounds := Vector2.{ cast(float, img_ctx.pre_info.width), cast(float, img_ctx.pre_info.height) };
 
 				if 0 > img_ctx.angle || img_ctx.angle >= 360 {
 					f := (img_ctx.angle + 720)/360;
@@ -505,18 +505,22 @@ main :: () {
 					if screen_woh > image_woh now_fit = .FIT_HEIGHT;
 					else now_fit = .FIT_WIDTH;
 				}
-				if now_fit == .FIT_FILL {
-					screen_woh := screen_center.x/screen_center.y;
-					image_woh := image_bounds.x/image_bounds.y;
-					if screen_woh > image_woh now_fit = .FIT_WIDTH;
-					else now_fit = .FIT_HEIGHT;
-				}
 
 				if img_ctx.auto_fit {
 					if #complete now_fit == {
 					case .ONE_TO_ONE;
 						img_ctx.scale = 1;
-					case .FIT_FILL; /* should be unreachable */
+					case .FIT_FILL;
+						screen_bounds := Vector2.{
+							screen_center.x*abs(cos(rad)) + screen_center.y*abs(sin(rad)),
+							screen_center.y*abs(cos(rad)) + screen_center.x*abs(sin(rad))
+						};
+						screen_woh := screen_bounds.x/screen_bounds.y;
+						image_woh := image_center.x/image_center.y;
+						if screen_woh > image_woh
+							img_ctx.scale = screen_bounds.x/image_center.x;
+						else
+							img_ctx.scale = screen_bounds.y/image_center.y;
 					case .FIT_WIDTH;
 						img_ctx.scale = screen_center.x/image_bounds.x;
 					case .FIT_HEIGHT;
@@ -888,6 +892,14 @@ main :: () {
 				display_metadata = !display_metadata;
 			}
 
+			/*# fps counter */
+			if inp.arrow_left_repeat || inp.arrow_right_repeat {
+				bottom_bar.colors.text = ifx frame_time < target_frame_time then u8.[100, 210, 25, 255] else .[220, 60, 25, 255];
+				panel_text_split(*bottom_bar, main_font, tprint("fps: %", frame_count_over_1s), .LEFT, .MIDDLE);
+				bottom_bar.colors.text = default_palette.text;
+			}
+
+			/*# scale percentage */
 			scale_text: string;
 			if img_ctx.draw {
 				scale_text = tprint("%\%", formatFloat(img_ctx.scale*100, trailing_width = 2, zero_removal = .NO));
@@ -899,13 +911,6 @@ main :: () {
 			/*# angle indicator */
 			angle_text := tprint("%°", img_ctx.angle);
 			angle_panel := panel_text_split(*bottom_bar, main_font, angle_text, .LEFT);
-
-			/*# fps counter */
-			if inp.arrow_left_repeat || inp.arrow_right_repeat {
-				bottom_bar.colors.text = ifx frame_time < target_frame_time then u8.[100, 210, 25, 255] else .[220, 60, 25, 255];
-				panel_text_split(*bottom_bar, main_font, tprint("fps: %", frame_count_over_1s), .LEFT, .MIDDLE);
-				bottom_bar.colors.text = default_palette.text;
-			}
 
 			/*# Backwards and forwards buttons (bnf buttons) */
 			bnf_menu_space := panel_split(*bottom_bar, .{bar_height*6, bottom_bar.size[0]}, .RIGHT, false);
