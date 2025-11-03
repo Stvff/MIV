@@ -430,6 +430,7 @@ main :: () {
 			canvas.border_size = 0;
 			panel_draw(*canvas);
 			if img_ctx.draw {
+				draw_rotation_indicator_line := false;
 				screen_offset := Vector2.{ cast(float, canvas.pos[0]), cast(float, canvas.pos[1]) };
 				screen_center := Vector2.{ cast(float, canvas.size[0])/2, cast(float, canvas.size[1])/2 };
 
@@ -478,6 +479,7 @@ main :: () {
 						sign := ifx from.x*to.y - from.y*to.x < 0 then -1 else 1;
 						angle := sign*acos(cos_a)/TAU;
 						img_ctx.angle = img_ctx.pre_rot_angle + angle*360;
+						draw_rotation_indicator_line = true;
 					} else img_ctx.pre_rot_angle = img_ctx.angle;
 				}
 				img_ctx.scale = clamp(img_ctx.scale, 1/cast(float, max(img_ctx.pre_info.width, img_ctx.pre_info.height)), cast(float, max(canvas.size[0], canvas.size[1])));
@@ -559,6 +561,14 @@ main :: () {
  					Gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
 				}
 				Simp.immediate_quad(image_edges[0], image_edges[1], image_edges[2], image_edges[3]);
+
+				if draw_rotation_indicator_line {
+					center := img_ctx.offset*img_ctx.scale + screen_center + .{xx canvas.pos[0], xx canvas.pos[1]};
+					cenfpo_diff := inp.fpointer - center;
+					cenrpo_diff := inp.rpointer_when_pressed - center;
+					draw_line(center + bar_height.(float)*cenfpo_diff/length(cenfpo_diff), inp.fpointer, 5, tool_tip_palette.border);
+					draw_line(center + bar_height.(float)*cenrpo_diff/length(cenrpo_diff), inp.rpointer_when_pressed, 5, tool_tip_palette.body);
+				}
 			}
 			panel_draw(*top_bar);
 			panel_draw(*bottom_bar);

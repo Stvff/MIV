@@ -76,7 +76,7 @@
 	- [x] Bounding box fitting
 	- [x] Fill screen setting
 	- [x] Angle button resets and rotates to 90 -> 180 -> -90
-	- [ ] Show little rotation UI?
+	- [x] Show little rotation UI? Nope, not for us
 - [x] Maybe tooltip of full path on filename
 - [x] Clipboard
 	- [x] copy filename to clipboard

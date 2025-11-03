@@ -390,6 +390,22 @@ draw_flow_text :: (font: *Simp.Dynamic_Font, lines: []string, pos: [2]int, size:
 	}
 }
 
+draw_line :: (start: Vector2, end: Vector2, thickness: float, color: [4]u8) {
+	Simp.immediate_begin();
+	Simp.set_shader_for_color();
+	fcolor := float_rgb(color);
+	thick := start - end;
+	thick = thickness*Vector2.{ -thick.y, thick.x}/(2*length(thick));
+	bl := start + thick;
+	br := start - thick;
+	tr := end - thick;
+	tl := end + thick;
+	Simp.immediate_quad(bl, br, tr, tl, fcolor);
+	// Simp.immediate_quad(start[0].(float), start[1].(float), end[0].(float), end[1].(float), fcolor);
+	Simp.immediate_flush();
+
+}
+
 FONT_PATH :: "./assets/LibertinusSerif-Regular.otf";
 FONT_DATA :: #run cast([]u8) read_entire_file(FONT_PATH);
 
