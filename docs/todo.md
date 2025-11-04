@@ -63,7 +63,7 @@
 - [ ] Exif data
 - [x] up/downscaling settings in the settings menu
 - [x] Rework plugin settings API to be less sum-type-y
-	- [ ] Docs for the new settings API
+	- [x] Docs for the new settings API
 - [ ] Plugin error, message, and warning lists instead of single only-errors for plugins
 - [ ] Settings file total update
 	- [x] Serialize the plugin settings for the settings file in some way

@@ -8,6 +8,9 @@
 6. [Render](#render)
 7. [Cleanup](#cleanup)
 8. [Settings API](#settings-api)
+	- [Toggle](#toggle)
+	- [List](#list)
+	- [Slider](#slider)
 
 ## Plugins Overview
 A valid MIV plugin must be a `.so` dynamic library, and define at least 4 functions:
@@ -159,65 +162,102 @@ A plugin can optionally enable the ability to declare its own settings by settin
 `Provided_Registration_Entry` to true.\
 If this flag is set to true, a function with the following signature has to be defined (with the established `procedure_prefix` as well):
 ```c
-string settings(Pre_Rendering_Info *pre_info, Rendering_Info *render_info, Settings_Info *settings_info);
+int32_t setting(Pre_Rendering_Info *pre_info, Rendering_Info *render_info, Setting_Info *info);
 ```
-The `settings()` function gets called whenever the settings menu is opened in MIV, as well as when a plugin setting have changed (in that menu).
-It takes the known `Pre_Rendering_Info` and `Rendering_Info` parameters, but also takes `Settings_Info`.
+The `setting()` function gets called whenever the settings menu is opened in MIV, as well as when a plugin setting have changed (in that menu).
+It takes the known `Pre_Rendering_Info` and `Rendering_Info` parameters, but also takes a pointer to a `Setting_Info` struct.
+
+When the settings menu is opened in MIV, `setting()` is called, and the `Setting_Info *info` argument is left `null`.
+This way, the plugin knows it needs to tell MIV how many plugin settings there are. It does this by returning that amount.
+
+Then, MIV will start calling `setting()` for each setting to initialize. Let's look at `Setting_Info` to see how this is done.
 ```c
 typedef struct {
-	uint8_t response;
-	int32_t changed_index;
-	int32_t changed_secondary_index;
-	int64_t options_count;
-	Option *options_data;
-} Settings_Info;
-```
-The `changed_index` is the primary indicator of the situation under which MIV called the `settings()` function.
-If it is `-1`, then the settings menu was just opened, and the plugin is expected to populate the relevant fields of `Settings_Info`.
-If it is larger than or equal to `0`, a setting was changed (more detail on this later).
+	int32_t provided_ID;
 
-The main fields for the plugin to populate are:
-```c
-int64_t options_count;
-Option *options_data;
+	string name;
+	uint8_t type;
+} Setting_Info;
 ```
-Together these form an array view of `Option`s, and they are entirely plugin-owned.
+First, `provided_ID` contains the setting's identifier. After initialization, this is an integer from 1 till the amount
+of settings (so if there are 5 plugin settings, `provided_ID` could be 1, 2, 3, 4, or 5).
+When initializing, this integer is negative instead, though the absolute value is the same.
+
+Next, there is the `name` of the setting, and its `type`. This `type` is one of the following values:
 ```c
 #define OPTION_TYPE_TOGGLE 0;
 #define OPTION_TYPE_LIST 1;
-
-typedef struct {
-	string name;
-	uint8_t type;
-	union {
-		uint8_t toggle;
-		struct {
-			int64_t count;
-			List_Item *data;
-		} list;
-	};
-} Option;
+#define OPTION_TYPE_SLIDER 2;
 ```
-An `Option` always has a name, which is the name that the setting will get in the UI. There are two types of options, denoted by the `type` field.
-It can be either a toggle (`type = OPTION_TYPE_TOGGLE`) or a list (`type = OPTION_TYPE_LIST`). Toggles are simply a boolean.
-
-Lists are a little more involved, as they are an array view of `List_Item`s.
+From here, to actually initialize the details of the setting, we employ a nice trick.
+The `Setting_Info` pointer provided by MIV can be cast to a pointer to any of these structs:
 ```c
 typedef struct {
-	uint8_t selected;
-	string name;
-} List_Item;
+	Setting_Info info;
+	uint8_t active;
+} Setting_Toggle;
+
+typedef struct {
+	Setting_Info info;
+	int64_t changed_item;
+	int64_t count;
+	List_Item *data;
+} Setting_List;
+
+typedef struct {
+	Setting_Info info;
+	string value_text;
+	float value;
+} Setting_Slider;
 ```
-Each item can be selected individually. They can be used either as checkboxes or as radio buttons, it is up to the plugin to enforce either.
+We will look at the initialization and usage of each of these individually in the next sections.
 
-But how does the plugin know what changed? It all lies in the `changed_index` and `changed_secondary_index` fields of `Settings_Info`.
-When a setting is changed in the UI, `settings()` is called, and `changed_index` is set to the index into `options_data` of the setting that was changed.
-If that setting was a list, then `changed_secondary_index` is set to the list item that was changed.
-
-Finally, whenever the plugin is done changing what it needs to internally, it can give a `response` (a field of `Settings_Info` as well) to MIV.
+After initialization, and when the settings are usage, `setting()` can return either of the following:
 ```c
 #define RESPONSE_NOTHING 0;
 #define RESPONSE_RE_RENDER 1;
 ```
-As you can see, this response is either `NOTHING`, or `RE_RENDER`. If the latter response is indicated, MIV calls the `pre_render()` and `render()`
-functions on the currently open image.
+As you can see, this response is either `NOTHING`, or `RE_RENDER`. If the latter response is returned,
+MIV calls the `pre_render()` and `render()` functions on the currently open image.
+
+### Toggle
+```c
+typedef struct {
+	Setting_Info info;
+	uint8_t active;
+} Setting_Toggle;
+```
+The toggle is the most basic setting, and there is not much to say about it.
+It can be initialized to be inactive or active, and when its state changes, `setting()` is called with the updated state.
+
+### List
+```c
+typedef struct {
+	Setting_Info info;
+	int64_t changed_item;
+	int64_t count;
+	List_Item *data;
+} Setting_List;
+```
+Lists are a little more elaborate than toggles, because they represent either a multi-selection list or radio buttons, which is up to the implementation.
+Via the `changed_item` field, MIV informs the plugin about which element of the list was clicked.
+
+A list is initialized by filling out the `count` field with the amount of items, and the `data` field with a pointer to a (plugin-owned) buffer of `List_Item`s:
+```c
+typedef struct {
+	uint8_t active;
+	string name;
+} List_Item;
+```
+These behave the same as toggles, but carry an additional `name` field, that gives the name of that list option.
+
+### Slider
+```c
+typedef struct {
+	Setting_Info info;
+	string value_text;
+	float value;
+} Setting_Slider;
+```
+A slider's `value` field is a floating point value between 0.0 and 1.0, where 0.0 is all the way to the left, and 1.0 is all the way to the right.
+The plugin can also represent the value textually with the slider, which is done via the `value_text` field.

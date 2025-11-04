@@ -718,8 +718,8 @@ main :: () {
 							list_options_panels := panel_subdivide(*list_panel, option.list.items.count, .VERTICAL, false);
 							current_option_index := it_index;
 							for * list_options_panels {
-								if panel_toggle_button(it, icon_font, ICON.RADIO, inp.ipointer, inp.left_button_switch, option.list.items[it_index].selected, optional_align_hor = .LEFT) {
-									option.list.items[it_index].selected = !option.list.items[it_index].selected;
+								if panel_toggle_button(it, icon_font, ICON.RADIO, inp.ipointer, inp.left_button_switch, option.list.items[it_index].active, optional_align_hor = .LEFT) {
+									option.list.items[it_index].active = !option.list.items[it_index].active;
 									option.list.changed_item = xx it_index;
 									changed_ID = option.info.provided_ID;
 									changed = true;

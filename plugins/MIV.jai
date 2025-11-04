@@ -48,7 +48,7 @@ Setting_Toggle :: struct {
 }
 
 List_Item :: struct {
-	selected: bool;
+	active: bool;
 	name: string;
 }
 Setting_List :: struct {

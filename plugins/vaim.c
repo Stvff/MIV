@@ -61,6 +61,7 @@ int32_t vaim_setting(Pre_Rendering_Info *pre_info, Rendering_Info *render_info, 
 		Setting_List *list = (Setting_List*) setting;
 		list->count = 4;
 		list->data = malloc(list->count*sizeof(List_Item));
+		memset(list->data, 0, list->count*sizeof(List_Item));
 		list->data[0].name = to_string("meow");
 		list->data[1] = (List_Item){true, to_string("yip")};
 		list->data[2].name = to_string("wruff");
@@ -78,17 +79,19 @@ int32_t vaim_setting(Pre_Rendering_Info *pre_info, Rendering_Info *render_info, 
 	/* use the results when a setting has changed */
 	case 1: {
 		Setting_Toggle *toggle = (Setting_Toggle*) setting;
-		if (toggle->active == 1) printf("wow\n");
+		if (toggle->active) printf("wow\n");
 		response = RESPONSE_NOTHING;
 		break;
-	}
-	case 2: {
+	} case 2: {
 		Setting_List *list = (Setting_List*) setting;
+		for (int i = 0; i < list->count; i += 1) list->data[i].active = false;
+		list->data[list->changed_item].active = true;
 		response = RESPONSE_RE_RENDER;
 		break;
 	} case 3: {
 		Setting_Slider *slider = (Setting_Slider*) setting;
-		slider->value -= 0.2;
+		slider->value -= 0.1;
+		if (slider->value < 0.0) slider->value = 0.0;
 		break;
 	}}
 

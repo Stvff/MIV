@@ -66,7 +66,7 @@ typedef struct {
 } Setting_Toggle;
 
 typedef struct {
-	uint8_t selected;
+	uint8_t active;
 	string name;
 } List_Item;
 
