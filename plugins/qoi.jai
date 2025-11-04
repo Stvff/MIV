@@ -157,46 +157,6 @@ index_hash :: (pixel: [4]u8) -> u64 {
 
 /* This is here for experimentation */
 #program_export
-qoi_settings :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings_info: *Settings_Info) -> string #c_call {
-	push_context,defer_pop pre_info.user_ptr.(*#Context);
-	if !settings_info.options {
-		settings_info.options = NewArray(4, Option);
-
-		settings_info.options[0] = .{
-			name = "toggle setting",
-			type = .TOGGLE,
-			toggle = true
-		};
-
-		sec_list := NewArray(3, List_Item);
-		sec_list[0] = .{true, "meow"};
-		sec_list[1] = .{false, "wruff"};
-		sec_list[2] = .{true, "nyaa"};
-		settings_info.options[1] = .{
-			name = "list of options",
-			type = .LIST,
-			list = sec_list
-		};
-
-		settings_info.options[2] = .{
-			name = "toggle setting (sequel)",
-			type = .TOGGLE,
-			toggle = false
-		};
-
-		settings_info.options[3] = .{
-			name = "rotato",
-			type = .SLIDER,
-			slider = .{0.5, "should be half", DEFAULT_SLIDER_HANDLE_SIZE}
-		};
-		return "";
-	}
-	settings_info.response = .RE_RENDER;
-	return "";
-//	return "Settings not implemented.";
-}
-
-#program_export
 qoi_setting :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, setting: *Setting_Info) -> s32 #c_call {
 	if setting == null return 4;
 	push_context,defer_pop pre_info.user_ptr.(*#Context);

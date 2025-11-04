@@ -646,7 +646,7 @@ main :: () {
 				panel_text(*fps_panel, main_font, "fps target:", .LEFT, .MIDDLE);
 
 				slider_pos := (target_frame_time.(float) - MIN_FRAME_TIME)/(MAX_FRAME_TIME - MIN_FRAME_TIME);
-				slider_pos = 1 - panel_slider(*fps_slider_panel, DEFAULT_SLIDER_HANDLE_SIZE, inp.ipointer, inp.left_button, 1 - slider_pos);
+				slider_pos = 1 - panel_slider(*fps_slider_panel, inp.ipointer, inp.left_button, 1 - slider_pos);
 				target_frame_time = (MIN_FRAME_TIME + slider_pos*(MAX_FRAME_TIME - MIN_FRAME_TIME));
 
 				if pointer_is_in_panel(*fps_slider_panel, inp.ipointer) && inp.middle_button_switch {
@@ -677,9 +677,9 @@ main :: () {
 					p := panel_split(*bg_color_subpanels[it], .{bar_height, bg_color_subpanels[it].size[0]}, .LEFT, true);
 					panel_text(*p, main_font, colornames[it], .MIDDLE, .MIDDLE);
 				}
-				settings.bg_color[2] = cast(u8, panel_slider(*bg_color_subpanels[0], DEFAULT_SLIDER_HANDLE_SIZE, inp.ipointer, inp.left_button, settings.bg_color[2].(float)/255)*255);
-				settings.bg_color[1] = cast(u8, panel_slider(*bg_color_subpanels[1], DEFAULT_SLIDER_HANDLE_SIZE, inp.ipointer, inp.left_button, settings.bg_color[1].(float)/255)*255);
-				settings.bg_color[0] = cast(u8, panel_slider(*bg_color_subpanels[2], DEFAULT_SLIDER_HANDLE_SIZE, inp.ipointer, inp.left_button, settings.bg_color[0].(float)/255)*255);
+				settings.bg_color[2] = cast(u8, panel_slider(*bg_color_subpanels[0], inp.ipointer, inp.left_button, settings.bg_color[2].(float)/255)*255);
+				settings.bg_color[1] = cast(u8, panel_slider(*bg_color_subpanels[1], inp.ipointer, inp.left_button, settings.bg_color[1].(float)/255)*255);
+				settings.bg_color[0] = cast(u8, panel_slider(*bg_color_subpanels[2], inp.ipointer, inp.left_button, settings.bg_color[0].(float)/255)*255);
 
 				/*# plugin settings */
 				if img_ctx.plugin && img_ctx.plugin.plugin_provided.has_settings {
@@ -734,7 +734,7 @@ main :: () {
 							panel_text_split(*slider_panel, main_font, option.slider.value_text, .RIGHT, .MIDDLE);
 							panel_text(*slider_panel, main_font, tprint("%:", option.info.name), .LEFT, .MIDDLE);
 
-							result := panel_slider(*slider_track_panel, DEFAULT_SLIDER_HANDLE_SIZE, inp.ipointer, inp.left_button, option.slider.value);
+							result := panel_slider(*slider_track_panel, inp.ipointer, inp.left_button, option.slider.value);
 							if result != option.slider.value {
 								option.slider.value = result;
 								changed_ID = option.info.provided_ID;

@@ -19,7 +19,6 @@ Registration_Entry :: struct {
 Registration_Procedure :: #type (registration: *Plugin_Registration_Entry) -> s64 #c_call;
 Pre_Rendering_Procedure :: #type (info: *Pre_Rendering_Info) -> string #c_call;
 Rendering_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> string #c_call;
-//Settings_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings_info: *Settings_Info) -> string #c_call;
 Setting_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings: *Setting_Info) -> s32 #c_call;
 Cleanup_Procedure :: #type (pre_info: *Pre_Rendering_Info) -> string #c_call;
 

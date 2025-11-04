@@ -218,7 +218,8 @@ panel_settings_toggle :: (p: *UI_Panel, icon_font: *Simp.Dynamic_Font, font: *Si
 	return panel_toggle_button(*this_setting_button_panel, icon_font, ICON.TOGGLE, pointer_position, pressed, current_state, tip);
 }
 
-panel_slider :: (p: *UI_Panel, handle_size: int, pointer_position: [2]int, pressed: bool, current_state: float, tip: *Tool_Tip = null) -> float {
+panel_slider :: (p: *UI_Panel, pointer_position: [2]int, pressed: bool, current_state: float, tip: *Tool_Tip = null) -> float {
+	handle_size :: 10;
 	in_panel := pointer_is_in_panel(p, pointer_position);
 	p.colors = selected_button_palette;
 

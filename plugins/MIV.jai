@@ -31,45 +31,10 @@ Rendering_Info :: struct {
 }
 
 /*** From here it is about the optional features (like plugin settings). ***/
-
-List_Item :: struct {
-	selected: bool;
-	name: string;
-}
-
-DEFAULT_SLIDER_HANDLE_SIZE :: 10;
-Slider :: struct {
-	value: float32;
-	value_text: string;
-	handle_size: s32;
-}
-
-Option_Type :: enum u8 {
-	TOGGLE; LIST; SLIDER;
-}
-
-Option :: struct {
-	name: string;
-	type: Option_Type;
-	union {
-		toggle: bool;
-		list: []List_Item;
-		slider: Slider;
-	};
-}
-
-Settings_Info :: struct {
-	response: Settings_Response;
-	changed_index: s32;
-	changed_secondary_index: s32;
-	options: []Option;
-}
-
-Settings_Response :: enum u8 {
+Settings_Response :: enum s32 {
 	NOTHING; RE_RENDER;
 }
 
-/* New and Improved */
 Setting_Info :: struct {
 	provided_ID: s32;
 
@@ -82,6 +47,10 @@ Setting_Toggle :: struct {
 	active: bool;
 }
 
+List_Item :: struct {
+	selected: bool;
+	name: string;
+}
 Setting_List :: struct {
 	#as using info: Setting_Info;
 	changed_item: s64;
