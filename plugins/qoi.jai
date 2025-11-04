@@ -197,6 +197,43 @@ qoi_settings :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, se
 }
 
 #program_export
+qoi_setting :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, setting: *Setting_Info) -> s32 #c_call {
+	push_context,defer_pop pre_info.user_ptr.(*#Context);
+	if setting == null return 4;
+
+	response := Settings_Response.NOTHING;
+	if setting.provided_setting_ID == {
+	/* initialize settings */
+	case -1;
+		setting.name = "toggle setting";
+		setting.type = .TOGGLE;
+		setting.(*Setting_Toggle).active = true;
+	case -2;
+		setting.name = "list of options";
+		setting.type = .LIST;
+		list := setting.(*Setting_List);
+		list.list = NewArray(3, List_Item);
+		list.list[0] = .{true, "meow"};
+		list.list[0] = .{false, "wruff"};
+		list.list[0] = .{true, "nyaa"};
+	case -3;
+		setting.name = "toggle setting (sequel)";
+		setting.type = .TOGGLE;
+	case -4;
+		setting.name = "rotato";
+		setting.type = .SLIDER;
+		slider := setting.(*Setting_Slider);
+		slider.value_text = "should be half";
+		slider.value = 0.5;
+
+	/* use the results when a setting has changed */
+	case; response = .RE_RENDER;
+	}
+	return xx response;
+}
+
+
+#program_export
 qoi_cleanup :: (pre_info: *Pre_Rendering_Info) -> string #c_call {
 	return "";
 }

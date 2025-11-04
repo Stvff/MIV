@@ -72,6 +72,7 @@
 	- [ ] Choice between every change or after mouse release.
 - [x] FPS slider for when holding down next or prev
 	- [x] When holding down next or prev, go up to full fps
+- [ ] Image mirroring
 - [x] Image rotation controls and logic (with button)
 	- [x] Bounding box fitting
 	- [x] Fill screen setting
@@ -91,7 +92,6 @@
 - [ ] Follow files when they are moved, also in the history
 - [ ] per-file offset history?
 - [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
-- [ ] Image mirroring?
 - [ ] Show Licenses button
 
 - [ ] Nicer looking scaling
@@ -107,3 +107,4 @@
 		- [ ] Asking the OS what is up with it
 	- [ ] Consider proper wayland support
 	- [ ] Save window size (or at least do something better than current behviour)
+	- [ ] fullscreen/presentation mode

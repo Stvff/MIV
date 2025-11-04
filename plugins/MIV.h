@@ -47,6 +47,13 @@ typedef struct {
 
 /*** From here it is about the optional features (like plugin settings). ***/
 
+#define OPTION_TYPE_TOGGLE 0;
+#define OPTION_TYPE_LIST 1;
+#define OPTION_TYPE_SLIDER 2;
+
+#define RESPONSE_NOTHING 0;
+#define RESPONSE_RE_RENDER 1;
+
 typedef struct {
 	uint8_t selected;
 	string name;
@@ -58,10 +65,6 @@ typedef struct {
 	string value_text;
 	int32_t handle_size;
 } Slider;
-
-#define OPTION_TYPE_TOGGLE 0;
-#define OPTION_TYPE_LIST 1;
-#define OPTION_TYPE_SLIDER 2;
 
 typedef struct {
 	string name;
@@ -84,5 +87,26 @@ typedef struct {
 	Option *options_data;
 } Settings_Info;
 
-#define RESPONSE_NOTHING 0;
-#define RESPONSE_RE_RENDER 1;
+/* New and Improved */
+typedef struct {
+	int32_t provided_setting_ID;
+	string name;
+	uint8_t type;
+} Setting_Info;
+
+typedef struct {
+	Setting_Info info;
+	uint8_t active;
+} Setting_Toggle;
+
+typedef struct {
+	Setting_Info info;
+	int64_t count;
+	List_Item *data;
+} Setting_List;
+
+typedef struct {
+	Setting_Info info;
+	string value_text;
+	float value;
+} Setting_Slider;

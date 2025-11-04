@@ -69,4 +69,28 @@ Settings_Response :: enum u8 {
 	NOTHING; RE_RENDER;
 }
 
+/* New and Improved */
+Setting_Info :: struct {
+	provided_setting_ID: s32;
+
+	name: string;
+	type: enum u8 {TOGGLE; LIST; SLIDER;};
+}
+
+Setting_Toggle :: struct {
+	#as using info: Setting_Info;
+	active: bool;
+}
+
+Setting_List :: struct {
+	#as using info: Setting_Info;
+	list: []List_Item;
+}
+
+Setting_Slider :: struct {
+	#as using info: Setting_Info;
+	value_text: string;
+	value: float;
+}
+
 posix :: #import "POSIX";
