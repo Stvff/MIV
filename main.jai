@@ -21,7 +21,6 @@ Image_Context :: struct {
 	plugin: *Registration_Entry;
 	pre_info: Pre_Rendering_Info;
 	render_info: Rendering_Info;
-	settings_info: Settings_Info;
 }
 
 Input_State :: struct {
@@ -684,69 +683,72 @@ main :: () {
 
 				/*# plugin settings */
 				if img_ctx.plugin && img_ctx.plugin.plugin_provided.has_settings {
-					if settings_menu_just_opened || img_ctx.settings_info.options.data == null {
-						img_ctx.settings_info.changed_index = -1;
-						img_ctx.settings_info.changed_secondary_index = -1;
-						settings_info := img_ctx.settings_info;
-						error_str := img_ctx.plugin.settings(*img_ctx.pre_info, *img_ctx.render_info, *settings_info);
-						if error_str {
-							log_error("Plugin for '%' settings retrieval error: %", img_ctx.plugin.plugin_provided.name_of_filetype, error_str);
-						} else img_ctx.settings_info = settings_info;
+					if settings_menu_just_opened || img_ctx.plugin.settings.count == 0 {
+						settings_amount := img_ctx.plugin.setting(*img_ctx.pre_info, *img_ctx.render_info, null);
+						img_ctx.plugin.settings = NewArray(settings_amount, Plugin_Setting);
+						for 0..settings_amount-1 {
+							img_ctx.plugin.settings[it].info.provided_ID = -(it + 1);
+							setting := img_ctx.plugin.settings[it];
+							img_ctx.plugin.setting(*img_ctx.pre_info, *img_ctx.render_info, (*setting).(*Setting_Info));
+							img_ctx.plugin.settings[it] = setting;
+							img_ctx.plugin.settings[it].info.provided_ID = it + 1;
+						}
 					}
 
 					panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, false);
 					title_panel := panel_split(*settings_menu_panel, .{bar_height, settings_menu_panel.size[1]}, .TOP, false);
 					panel_text(*title_panel, main_font, tprint("% settings:", img_ctx.plugin.plugin_provided.name_of_filetype), .LEFT, .MIDDLE);
 
-					for * option: img_ctx.settings_info.options {
+					for * option: img_ctx.plugin.settings {
 						changed := false;
-						if #complete option.type == {
+						changed_ID: s32;
+						if #complete option.info.type == {
 						case .TOGGLE;
-							if panel_settings_toggle(*settings_menu_panel, icon_font, main_font, tprint(" %:", option.name),
-							                         inp.ipointer, inp.left_button_switch, option.toggle) {
-								option.toggle = !option.toggle;
-								img_ctx.settings_info.changed_index = xx it_index;
+							if panel_settings_toggle(*settings_menu_panel, icon_font, main_font, tprint(" %:", option.info.name),
+							                         inp.ipointer, inp.left_button_switch, option.toggle.active) {
+								option.toggle.active = !option.toggle.active;
+								changed_ID = option.info.provided_ID;
 								changed = true;
 							}
 
 						case .LIST;
-							list_panel := panel_split(*settings_menu_panel, .{bar_height*(1 + option.list.count), settings_menu_panel.size[1]}, .TOP, true);
+							list_panel := panel_split(*settings_menu_panel, .{bar_height*(1 + option.list.items.count), settings_menu_panel.size[1]}, .TOP, true);
 							list_title_panel := panel_split(*list_panel, .{bar_height, list_panel.size[1]}, .TOP, true);
-							panel_text(*list_title_panel, main_font, tprint(" %:", option.name), .LEFT, .MIDDLE);
-							list_options_panels := panel_subdivide(*list_panel, option.list.count, .VERTICAL, false);
+							panel_text(*list_title_panel, main_font, tprint(" %:", option.info.name), .LEFT, .MIDDLE);
+							list_options_panels := panel_subdivide(*list_panel, option.list.items.count, .VERTICAL, false);
 							current_option_index := it_index;
 							for * list_options_panels {
-								if panel_toggle_button(it, icon_font, ICON.RADIO, inp.ipointer, inp.left_button_switch, option.list[it_index].selected, optional_align_hor = .LEFT) {
-									option.list[it_index].selected = !option.list[it_index].selected;
-									img_ctx.settings_info.changed_index = xx current_option_index;
-									img_ctx.settings_info.changed_secondary_index = xx it_index;
+								if panel_toggle_button(it, icon_font, ICON.RADIO, inp.ipointer, inp.left_button_switch, option.list.items[it_index].selected, optional_align_hor = .LEFT) {
+									option.list.items[it_index].selected = !option.list.items[it_index].selected;
+									option.list.changed_item = xx it_index;
+									changed_ID = option.info.provided_ID;
 									changed = true;
 								}
 
-								panel_text(it, main_font, option.list[it_index].name, .RIGHT, .MIDDLE);
+								panel_text(it, main_font, option.list.items[it_index].name, .RIGHT, .MIDDLE);
 							}
 
 						case .SLIDER;
 							slider_panel := panel_split(*settings_menu_panel, .{bar_height*2, settings_menu_panel.size[1]}, .TOP, true);
 							slider_track_panel := panel_split(*slider_panel, .{1, 2}, .BOTTOM, true);
 							panel_text_split(*slider_panel, main_font, option.slider.value_text, .RIGHT, .MIDDLE);
-							panel_text(*slider_panel, main_font, tprint("%:", option.name), .LEFT, .MIDDLE);
+							panel_text(*slider_panel, main_font, tprint("%:", option.info.name), .LEFT, .MIDDLE);
 
-							result := panel_slider(*slider_track_panel, option.slider.handle_size, inp.ipointer, inp.left_button, option.slider.value);
+							result := panel_slider(*slider_track_panel, DEFAULT_SLIDER_HANDLE_SIZE, inp.ipointer, inp.left_button, option.slider.value);
 							if result != option.slider.value {
 								option.slider.value = result;
-								img_ctx.settings_info.changed_index = xx it_index;
+								changed_ID = option.info.provided_ID;
 								changed = true;
 							}
 						}
 
 						if changed {
-							settings_info := img_ctx.settings_info;
-							error_str := img_ctx.plugin.settings(*img_ctx.pre_info, *img_ctx.render_info, *settings_info);
-							if error_str {
-								log_error("Plugin for '%' settings retrieval error: %", img_ctx.plugin.plugin_provided.name_of_filetype, error_str);
-							} else img_ctx.settings_info = settings_info;
-							if #complete img_ctx.settings_info.response == {
+							changed_ID -= 1;
+							setting := img_ctx.plugin.settings[changed_ID];
+							response: Settings_Response = xx img_ctx.plugin.setting(*img_ctx.pre_info, *img_ctx.render_info, (*setting).(*Setting_Info));
+							img_ctx.plugin.settings[changed_ID] = setting;
+
+							if #complete response == {
 							case .NOTHING;
 							case .RE_RENDER; img_ctx.render = true;
 							}

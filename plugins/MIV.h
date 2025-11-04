@@ -89,7 +89,7 @@ typedef struct {
 
 /* New and Improved */
 typedef struct {
-	int32_t provided_setting_ID;
+	int32_t provided_ID;
 	string name;
 	uint8_t type;
 } Setting_Info;
@@ -101,6 +101,7 @@ typedef struct {
 
 typedef struct {
 	Setting_Info info;
+	int64_t changed_item;
 	int64_t count;
 	List_Item *data;
 } Setting_List;

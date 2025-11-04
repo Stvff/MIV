@@ -10,14 +10,17 @@ Registration_Entry :: struct {
 	plugin_provided: Plugin_Registration_Entry;
 	pre_render: Pre_Rendering_Procedure;
 	render: Rendering_Procedure;
-	settings: Settings_Procedure;
+	setting: Setting_Procedure;
 	cleanup: Cleanup_Procedure;
+
+	settings: []Plugin_Setting;
 }
 
 Registration_Procedure :: #type (registration: *Plugin_Registration_Entry) -> s64 #c_call;
 Pre_Rendering_Procedure :: #type (info: *Pre_Rendering_Info) -> string #c_call;
 Rendering_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> string #c_call;
-Settings_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings_info: *Settings_Info) -> string #c_call;
+//Settings_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings_info: *Settings_Info) -> string #c_call;
+Setting_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings: *Setting_Info) -> s32 #c_call;
 Cleanup_Procedure :: #type (pre_info: *Pre_Rendering_Info) -> string #c_call;
 
 register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugins: bool) -> bool {
@@ -65,11 +68,11 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugi
 		}
 		posix.dlerror();
 
-		settings_handle: *void;
+		setting_handle: *void;
 		if p.has_settings {
-			settings_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "settings"));
-			settings_handle = posix.dlsym(dynlib_handle, settings_cname);
-			if !settings_handle {
+			setting_cname := temp_c_string(tprint("%1%2", p.procedure_prefix, "setting"));
+			setting_handle = posix.dlsym(dynlib_handle, setting_cname);
+			if !setting_handle {
 				log_error("Dynamic function loading error: %", to_string(posix.dlerror()));
 				success = false;
 			}
@@ -90,7 +93,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugi
 			plugin_provided = p,
 			pre_render = pre_render_handle,
 			render = render_handle,
-			settings = settings_handle,
+			setting = setting_handle,
 			cleanup = cleanup_handle,
 		};
 		array_add(*all_registrations, registration);

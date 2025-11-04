@@ -71,7 +71,7 @@ Settings_Response :: enum u8 {
 
 /* New and Improved */
 Setting_Info :: struct {
-	provided_setting_ID: s32;
+	provided_ID: s32;
 
 	name: string;
 	type: enum u8 {TOGGLE; LIST; SLIDER;};
@@ -84,7 +84,8 @@ Setting_Toggle :: struct {
 
 Setting_List :: struct {
 	#as using info: Setting_Info;
-	list: []List_Item;
+	changed_item: s64;
+	items: []List_Item;
 }
 
 Setting_Slider :: struct {
@@ -94,3 +95,11 @@ Setting_Slider :: struct {
 }
 
 posix :: #import "POSIX";
+
+/* For MIV internal usage */
+Plugin_Setting :: union {
+	info: Setting_Info;
+	toggle: Setting_Toggle;
+	list: Setting_List;
+	slider: Setting_Slider;
+}

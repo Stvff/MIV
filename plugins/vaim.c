@@ -6,6 +6,7 @@ int64_t registration_procedure(Plugin_Registration_Entry *registration) {
 	registration->extension = to_string("VAIM");
 	registration->magic_number = to_string("vaim");
 	registration->procedure_prefix = to_string("vaim_");
+	registration->has_settings = true;
 	return 0;
 }
 
@@ -48,7 +49,7 @@ int32_t vaim_setting(Pre_Rendering_Info *pre_info, Rendering_Info *render_info, 
 	if (setting == NULL) return 3;
 
 	int32_t response = RESPONSE_NOTHING;
-	switch (setting->provided_setting_ID) {
+	switch (setting->provided_ID) {
 	/* intialize settings */
 	case -1: {
 		setting->name = to_string("invert");

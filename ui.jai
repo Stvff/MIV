@@ -253,7 +253,7 @@ panel_slider :: (p: *UI_Panel, handle_size: int, pointer_position: [2]int, press
 		}
 		tip.pointer_position = pointer_position;
 	}
-	return new_state;
+	return clamp(new_state, 0, 1);
 }
 
 panel_text_split :: (mother: *UI_Panel, font: *Simp.Dynamic_Font, text: string, side: Creation_Side, other_align: enum {NEAR; MIDDLE; FAR;} = .MIDDLE) -> UI_Panel {

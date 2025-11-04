@@ -198,11 +198,11 @@ qoi_settings :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, se
 
 #program_export
 qoi_setting :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, setting: *Setting_Info) -> s32 #c_call {
-	push_context,defer_pop pre_info.user_ptr.(*#Context);
 	if setting == null return 4;
+	push_context,defer_pop pre_info.user_ptr.(*#Context);
 
 	response := Settings_Response.NOTHING;
-	if setting.provided_setting_ID == {
+	if setting.provided_ID == {
 	/* initialize settings */
 	case -1;
 		setting.name = "toggle setting";
@@ -212,10 +212,10 @@ qoi_setting :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, set
 		setting.name = "list of options";
 		setting.type = .LIST;
 		list := setting.(*Setting_List);
-		list.list = NewArray(3, List_Item);
-		list.list[0] = .{true, "meow"};
-		list.list[0] = .{false, "wruff"};
-		list.list[0] = .{true, "nyaa"};
+		list.items = NewArray(3, List_Item);
+		list.items[0] = .{true, "meow"};
+		list.items[1] = .{false, "wruff"};
+		list.items[2] = .{true, "nyaa"};
 	case -3;
 		setting.name = "toggle setting (sequel)";
 		setting.type = .TOGGLE;
