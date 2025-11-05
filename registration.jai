@@ -210,6 +210,7 @@ load_registrations :: () -> Settings_File_3 {
 		progress := 1;
 		while settings_file_buffer.count - progress - 1  > size_of(Setting_Header) {
 			header := (settings_file_buffer.data + progress).(*Setting_Header).*;
+			was_normal_setting := false;
 			for member: type_info(Settings_File_3).members {
 				if it_index == 0 continue member;
 				hash := Hash.sdbm_hash(member.name.data, member.name.count);
@@ -219,8 +220,17 @@ load_registrations :: () -> Settings_File_3 {
 					dst := (*settings_file).(*u8) + member.offset_in_bytes;
 					src := settings_file_buffer.data + progress + size_of(Setting_Header);
 					memcpy(dst, src, header.data_length);
+//					was_normal_setting = true;
 					break member;
 				}
+			}
+			if !was_normal_setting for registration: all_registrations {
+				plugin_code := tprint("%.%.%", registration.plugin_filename, registration.plugin_provided.name_of_filetype, registration.plugin_provided.extension);
+				hash := Hash.sdbm_hash(plugin_code.data, plugin_code.count);
+				if hash == header.name_hash {
+
+				}
+				print("%, %\n", plugin_code, hash);
 			}
 			progress += header.data_length + size_of(Setting_Header);;
 		}
@@ -240,6 +250,14 @@ write_settings_file :: (settings_file: Settings_File_3) {
 		header := Setting_Header.{Hash.sdbm_hash(member.name.data, member.name.count), xx member.type.runtime_size};
 		array_add(*buffer, ..[]u8.{size_of(Setting_Header), (*header).(*u8)});
 		array_add(*buffer, ..[]u8.{header.data_length, (*settings_file).(*u8) + member.offset_in_bytes});
+	}
+	for registration: all_registrations {
+		plugin_code := tprint("%.%.%", registration.plugin_filename, registration.plugin_provided.name_of_filetype, registration.plugin_provided.extension);
+		hash := Hash.sdbm_hash(plugin_code.data, plugin_code.count);
+		byte_count := 0;
+		for setting: registration.settings {
+			
+		}
 	}
 
 	path := tprint("%plugins/settings.miv", path_strip_filename(system.get_path_of_running_executable()));
