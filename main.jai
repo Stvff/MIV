@@ -627,7 +627,7 @@ main :: () {
 
 				/* elaborate tooltips settings */
 				tip.text = "When turned on, tooltips will contain more information about what a setting or button does.";
-				if panel_settings_toggle(*settings_menu_panel, icon_font, main_font, "elaborate_tooltips:",
+				if panel_settings_toggle(*settings_menu_panel, icon_font, main_font, "elaborate tooltips:",
 				                         inp.ipointer, inp.left_button_switch, elaborate_tips, *tip) {
 					elaborate_tips = !elaborate_tips;
 				}

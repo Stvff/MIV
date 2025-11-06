@@ -48,7 +48,9 @@
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
 - When another window is above MIV, MIV still reads the mouse position from that window.
 - Slider drops input when you move out of it too fast.
-- Should fit to height and width fill in such a way that there is no background visible at the top/bottom or left/right respectively?
+- Rotating with mouse uses the wrong reference point, so when the settings/metadata panels are open, everything is wierd
+- When falling back on a different plugin, there should be a warning generated.
+	- Also, there should be no fallback to files with no magic number or file extension.
 
 ## Amersfoort
 - [ ] Another image type

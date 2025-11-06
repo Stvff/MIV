@@ -230,7 +230,7 @@ load_registrations :: () -> Settings_File_3 {
 				if hash == header.name_hash {
 
 				}
-				print("%, %\n", plugin_code, hash);
+				//print("%, %\n", plugin_code, hash);
 			}
 			progress += header.data_length + size_of(Setting_Header);;
 		}
@@ -251,14 +251,14 @@ write_settings_file :: (settings_file: Settings_File_3) {
 		array_add(*buffer, ..[]u8.{size_of(Setting_Header), (*header).(*u8)});
 		array_add(*buffer, ..[]u8.{header.data_length, (*settings_file).(*u8) + member.offset_in_bytes});
 	}
-	for registration: all_registrations {
-		plugin_code := tprint("%.%.%", registration.plugin_filename, registration.plugin_provided.name_of_filetype, registration.plugin_provided.extension);
-		hash := Hash.sdbm_hash(plugin_code.data, plugin_code.count);
-		byte_count := 0;
-		for setting: registration.settings {
-			
-		}
-	}
+	// for registration: all_registrations {
+	// 	plugin_code := tprint("%.%.%", registration.plugin_filename, registration.plugin_provided.name_of_filetype, registration.plugin_provided.extension);
+	// 	hash := Hash.sdbm_hash(plugin_code.data, plugin_code.count);
+	// 	byte_count := 0;
+	// 	for setting: registration.settings {
+
+	// 	}
+	// }
 
 	path := tprint("%plugins/settings.miv", path_strip_filename(system.get_path_of_running_executable()));
 	write_entire_file(path, buffer.data, buffer.count);
