@@ -26,6 +26,7 @@ register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugi
 	exe_path := path_strip_filename(system.get_path_of_running_executable());
 	new_dynlib_path := tprint("%plugins/%", exe_path, isolate_name(dynlib_name));
 	if newly_imported {
+		file_delete(new_dynlib_path);
 		file_move(dynlib_name, new_dynlib_path);
 	}
 
@@ -322,7 +323,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do
 			found_mn := cast(string, NewArray(it.plugin_provided.magic_number.count, u8));
 			posix.fread(found_mn.data, 1, xx found_mn.count, file_handle);
 			posix.fseek(file_handle, 0, posix.SEEK_SET);
-			if found_mn == it.plugin_provided.magic_number {
+			if it.plugin_provided.magic_number && found_mn == it.plugin_provided.magic_number {
 				new_plugin = it;
 				break;
 			}

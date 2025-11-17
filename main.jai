@@ -32,7 +32,6 @@ Input_State :: struct {
 
 	scroll_delta: float;
 
-
 	w, a, s, d: bool;
 
 	fpointer: Vector2;

@@ -50,7 +50,6 @@
 - Slider drops input when you move out of it too fast.
 - Rotating with mouse uses the wrong reference point, so when the settings/metadata panels are open, everything is wierd
 - When falling back on a different plugin, there should be a warning generated.
-	- Also, there should be no fallback to files with no magic number or file extension.
 
 ## Amersfoort
 - [ ] Another image type
