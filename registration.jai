@@ -17,10 +17,10 @@ Registration_Entry :: struct {
 }
 
 Registration_Procedure :: #type (registration: *Plugin_Registration_Entry) -> s64 #c_call;
-Pre_Rendering_Procedure :: #type (info: *Pre_Rendering_Info) -> string #c_call;
-Rendering_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> string #c_call;
+Pre_Rendering_Procedure :: #type (info: *Pre_Rendering_Info) -> Log #c_call;
+Rendering_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> Log #c_call;
 Setting_Procedure :: #type (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, settings: *Setting_Info) -> s32 #c_call;
-Cleanup_Procedure :: #type (pre_info: *Pre_Rendering_Info) -> string #c_call;
+Cleanup_Procedure :: #type (pre_info: *Pre_Rendering_Info) -> Log #c_call;
 
 register_dynlib :: (dynlib_name: string, newly_imported: bool, content_log_plugins: bool) -> bool {
 	exe_path := path_strip_filename(system.get_path_of_running_executable());
@@ -356,17 +356,18 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do
 		}
 	}
 
-	pre_info_err := new_plugin.pre_render(*pre_info);
+	pre_info_log := new_plugin.pre_render(*pre_info);
 	defer if !ok {
-		log_error(new_plugin.cleanup(*pre_info));
+		plugin_log(new_plugin.cleanup(*pre_info));
 	}
 
 	posix.fseek(file_handle, 0, posix.SEEK_SET);
-	if pre_info_err {
-		if do_logging log_error("File type '%' metadata reading error: %", new_plugin.plugin_provided.name_of_filetype, pre_info_err);
+	if pre_info_log.type == .ERROR {
+		if do_logging log_error("File type '%' metadata reading error: %", new_plugin.plugin_provided.name_of_filetype, pre_info_log.message);
 		ok = false;
 		return false;
 	}
+	if do_logging plugin_log(pre_info_log);
 
 	if img_ctx.watcher.callback {
 		deinit(img_ctx.watcher);
@@ -385,7 +386,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do
 		}
 	}
 
-	if img_ctx.plugin log_error(img_ctx.plugin.cleanup(*img_ctx.pre_info));
+	if img_ctx.plugin plugin_log(img_ctx.plugin.cleanup(*img_ctx.pre_info));
 
 	img_ctx.pre_info = pre_info;
 	img_ctx.plugin = new_plugin;
@@ -482,7 +483,7 @@ sanitize_file_list :: (list: *[..]string, file: string, index: *int, do_logging:
 	dummy_img_ctx: Image_Context;
 	for list.* {
 		if !get_loading(it, get_extension(it), *dummy_img_ctx, do_logging) continue;
-		log_error(dummy_img_ctx.plugin.cleanup(*dummy_img_ctx.pre_info));
+		plugin_log(dummy_img_ctx.plugin.cleanup(*dummy_img_ctx.pre_info));
 		posix.fclose(dummy_img_ctx.pre_info.fileptr);
 		array_add(*new_list, it);
 	}

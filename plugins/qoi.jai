@@ -14,14 +14,14 @@ registration_procedure :: (registration: *Plugin_Registration_Entry) -> s64 #c_c
 }
 
 #program_export
-qoi_pre_render :: (info: *Pre_Rendering_Info) -> string #c_call {
+qoi_pre_render :: (info: *Pre_Rendering_Info) -> Log #c_call {
 	if !info.user_ptr info.user_ptr = __jai_runtime_init(0, null);
 	push_context,defer_pop info.user_ptr.(*#Context);
 
 	posix.fseek(info.fileptr, 0, posix.SEEK_END);
 	file_length := posix.ftell(info.fileptr);
 	if file_length < 22 {
-		return sprint("Expected a filesize of at least 22 bytes (14 header, 8 end token), but found only % bytes.",  file_length);
+		return .{.ERROR, sprint("Expected a filesize of at least 22 bytes (14 header, 8 end token), but found only % bytes.",  file_length)};
 	}
 	posix.fseek(info.fileptr, 4, posix.SEEK_SET);
 
@@ -49,11 +49,11 @@ qoi_pre_render :: (info: *Pre_Rendering_Info) -> string #c_call {
 	case;
 		info.metadata[0][1] = sprint("'%'");
 	}
-	return "";
+	return .{};
 }
 
 #program_export
-qoi_render :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> string #c_call {
+qoi_render :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> Log #c_call {
 	push_context,defer_pop pre_info.user_ptr.(*#Context);
 
 	QOI_HEADER_SIZE :: 14;
@@ -139,7 +139,7 @@ qoi_render :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info) -> s
 		if coded >= file.count break;
 	}
 
-	return "";
+	return .{};
 }
 
 QOI_OP_RGB    :u8: 0b1111_1110;
@@ -194,8 +194,8 @@ qoi_setting :: (pre_info: *Pre_Rendering_Info, render_info: *Rendering_Info, set
 
 
 #program_export
-qoi_cleanup :: (pre_info: *Pre_Rendering_Info) -> string #c_call {
-	return "";
+qoi_cleanup :: (pre_info: *Pre_Rendering_Info) -> Log #c_call {
+	return .{};
 }
 
 #load "MIV.jai";

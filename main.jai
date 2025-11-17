@@ -383,11 +383,12 @@ main :: () {
 			buffer_width := img_ctx.pre_info.width;
 			buffer_height := img_ctx.pre_info.height;
 			array_resize(*(buffer), buffer_width*buffer_height);
-			render_error := img_ctx.plugin.render(*img_ctx.pre_info, *img_ctx.render_info);
-			if render_error {
-				log_error("Image data retrieval error: %", render_error);
+			render_log := img_ctx.plugin.render(*img_ctx.pre_info, *img_ctx.render_info);
+			if render_log.type == .ERROR {
+				log_error("Image data retrieval error: %", render_log.message);
 				img_ctx.draw = false;
 			} else {
+				plugin_log(render_log);
 				bitmap: Simp.Bitmap;
 				bitmap.width = xx buffer_width;
 				bitmap.height = xx buffer_height;
@@ -1148,6 +1149,10 @@ logger :: (message: string, data: *void, info: Log_Info) {
 		entry.options[0] = "dismiss";
 	}
 	array_add(entries, entry);
+}
+
+plugin_log :: (l: Log) {
+	log("%", l.message, flags = xx l.type);
 }
 
 #load "registration.jai";

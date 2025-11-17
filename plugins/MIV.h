@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 
+/*** Jai string compatibility. ***/
 typedef struct {
 	int64_t count;
 	uint8_t *data;
@@ -11,7 +12,15 @@ string to_string(char *str) {
 	return (string){(int64_t) strlen(str), (uint8_t *) str};
 }
 
-/*** The next three structs are used in the mandatory functions. ***/
+/*** The next four structs are used in the mandatory functions. ***/
+
+#define LOG_TYPE_LOG 0
+#define LOG_TYPE_ERROR 1
+#define LOG_TYPE_WARNING 2
+typedef struct {
+	uint8_t type;
+	string message;
+} Log;
 
 /* Entirely filled in by the Plugin. */
 typedef struct {

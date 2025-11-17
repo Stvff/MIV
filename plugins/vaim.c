@@ -11,7 +11,7 @@ int64_t registration_procedure(Plugin_Registration_Entry *registration) {
 }
 
 static uint16_t bytes_per_pixel = 0;
-string vaim_pre_render(Pre_Rendering_Info *pre_info) {
+Log vaim_pre_render(Pre_Rendering_Info *pre_info) {
 	fseek(pre_info->fileptr, 6, SEEK_SET);
 	fread(&(pre_info->channels), 1, 2, pre_info->fileptr);
 	bytes_per_pixel = pre_info->channels;
@@ -20,10 +20,10 @@ string vaim_pre_render(Pre_Rendering_Info *pre_info) {
 	fread(&(pre_info->width), 1, 8, pre_info->fileptr);
 	fread(&(pre_info->height), 1, 8, pre_info->fileptr);
 
-	return (string){0};
+	return (Log){0};
 }
 
-string vaim_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
+Log vaim_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 	fseek(pre_info->fileptr, 32, SEEK_SET);
 	uint64_t data_count = pre_info->width*pre_info->height*bytes_per_pixel;
 	uint8_t *data = malloc(data_count);
@@ -38,11 +38,11 @@ string vaim_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 	}
 
 	free(data);
-	return (string){0};
+	return (Log){0};
 }
 
-string vaim_cleanup(Pre_Rendering_Info *pre_info) {
-	return (string){0};
+Log vaim_cleanup(Pre_Rendering_Info *pre_info) {
+	return (Log){0};
 }
 
 int32_t vaim_setting(Pre_Rendering_Info *pre_info, Rendering_Info *render_info, Setting_Info *setting) {
@@ -98,6 +98,6 @@ int32_t vaim_setting(Pre_Rendering_Info *pre_info, Rendering_Info *render_info, 
 	return RESPONSE_NOTHING;
 }
 
-string vaim_setting_cleanup(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
-	return (string){0};
+Log vaim_setting_cleanup(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
+	return (Log){0};
 }

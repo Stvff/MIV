@@ -71,8 +71,9 @@ typedef struct {
 } Specifics;
 enum {TYPE_PBM = 1, TYPE_PGM = 2, TYPE_PPM = 3};
 
-string generic_pre_render(Pre_Rendering_Info *pre_info) {
+Log generic_pre_render(Pre_Rendering_Info *pre_info) {
 	Specifics *specifics = pre_info->user_ptr;
+	Log log = (Log){0};
 
 	/*# Checking the header */
 	fseek(pre_info->fileptr, 1, SEEK_SET);
@@ -84,6 +85,9 @@ string generic_pre_render(Pre_Rendering_Info *pre_info) {
 		if (specifics->which_type == TYPE_PGM) header_warning.data[1] = 'G';
 		else if (specifics->which_type == TYPE_PPM) header_warning.data[1] = 'P';
 		header_warning.data[header_warning.count-3] = c;
+
+		log.type = LOG_TYPE_WARNING;
+		log.message = header_warning;
 	}
 	if (c - '3' == specifics->which_type) specifics->is_binary = 1;
 	fseek(pre_info->fileptr, 3, SEEK_SET);
@@ -114,7 +118,6 @@ string generic_pre_render(Pre_Rendering_Info *pre_info) {
 		c = fgetc(pre_info->fileptr);
 	} while (is_digit(c));
 
-
 	if (specifics->which_type == TYPE_PPM) pre_info->channels = 3;
 	else pre_info->channels = 1;
 
@@ -122,7 +125,7 @@ string generic_pre_render(Pre_Rendering_Info *pre_info) {
 		pre_info->bit_depth = 1;
 		/* not fseeking back, because that last newline was in fact the final newline */
 		specifics->start_of_image = ftell(pre_info->fileptr);
-		return (string){0};
+		return log;
 	}
 	fseek(pre_info->fileptr, -1, SEEK_CUR);
 
@@ -141,7 +144,9 @@ string generic_pre_render(Pre_Rendering_Info *pre_info) {
 	if (specifics->max_pixel_value <= 255) pre_info->bit_depth = 8;
 	else if (specifics->max_pixel_value <= 65535) pre_info->bit_depth = 16;
 	if (pre_info->bit_depth > 8) {
-		return to_string("The PNM plugin currently does not support conversion of 16 bit to 8 bit.");
+		log.type = LOG_TYPE_ERROR;
+		log.message = to_string("The PNM plugin currently does not support conversion of 16 bit to 8 bit.");
+		return log;
 	}
 
 	/*# adding the max pixel value to the metadata */
@@ -151,10 +156,10 @@ string generic_pre_render(Pre_Rendering_Info *pre_info) {
 	sprintf((char*) &specifics->pixel_value_string_buffer, "%d", specifics->max_pixel_value);
 	pre_info->metadata[pre_info->metadata_count-1][1] = to_string((char*) &specifics->pixel_value_string_buffer);
 
-	return (string){0};
+	return log;
 }
 
-string ppm_pre_render(Pre_Rendering_Info *pre_info) {
+Log ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	Specifics *specifics;
 	if (!pre_info->user_ptr) {
 		specifics = malloc(sizeof(Specifics));
@@ -163,12 +168,12 @@ string ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	} else specifics = pre_info->user_ptr;
 
 	specifics->which_type = TYPE_PPM;
-	generic_pre_render(pre_info);
-	return (string){0};
+	return generic_pre_render(pre_info);
 }
 
-string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
+Log ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 	Specifics *specifics = pre_info->user_ptr;
+	Log log = (Log){0};
 
 	fseek(pre_info->fileptr, 0, SEEK_END);
 	string file;
@@ -212,14 +217,14 @@ string ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 		}
 	}
 	free(file.data);
-	return (string){0};
+	return log;
 }
 
-string ppm_cleanup(Pre_Rendering_Info *pre_info) {
-	return (string){0};
+Log ppm_cleanup(Pre_Rendering_Info *pre_info) {
+	return (Log){0};
 }
 
-string pbm_pre_render(Pre_Rendering_Info *pre_info) {
+Log pbm_pre_render(Pre_Rendering_Info *pre_info) {
 	Specifics *specifics;
 	if (!pre_info->user_ptr) {
 		specifics = malloc(sizeof(Specifics));
@@ -228,12 +233,12 @@ string pbm_pre_render(Pre_Rendering_Info *pre_info) {
 	} else specifics = pre_info->user_ptr;
 
 	specifics->which_type = TYPE_PBM;
-	generic_pre_render(pre_info);
-	return (string){0};
+	return generic_pre_render(pre_info);;
 }
 
-string pbm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
+Log pbm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 	Specifics *specifics = pre_info->user_ptr;
+	Log log = (Log){0};
 
 	fseek(pre_info->fileptr, 0, SEEK_END);
 	string file;
@@ -278,14 +283,14 @@ string pbm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 		}
 	}
 	free(file.data);
-	return (string){0};
+	return log;
 }
 
-string pbm_cleanup(Pre_Rendering_Info *pre_info) {
-	return (string){0};
+Log pbm_cleanup(Pre_Rendering_Info *pre_info) {
+	return (Log){0};
 }
 
-string pgm_pre_render(Pre_Rendering_Info *pre_info) {
+Log pgm_pre_render(Pre_Rendering_Info *pre_info) {
 	Specifics *specifics;
 	if (!pre_info->user_ptr) {
 		specifics = malloc(sizeof(Specifics));
@@ -294,12 +299,12 @@ string pgm_pre_render(Pre_Rendering_Info *pre_info) {
 	} else specifics = pre_info->user_ptr;
 
 	specifics->which_type = TYPE_PGM;
-	generic_pre_render(pre_info);
-	return (string){0};
+	return generic_pre_render(pre_info);
 }
 
-string pgm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
+Log pgm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 	Specifics *specifics = pre_info->user_ptr;
+	Log log = (Log){0};
 
 	fseek(pre_info->fileptr, 0, SEEK_END);
 	string file;
@@ -343,9 +348,9 @@ string pgm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 		}
 	}
 	free(file.data);
-	return (string){0};
+	return log;
 }
 
-string pgm_cleanup(Pre_Rendering_Info *pre_info) {
-	return (string){0};
+Log pgm_cleanup(Pre_Rendering_Info *pre_info) {
+	return (Log){0};
 }

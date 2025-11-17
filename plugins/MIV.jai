@@ -1,4 +1,10 @@
-/*** The next three structs are used in the mandatory functions. ***/
+/*** The next four structs are used in the mandatory functions. ***/
+
+Log_Type :: enum u8 { LOG; ERROR; WARNING; }
+Log :: struct {
+	type: Log_Type;
+	message: string;
+}
 
 /* Entirely filled in by the Plugin. */
 Plugin_Registration_Entry :: struct {
