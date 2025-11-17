@@ -48,7 +48,6 @@
 - There is a potential read out of bounds error when a PPM file is too short and ends in whitespace.
 - When another window is above MIV, MIV still reads the mouse position from that window.
 - Slider drops input when you move out of it too fast.
-- Rotating with mouse uses the wrong reference point, so when the settings/metadata panels are open, everything is wierd
 - When falling back on a different plugin, there should be a warning generated.
 
 ## Amersfoort

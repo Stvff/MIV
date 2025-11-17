@@ -470,8 +470,8 @@ main :: () {
 					if inp.right_button {
 						// img_ctx.auto_fit = false;
 						diff := inp.fpointer - inp.rpointer_when_pressed;
-						from := normalize(inp.rpointer_when_pressed - screen_center - img_ctx.offset*img_ctx.scale);
-						to := normalize(inp.fpointer - screen_center - img_ctx.offset*img_ctx.scale);
+						from := normalize(inp.rpointer_when_pressed - (screen_center + screen_offset) - img_ctx.offset*img_ctx.scale);
+						to := normalize(inp.fpointer - (screen_center + screen_offset) - img_ctx.offset*img_ctx.scale);
 						cos_a := dot(from, to);
 						sign := ifx from.x*to.y - from.y*to.x < 0 then -1 else 1;
 						angle := sign*acos(cos_a)/TAU;
