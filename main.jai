@@ -6,6 +6,8 @@ Image_Context :: struct {
 	scale: float;
 	angle: float;
 	pre_rot_angle: float;
+	flip_horizontally: bool;
+	flip_vertically: bool;
 
 	smoothing_on: bool;
 	linear_downscaling: bool;
@@ -457,6 +459,8 @@ main :: () {
 						img_ctx.auto_fit = true;
 						img_ctx.offset = .{};
 						img_ctx.angle = 0;
+						img_ctx.flip_horizontally = false;
+						img_ctx.flip_vertically = false;
 					}
 
 					if inp.left_button {
@@ -536,6 +540,8 @@ main :: () {
 					sin(rad), cos(rad)
 				};
 				for * image_edges {
+					if img_ctx.flip_vertically it.*.y *= -1;
+					if img_ctx.flip_horizontally it.*.x *= -1;
 					it.* = rot_mat*it.*;
 
 					it.* += img_ctx.offset;
@@ -789,6 +795,9 @@ main :: () {
 			zoom_buttons_space := panel_split(*top_bar, .{bar_height*2, top_bar.size[0]}, .LEFT, false);
 			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 			rotation_button := panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
+			panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
+			flip_horizontally_button := panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
+			flip_vertically_button := panel_split(*top_bar, .{bar_height, top_bar.size[0]}, .LEFT, false);
 
 			/*# settings button */
 			tip.text = "Toggle settings menu";
@@ -865,6 +874,19 @@ main :: () {
 				if img_ctx.angle != 0.00 && img_ctx.angle != 90 && img_ctx.angle != 180 && img_ctx.angle != 270 {
 					img_ctx.angle = 0;
 				} else img_ctx.angle -= 90;
+			}
+
+			/*# mirroring buttons */
+			tip.text = "Flip horizontally";
+			if elaborate_tips tip.text = "Flip horizontally:\nFlips the image so that that its right side appears on the left, and vise versa.";
+			if first_layer_is_pressable && panel_toggle_button(*flip_horizontally_button, icon_font, ICON.FLIP_LEFT_RIGHT, inp.ipointer, inp.left_button_switch, img_ctx.flip_horizontally, *tip) {
+				img_ctx.flip_horizontally = !img_ctx.flip_horizontally;
+			}
+
+			tip.text = "Flip Vertically";
+			if elaborate_tips tip.text = "Flip vertically:\nFlips the image so that its top appears at the bottom, and vise versa.";
+			if first_layer_is_pressable && panel_toggle_button(*flip_vertically_button, icon_font, ICON.FLIP_UP_DOWN, inp.ipointer, inp.left_button_switch, img_ctx.flip_vertically, *tip) {
+				img_ctx.flip_vertically = !img_ctx.flip_vertically;
 			}
 
 			/*# filename display */

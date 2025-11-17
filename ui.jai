@@ -423,8 +423,11 @@ ICON :: struct {
 	ZOOM_CENTER :: "M";
 	ZOOM_POINTER :: "P";
 	ROTATE :: string.["R", "R"];
-	COPY :: "c";
-	COPY_TEXT :: "T"; //Unused
+	COPY :: "c"; // Unused
+	COPY_TEXT :: "T"; // Unused
+
+	FLIP_LEFT_RIGHT :: string.["?", "?"];
+	FLIP_UP_DOWN :: string.["?", "?"];
 
 	METADATA :: string.["m", "m"];
 	HISTORY :: "C";

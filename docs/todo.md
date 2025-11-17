@@ -71,10 +71,9 @@
 	- [ ] Save settings in case of crash by saving the settings file right after settings changed
 	- [ ] Save plugin settings
 - [x] Slider for Plugin settings
-	- [ ] Choice between every change or after mouse release.
 - [x] FPS slider for when holding down next or prev
 	- [x] When holding down next or prev, go up to full fps
-- [ ] Image mirroring
+- [x] Image mirroring
 - [x] Image rotation controls and logic (with button)
 	- [x] Bounding box fitting
 	- [x] Fill screen setting
@@ -107,6 +106,7 @@
 	- [ ] Sliders in general should be more advanced
 		- [ ] Maybe with indents
 		- [ ] Also the Uberslider
+		- [ ] Choice between every change or after mouse release (for plugins).
 	- [ ] UI size selection
 		- [ ] Asking the OS what is up with it
 	- [ ] Consider proper wayland support
