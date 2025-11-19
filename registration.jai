@@ -363,7 +363,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do
 
 	posix.fseek(file_handle, 0, posix.SEEK_SET);
 	if pre_info_log.type == .ERROR {
-		if do_logging log_error("File type '%' metadata reading error: %", new_plugin.plugin_provided.name_of_filetype, pre_info_log.message);
+		if do_logging log_error("File type '%' metadata reading error:\n%", new_plugin.plugin_provided.name_of_filetype, pre_info_log.message);
 		ok = false;
 		return false;
 	}

@@ -3,11 +3,12 @@
 1. [Plugins Overview](#plugins-overview)
 2. [Lifecycle](#lifecycle)
 3. [`string`](#string)
-4. [Registration](#registration)
-5. [Pre-Render](#pre-render)
-6. [Render](#render)
-7. [Cleanup](#cleanup)
-8. [Settings API](#settings-api)
+4. [`Log`](#log)
+5. [Registration](#registration)
+6. [Pre-Render](#pre-render)
+7. [Render](#render)
+8. [Cleanup](#cleanup)
+9. [Settings API](#settings-api)
 	- [Toggle](#toggle)
 	- [List](#list)
 	- [Slider](#slider)
@@ -17,11 +18,11 @@ A valid MIV plugin must be a `.so` dynamic library, and define at least 4 functi
 ```c
 int64_t registration_procedure(Plugin_Registration_Entry *registration)
 
-string pre_render(Pre_Rendering_Info *pre_info)
-string render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info)
-string cleanup(Pre_Rendering_Info *pre_info)
+Log pre_render(Pre_Rendering_Info *pre_info)
+Log render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info)
+Log cleanup(Pre_Rendering_Info *pre_info)
 ```
-The `string`, `Plugin_Registration_Entry`, `Pre_Rendering_Info` and `Rendering_Info` types are defined in [plugins/MIV.h](../plugins/MIV.h).
+The `Log`, `Plugin_Registration_Entry`, `Pre_Rendering_Info` and `Rendering_Info` types are defined in [plugins/MIV.h](../plugins/MIV.h).
 See [plugins/ppm.c](../plugins/pnm.c) for a comprehensive example on how they are used in a plugin.
 
 This API is expected to change to allow for more advanced features. Also it's not done yet.
@@ -37,10 +38,10 @@ When scanning a directory, MIV calls `pre_render()` and `cleanup()` for every fi
 to see if it should add them to the file queue. This can happen while it is displaying an image, so the following can (and often does) happen:\
 `pre_render()` -> `pre_render()` -> `cleanup()` -> `render()` -> `cleanup()`.
 
-MIV does not call any plugin functions from multiple threads.
+MIV does not call any plugin functions from multiple threads, so every plugin function call will be sent from the same thread.
 
 ## `string`
-The `string` type is used for all plugin functions, and for nearly all of its structs. It's used instead of the more customary `char *`
+The `string` type is used in all plugin functions, and for nearly all of its structs. It's used instead of the more customary `char *`
 because \*gestures vaguely at C's history*.
 
 It's essentially a byte array:
@@ -57,6 +58,27 @@ string to_string(char *str) {
 	return (string){(int64_t) strlen(str), (uint8_t *) str};
 }
 ```
+
+## `Log`
+The main required image functions return a `Log`.
+```c
+typedef struct {
+	uint8_t type;
+	string message;
+} Log;
+```
+Here, the `type` can be:
+```c
+#define LOG_TYPE_LOG 0
+#define LOG_TYPE_ERROR 1
+#define LOG_TYPE_WARNING 2
+```
+When `type` is `LOG_TYPE_LOG`, the message will only be viewable in MIV when the 'debug logging' toggle is active.\
+When `type` is `LOG_TYPE_ERROR`, the message will be passed as an error, and show up as a red popup. MIV will not display an image if `pre_render()` or `render()` return an error.\
+When `type` is `LOG_TYPE_WARNING`, the message will show up as an orange popup, but MIV will still display the image.
+
+Newlines are safe to use.
+If the `Log` is left empty and zero, everything continues without anything happening.
 
 ## Registration
 The `registration_procedure()` is the first mandatory function that has to be defined. This is its signature:
@@ -124,8 +146,8 @@ string pairs that the library has provided.
 Finally, `user_ptr` is a pointer that MIV never touches or looks at, and can be used by the plugin to store its own internal state for between functions.
 Do note the [lifecycle](#lifecycle) and its implications!
 
-Whenever `pre_render()` detects an error in the image, it can return a non-empty `string` that contains information about what went wrong. This message will be
-presented to the user along with the string: `File metadata reading error: `.
+Whenever `pre_render()` detects an error in the image, it can return a non-empty error `Log` that contains information about what went wrong. This message will be
+presented to the user along with the string: `File metadata reading error:\n`.
 
 ## Render
 In a sense, `render()` is the focal point of a plugin.
@@ -147,7 +169,7 @@ typedef struct {
 `render()`'s task is to decode the image data in the image file, and to load it, as pixels, into the buffer.
 Every pixel in the buffer is 8-bit sRGBA.
 
-Just like `pre_render()`, `render()` can also return an error, which is presented to the user with the string `Image data retrieval error: `.
+Just like `pre_render()`, `render()` can also return an error `Log`, which is presented to the user with the string `Image data retrieval error:\n`.
 
 ## Cleanup
 `cleanup()` can be used to clean up internal resources.

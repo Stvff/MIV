@@ -385,7 +385,7 @@ main :: () {
 			array_resize(*(buffer), buffer_width*buffer_height);
 			render_log := img_ctx.plugin.render(*img_ctx.pre_info, *img_ctx.render_info);
 			if render_log.type == .ERROR {
-				log_error("Image data retrieval error: %", render_log.message);
+				log_error("Image data retrieval error:\n%", render_log.message);
 				img_ctx.draw = false;
 			} else {
 				plugin_log(render_log);
