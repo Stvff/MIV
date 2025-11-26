@@ -54,6 +54,7 @@
 - [ ] Another image type
 	- [ ] jpeg
 	- [ ] bmp
+	- [ ] Put pnm comments into the metadata
 - [x] Rework the queue model
 	- [x] Option for queue looping
 - [x] Help mode where the tooltips are wayyy larger
@@ -84,8 +85,6 @@
 	- [x] copy filename to clipboard
 	- [x] get filename from clipboard
 - [x] background color setting
-- [ ] Produce a coherent concept of the design language
-	- [ ] Logo and possible rename.......
 
 ## Utrecht
 - [ ] Another image type
@@ -98,6 +97,8 @@
 - [ ] Select which plugin to use for which filetype in case there's multiple plugins covering multiple file types.
 - [ ] Show Licenses button
 
+- [ ] Produce a coherent concept of the design language
+	- [ ] Logo and possible rename.......
 - [ ] Nicer looking scaling
 - [ ] UI rework
 	- [ ] Textbox input
