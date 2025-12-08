@@ -70,7 +70,6 @@
 - [x] Plugin error, message, and warning instead of only-errors for plugins
 - [ ] Settings file total update
 	- [x] Serialize the plugin settings for the settings file in some way
-	- [ ] Save settings in case of crash by saving the settings file right after settings changed
 	- [ ] Save plugin settings
 - [x] Slider for Plugin settings
 - [x] FPS slider for when holding down next or prev

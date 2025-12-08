@@ -231,7 +231,7 @@ load_registrations :: () -> Settings_File_3 {
 				if hash == header.name_hash {
 					print("found\n");
 				}
-				print("%, %\n", plugin_code, hash);
+				// print("%, %\n", plugin_code, hash);
 			}
 			progress += header.data_length + size_of(Setting_Header);;
 		}
@@ -257,10 +257,10 @@ write_settings_file :: (settings_file: Settings_File_3) {
 		plugin_code := tprint("%.%.%", registration.plugin_filename, registration.plugin_provided.name_of_filetype, registration.plugin_provided.extension);
 		hash := Hash.sdbm_hash(plugin_code.data, plugin_code.count);
 		byte_count := 0;
-		print("%, %\n", plugin_code, hash);
-		for setting: registration.settings {
+		// print("%, %\n", plugin_code, hash);
+		// for setting: registration.settings {
 
-		}
+		// }
 	}
 
 	path := tprint("%plugins/settings.miv", path_strip_filename(system.get_path_of_running_executable()));
