@@ -49,6 +49,7 @@
 - When another window is above MIV, MIV still reads the mouse position from that window.
 - Slider drops input when you move out of it too fast.
 - When falling back on a different plugin, there should be a warning generated.
+- `log`s from libraries etc sometimes have a trailing newline, or leading tabs. These should ideally be truncated.
 
 ## Amersfoort
 - [ ] Another image type
@@ -63,7 +64,7 @@
 - [x] Adjustable panels
 - [x] logs onscreen instead of in terminal
 - [ ] Being more elaborate about what failed during loading (which part of the directory, which type of error)
-- [ ] Exif data
+- [ ] Exif data (at least a beginning to it)
 	- [ ] Inode data
 - [x] up/downscaling settings in the settings menu
 - [x] Rework plugin settings API to be less sum-type-y
