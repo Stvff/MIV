@@ -5,6 +5,7 @@ release :: false;
 exe_name        :: "miv";
 compile_MIV     :: true;
 compile_pnm_c   :: true;
+compile_bmp_c   :: true;
 compile_qoi_jai :: true;
 compile_vaim_c  :: true;
 
@@ -39,11 +40,22 @@ build :: () {
 		compiler_destroy_workspace(qoi_w);
 	}
 
-	if compile_pnm_c {
+	c_files: [..]string;
+
+	if compile_pnm_c array_add(*c_files, "pnm");
+	if compile_bmp_c array_add(*c_files, "bmp");
+
+	/* This is a personal format that I used a lot in the past. I probably won't ship the plugin on releases unless someone asks for it */
+	if compile_vaim_c array_add(*c_files, "vaim");
+
+	for c_file: c_files {
+		input_file := tprint("./plugins/%.c", c_file);
+		output_file := tprint("./plugins/%.so", c_file);
+
 		command: [..]string;
 		array_add(*command, "gcc", "-fPIC");
 		if release array_add(*command, "-O3");
-		array_add(*command, "./plugins/pnm.c", "-shared", "-o", "./plugins/pnm.so");
+		array_add(*command, input_file, "-shared", "-o", output_file);
 		process_result, output_string, error_string, timeout_reached := Process.run_command(..command);
 		if process_result.exit_code != 0 {
 			log_error("Attempted command: %\n%", command, error_string);
@@ -51,18 +63,6 @@ build :: () {
 		}
 	}
 
-	/* This is a personal format that I used a lot in the past. I probably won't ship the plugin on releases unless someone asks for it */
-	if compile_vaim_c {
-		command: [..]string;
-		array_add(*command, "gcc", "-fPIC");
-		if release array_add(*command, "-O3");
-		array_add(*command, "./plugins/vaim.c", "-shared", "-o", "./plugins/vaim.so");
-		process_result, output_string, error_string, timeout_reached := Process.run_command(..command);
-		if process_result.exit_code != 0 {
-			log_error("Attempted command: %\n%", command, error_string);
-			log_error("\n");
-		}
-	}
 }
 
 Process :: #import "Process";
