@@ -67,6 +67,7 @@ typedef struct {
 	int64_t start_of_image;
 	bool is_binary;
 	uint8_t which_type;
+	string header_error;
 	char pixel_value_string_buffer[16];
 } Specifics;
 enum {TYPE_PBM = 1, TYPE_PGM = 2, TYPE_PPM = 3};
@@ -79,15 +80,20 @@ Log generic_pre_render(Pre_Rendering_Info *pre_info) {
 	fseek(pre_info->fileptr, 1, SEEK_SET);
 	char c = fgetc(pre_info->fileptr);
 	if (c - '0' != specifics->which_type && c - '3' != specifics->which_type) {
-		string header_warning = to_string("PBM files must start with either 'P0' or 'P3', but the second character was ' '.");;
-		header_warning.data[35] += specifics->which_type;
-		header_warning.data[43] += specifics->which_type;
-		if (specifics->which_type == TYPE_PGM) header_warning.data[1] = 'G';
-		else if (specifics->which_type == TYPE_PPM) header_warning.data[1] = 'P';
-		header_warning.data[header_warning.count-3] = c;
+		string raw_header_error = to_string("PBM files must start with either 'P0' or 'P3', but the second character was ' '.");;
+		if (!specifics->header_error.data) {
+			specifics->header_error = raw_header_error;
+			specifics->header_error.data = malloc(specifics->header_error.count);
+			memcpy(specifics->header_error.data, raw_header_error.data, raw_header_error.count);
+		}
+		specifics->header_error.data[35] += specifics->which_type;
+		specifics->header_error.data[43] += specifics->which_type;
+		if (specifics->which_type == TYPE_PGM) specifics->header_error.data[1] = 'G';
+		else if (specifics->which_type == TYPE_PPM) specifics->header_error.data[1] = 'P';
+		specifics->header_error.data[specifics->header_error.count-3] = c;
 
-		log.type = LOG_TYPE_WARNING;
-		log.message = header_warning;
+		log.type = LOG_TYPE_ERROR;
+		log.message = specifics->header_error;
 	}
 	if (c - '3' == specifics->which_type) specifics->is_binary = 1;
 	fseek(pre_info->fileptr, 3, SEEK_SET);
@@ -159,6 +165,18 @@ Log generic_pre_render(Pre_Rendering_Info *pre_info) {
 	return log;
 }
 
+Log generic_cleanup(Pre_Rendering_Info *pre_info) {
+	if (!pre_info->user_ptr) return (Log){0};
+	Specifics *specifics = pre_info->user_ptr;
+	if (specifics->header_error.data) {
+		free(specifics->header_error.data);
+		specifics->header_error = (string){0};
+	}
+	free(specifics);
+	pre_info->user_ptr = NULL;
+	return (Log){0};
+}
+
 Log ppm_pre_render(Pre_Rendering_Info *pre_info) {
 	Specifics *specifics;
 	if (!pre_info->user_ptr) {
@@ -221,7 +239,7 @@ Log ppm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 }
 
 Log ppm_cleanup(Pre_Rendering_Info *pre_info) {
-	return (Log){0};
+	return generic_cleanup(pre_info);
 }
 
 Log pbm_pre_render(Pre_Rendering_Info *pre_info) {
@@ -287,7 +305,7 @@ Log pbm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 }
 
 Log pbm_cleanup(Pre_Rendering_Info *pre_info) {
-	return (Log){0};
+	return generic_cleanup(pre_info);
 }
 
 Log pgm_pre_render(Pre_Rendering_Info *pre_info) {
@@ -352,5 +370,5 @@ Log pgm_render(Pre_Rendering_Info *pre_info, Rendering_Info *render_info) {
 }
 
 Log pgm_cleanup(Pre_Rendering_Info *pre_info) {
-	return (Log){0};
+	return generic_cleanup(pre_info);
 }

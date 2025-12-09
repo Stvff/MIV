@@ -288,7 +288,7 @@ main :: () {
 			file_history_index = file_history.count-1;
 			img_ctx.render = true; /* I know we're setting this for every dropped file, but it's worth it in code clarity imo */
 		}
-		if added_string_queue.count == 1 {
+		if added_string_queue.count == 1 && !settings.open_in_history_mode {
 			fileq_setting = .DIRECTORY;
 			/* I'm assuming there's always a valid file in this directory */
 			discover_directory(*directory, file_history[file_history_index]);
@@ -642,6 +642,13 @@ main :: () {
 				if panel_settings_toggle(*settings_menu_panel, icon_font, main_font, "file queue loops:",
 				                         inp.ipointer, inp.left_button_switch, settings.queues_loop) {
 					settings.queues_loop = !settings.queues_loop;
+				}
+
+				/* open in history mode setting */
+				tip.text = "Normally, single files open in directory mode, but sometimes this is unwanted.\nThis toggle changes that behaviour to always open files in history mode.";
+				if panel_settings_toggle(*settings_menu_panel, icon_font, main_font, "open in history mode:",
+				                         inp.ipointer, inp.left_button_switch, settings.open_in_history_mode, *tip) {
+					settings.open_in_history_mode = !settings.open_in_history_mode;
 				}
 
 				/* FPS slider */

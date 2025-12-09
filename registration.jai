@@ -155,6 +155,7 @@ Settings_File_3 :: struct {
 	downscaling_on_previous_close: bool = true;
 	elaborate_tips: bool;
 	queues_loop: bool = true;
+	open_in_history_mode: bool;
 
 	scale_on_previous_close: float #align 1;
 	offset_on_previous_close: Vector2 #align 1;
@@ -252,7 +253,7 @@ write_settings_file :: (settings_file: Settings_File_3) {
 		array_add(*buffer, ..[]u8.{size_of(Setting_Header), (*header).(*u8)});
 		array_add(*buffer, ..[]u8.{header.data_length, (*settings_file).(*u8) + member.offset_in_bytes});
 	}
-	print("-----------------\n");
+	// print("-----------------\n");
 	for registration: all_registrations {
 		plugin_code := tprint("%.%.%", registration.plugin_filename, registration.plugin_provided.name_of_filetype, registration.plugin_provided.extension);
 		hash := Hash.sdbm_hash(plugin_code.data, plugin_code.count);
