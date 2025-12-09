@@ -256,8 +256,27 @@ main :: () {
 				inp.scroll_delta = cast(float, event.wheel_delta)/cast(float, event.typical_wheel_delta);
 			}
 
-			if event.type == .DRAG_AND_DROP_FILES for event.files {
-				array_add(*added_string_queue, copy_string(it));
+			if event.type == .DRAG_AND_DROP_FILES for name: event.files {
+				sb: String_Builder;
+				i := 0;
+				while i < name.count {
+					char := name[i];
+					if char == "%" {
+						hi_digit := name[i + 1];
+						lo_digit := name[i + 2];
+						if  hi_digit >= "0" && hi_digit <= "9" then hi_digit -= "0";
+						if  hi_digit >= "A" && hi_digit <= "F" { hi_digit -= "A"; hi_digit += 10; }
+						if  hi_digit >= "a" && hi_digit <= "f" { hi_digit -= "A"; hi_digit += 10; }
+						if  lo_digit >= "0" && lo_digit <= "9" then lo_digit -= "0";
+						if  lo_digit >= "A" && lo_digit <= "F" { lo_digit -= "A"; lo_digit += 10; }
+						if  lo_digit >= "a" && lo_digit <= "f" { lo_digit -= "A"; lo_digit += 10; }
+						char = hi_digit*16 + lo_digit;
+						i += 2;
+					}
+					append(*sb, char);
+					i += 1;
+				}
+				array_add(*added_string_queue, builder_to_string(*sb));
 			}
 			if inp.ctrl && inp.v {
 				added_files := split(Clippy.os_clipboard_get_text(), "\n",, temp);

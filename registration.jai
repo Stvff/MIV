@@ -306,7 +306,7 @@ get_loading :: (filepath: string, extension: string, img_ctx: *Image_Context, do
 	file_handle: *posix.FILE;
 	file_handle = posix.fopen(temp_c_string(filepath), "r");
 	if !file_handle {
-		if do_logging log_error("File does not exist or could not be opened: %", filepath);
+		if do_logging log_error("File could not be opened:\n%\nError code: %", filepath, posix.errno());
 		ok = false;
 		return false;
 	}
