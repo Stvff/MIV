@@ -18,6 +18,23 @@ To add plugins, simply drag them onto the window from your file explorer (or by 
 ### Viewing files
 To view files, you can drag them onto the window, or add them from the terminal.
 
+### Supported filetypes
+This list of files is some of the planned formats MIV should be able to view. The ones marked as completed can already be viewed with the latest release.
+- [x] PBM
+- [x] PGM
+- [x] PPM
+- [x] QOI
+- [ ] BMP
+- [ ] JPEG
+- [ ] PNG
+- [ ] NEF
+- [ ] DNG
+- [ ] TIF
+- [ ] GIF
+- [ ] WEBP
+- [ ] SVG
+- [ ] HEIC
+
 ## Context
 Recently, while making [Sokoworm](https://stvff.github.io/sokoworm.html#top), which uses [PPM image files](https://en.wikipedia.org/wiki/Netpbm#File_formats)
 as graphics outputs, I noticed that the feature-set of the average image viewer is quite limited. Many image viewers only support a relatively small set of image types,
@@ -32,7 +49,7 @@ So far, I have implemented most of my desired features, and have still not found
 
 ## Outline/Mission Statement
 The current roadmap can be found in [docs/todo.md](./docs/todo.md).\
-The naming of releases is based on all the major train stations between Twente and Amsterdam. The hope is that it will be out of pre-release when I get to Amsterdam.
+The naming of pre-releases is based on all the major train stations between Twente and Amsterdam. The hope is that it will be out of pre-release when I get to Amsterdam.
 
 To be more specific about features, I am aiming for feature parity (or more) with the [Linux Mint xviewer](https://github.com/linuxmint/xviewer?tab=readme-ov-file) in terms of the image viewing experience.
 
