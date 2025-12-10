@@ -2,12 +2,12 @@
 
 release :: false;
 
-exe_name        :: "miv";
-compile_MIV     :: true;
-compile_pnm_c   :: true;
-compile_bmp_c   :: true;
-compile_qoi_jai :: true;
-compile_vaim_c  :: true;
+exe_name     :: "miv";
+compile_MIV  :: true;
+compile_pnm  :: true;
+compile_bmp  :: true;
+compile_qoi  :: true;
+compile_vaim :: true;
 
 build :: () {
 	defer set_build_options_dc(.{do_output = false, write_added_strings=false});
@@ -25,28 +25,30 @@ build :: () {
 		add_build_file("main.jai", MIV_w);
 	}
 
-	if compile_qoi_jai {
-		qoi_w := compiler_create_workspace("Build qoi.jai");
+	jai_files: [..]string;
+	c_files: [..]string;
+
+	if compile_qoi array_add(*jai_files, "qoi");
+	if compile_bmp array_add(*jai_files, "bmp");
+
+	if compile_pnm array_add(*c_files, "pnm");
+	/* This is a personal format that I used a lot in the past. I probably won't ship the plugin on releases unless someone asks for it */
+	if compile_vaim array_add(*c_files, "vaim");
+
+	for jai_file: jai_files {
+		w := compiler_create_workspace(jai_file);
 		options := get_build_options(); {
 			options.output_type = .DYNAMIC_LIBRARY;
-			options.output_executable_name = "qoi";
+			options.output_executable_name = jai_file;
 			options.output_path = "./plugins/";
 
 			options.backend = ifx release then .LLVM else .X64;
 			options.text_output_flags = .OUTPUT_TIMING_INFO;
 			if options.backend == .LLVM then set_optimization(*options, .VERY_OPTIMIZED);
-		} set_build_options(options, qoi_w);
-		add_build_file("./plugins/qoi.jai", qoi_w);
-		compiler_destroy_workspace(qoi_w);
+		} set_build_options(options, w);
+		add_build_file(tprint("./plugins/%.jai", jai_file), w);
+		compiler_destroy_workspace(w);
 	}
-
-	c_files: [..]string;
-
-	if compile_pnm_c array_add(*c_files, "pnm");
-	if compile_bmp_c array_add(*c_files, "bmp");
-
-	/* This is a personal format that I used a lot in the past. I probably won't ship the plugin on releases unless someone asks for it */
-	if compile_vaim_c array_add(*c_files, "vaim");
 
 	for c_file: c_files {
 		input_file := tprint("./plugins/%.c", c_file);
