@@ -426,8 +426,8 @@ ICON :: struct {
 	COPY :: "c"; // Unused
 	COPY_TEXT :: "T"; // Unused
 
-	FLIP_LEFT_RIGHT :: string.["?", "?"];
-	FLIP_UP_DOWN :: string.["?", "?"];
+	FLIP_LEFT_RIGHT :: string.["K", "K"];
+	FLIP_UP_DOWN :: string.["k", "k"];
 
 	METADATA :: string.["m", "m"];
 	HISTORY :: "C";
