@@ -54,7 +54,8 @@
 ## Amersfoort
 - [ ] Another image type
 	- [ ] jpeg
-	- [ ] bmp
+	- [x] bmp
+		- [ ] Make it more spec compliant, but also listen to the available header info
 	- [ ] Put pnm comments into the metadata
 - [x] Rework the queue model
 	- [x] Option for queue looping
