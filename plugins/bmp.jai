@@ -35,6 +35,7 @@ Bitmap_Info_Header :: struct {
 HEADER_SIZE :: size_of(Bitmap_File_Header) + size_of(Bitmap_Info_Header);
 
 #add_context bmp_full_header: *Bitmap_Full_Header;
+#add_context metadata_backing: [..][2]string;
 
 Bitmap_Full_Header :: struct {
 	file: Bitmap_File_Header;
@@ -77,6 +78,19 @@ bmp_pre_render :: (info: *Pre_Rendering_Info) -> Log #c_call {
 	if full_header.file.offset_to_pixels != HEADER_SIZE {
 		log = .{.WARNING, sprint("Header size is nonstandard (expected % bytes, got % bytes).", HEADER_SIZE, full_header.file.offset_to_pixels)};
 	}
+
+	array_add(*context.metadata_backing, string.["bits per pixel", sprint("%", full_header.info.bits_per_pixel)]);
+	array_add(*context.metadata_backing, string.["planes", sprint("%", full_header.info.planes)]);
+	array_add(*context.metadata_backing, string.["compression", sprint("%", full_header.info.compression)]);
+	array_add(*context.metadata_backing, string.["pixels/meter (X)", sprint("%", full_header.info.x_pixels_per_meter)]);
+	array_add(*context.metadata_backing, string.["pixels/meter (Y)", sprint("%", full_header.info.y_pixels_per_meter)]);
+	array_add(*context.metadata_backing, string.["colors in table", sprint("%", full_header.info.colors_in_color_table)]);
+	array_add(*context.metadata_backing, string.["DIB header size", sprint("%", full_header.info.dib_header_size)]);
+	if full_header.file.reserved[0] || full_header.file.reserved[1] {
+		array_add(*context.metadata_backing, string.["Reserved 1", sprint("%", full_header.file.reserved[0])]);
+		array_add(*context.metadata_backing, string.["Reserved 2", sprint("%", full_header.file.reserved[1])]);
+	}
+	info.metadata = .{context.metadata_backing.count, context.metadata_backing.data};
 
 	context.bmp_full_header = full_header;
 
@@ -131,6 +145,10 @@ bmp_cleanup :: (info: *Pre_Rendering_Info) -> Log #c_call {
 	push_context,defer_pop info.user_ptr.(*#Context);
 
 	if context.bmp_full_header then free(context.bmp_full_header);
+	if context.metadata_backing {
+		for context.metadata_backing free(it[1].data);
+		array_reset(*context.metadata_backing);
+	}
 	return .{};
 }
 
