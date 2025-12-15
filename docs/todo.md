@@ -50,6 +50,7 @@
 - Slider drops input when you move out of it too fast.
 - When falling back on a different plugin, there should be a warning generated.
 - `log`s from libraries etc sometimes have a trailing newline, or leading tabs. These should ideally be truncated.
+- When reloading a plugin that already has images loaded, the plugin does not appear to be properly re-applied.
 
 ## Amersfoort
 - [ ] Another image type
