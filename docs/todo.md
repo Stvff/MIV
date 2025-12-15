@@ -90,6 +90,7 @@
 ## Utrecht
 - [ ] Another image type
 	- [ ] PNG
+	- [ ] STL? :P
 - [ ] Double press instead of middle mouse to reset
 - [ ] Think even harder about first installation
 - [ ] different types of filesorting
@@ -112,6 +113,8 @@
 		- [ ] Choice between every change or after mouse release (for plugins).
 	- [ ] UI size selection
 		- [ ] Asking the OS what is up with it
+	- [ ] Some amount of themeing selection/support
 	- [ ] Consider proper wayland support
 	- [ ] Save window size (or at least do something better than current behviour)
 	- [ ] fullscreen/presentation mode
+	- [ ] Proper OS Icon
